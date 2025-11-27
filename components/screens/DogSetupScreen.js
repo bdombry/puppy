@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
   ScrollView,
-  StyleSheet,
   Alert,
   Platform,
+  TouchableOpacity,
+  View,
+  Text,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import PropTypes from 'prop-types';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
-import { GlobalStyles } from '../../styles/global'; // import GlobalStyles
+import { onboardingStyles } from '../../styles/onboardingStyles';
+import OnboardingHeader from '../OnboardingHeader';
+import FormInput from '../FormInput';
+import AuthButton from '../AuthButton';
+import BackButton from '../BackButton';
+import { EMOJI } from '../../constants/config';
 
 export default function DogSetupScreen() {
   const [name, setName] = useState('');
@@ -58,109 +62,69 @@ export default function DogSetupScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
-      contentContainerStyle={[styles.content, GlobalStyles.safeArea]}
+      style={onboardingStyles.container}
+      contentContainerStyle={onboardingStyles.scrollContent}
+      scrollEnabled={false}
     >
-      {/* Bouton retour */}
-      <TouchableOpacity
-        style={styles.backButton}
-        onPress={() => navigation.goBack()}
-      >
-        <Text style={styles.backButtonText}>← Retour</Text>
-      </TouchableOpacity>
+      <BackButton onPress={() => navigation.navigate('Auth')} />
 
-      <Text style={styles.icon}>🐶</Text>
-      <Text style={styles.title}>Parlez-nous de votre chiot</Text>
+      <OnboardingHeader
+        icon={EMOJI.dog}
+        title="Parlez-nous de votre chiot"
+        subtitle="Ces informations nous aideront à suivre sa croissance"
+      />
 
-      <View style={styles.form}>
-        <Text style={styles.label}>Nom du chiot *</Text>
-        <TextInput
-          style={styles.input}
+      <View style={onboardingStyles.form}>
+        <FormInput
+          label="Nom du chiot *"
           placeholder="Ex: Max"
           value={name}
           onChangeText={setName}
         />
 
-        <Text style={styles.label}>Race (optionnel)</Text>
-        <TextInput
-          style={styles.input}
+        <FormInput
+          label="Race (optionnel)"
           placeholder="Ex: Golden Retriever"
           value={breed}
           onChangeText={setBreed}
         />
 
-        <Text style={styles.label}>Date de naissance (optionnel)</Text>
-        <TouchableOpacity
-          style={styles.dateInput}
-          onPress={() => setShowPicker(true)}
-        >
-          <Text style={styles.dateText}>
-            {birthDate ? birthDate.toLocaleDateString('fr-FR') : 'Sélectionnez la date'}
-          </Text>
-        </TouchableOpacity>
+        <View style={onboardingStyles.formGroup}>
+          <Text style={onboardingStyles.label}>Date de naissance (optionnel)</Text>
+          <TouchableOpacity
+            style={onboardingStyles.dateInput}
+            onPress={() => setShowPicker(true)}
+          >
+            <Text style={onboardingStyles.dateText}>
+              {birthDate ? birthDate.toLocaleDateString('fr-FR') : 'Sélectionnez la date'}
+            </Text>
+          </TouchableOpacity>
 
-        {showPicker && (
-          <DateTimePicker
-            value={birthDate || new Date()}
-            mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            maximumDate={new Date()}
-            onChange={(event, selectedDate) => {
-              setShowPicker(Platform.OS === 'ios');
-              if (selectedDate) setBirthDate(selectedDate);
-            }}
-          />
-        )}
+          {showPicker && (
+            <DateTimePicker
+              value={birthDate || new Date()}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              maximumDate={new Date()}
+              onChange={(event, selectedDate) => {
+                setShowPicker(Platform.OS === 'ios');
+                if (selectedDate) setBirthDate(selectedDate);
+              }}
+            />
+          )}
+        </View>
       </View>
 
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
+      <AuthButton
+        type="primary"
+        label={`C'est parti ! ${EMOJI.party}`}
         onPress={handleSave}
-        disabled={loading}
-      >
-        <Text style={styles.buttonText}>C'est parti ! 🎉</Text>
-      </TouchableOpacity>
+        loading={loading}
+      />
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb' },
-  content: { padding: 24, alignItems: 'center' },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#6366f1',
-  },
-  icon: { fontSize: 64, marginTop: 16, marginBottom: 16 },
-  title: { fontSize: 24, fontWeight: 'bold', color: '#111827', textAlign: 'center', marginBottom: 32 },
-  form: { width: '100%', marginBottom: 32 },
-  label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8 },
-  input: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    marginBottom: 16,
-    fontSize: 16,
-  },
-  dateInput: {
-    width: '100%',
-    padding: 16,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  dateText: { fontSize: 16, color: '#374151' },
-  button: { backgroundColor: '#6366f1', padding: 16, borderRadius: 12, width: '100%', alignItems: 'center' },
-  buttonDisabled: { opacity: 0.5 },
-  buttonText: { fontSize: 16, fontWeight: '600', color: '#fff' },
-});
+DogSetupScreen.propTypes = {
+  navigation: PropTypes.object,
+};

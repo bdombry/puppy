@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { supabase } from '../../config/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function WalkScreen() {
   const navigation = useNavigation();
@@ -124,10 +125,10 @@ export default function WalkScreen() {
               width: 80,
               height: 80,
               borderRadius: 40,
-              backgroundColor: isIncident ? '#fef2f2' : '#f0fdf4',
+              backgroundColor: isIncident ? colors.errorLight : colors.successLight,
               alignItems: 'center',
               justifyContent: 'center',
-              marginBottom: 16,
+              marginBottom: spacing.base,
             }}
           >
             <Text style={{ fontSize: 48 }}>
@@ -266,7 +267,7 @@ export default function WalkScreen() {
               style={[
                 GlobalStyles.buttonPrimary,
                 styles.fullWidth,
-                { backgroundColor: isIncident ? '#ef4444' : '#10b981' },
+                { backgroundColor: isIncident ? colors.error : colors.success },
               ]}
               onPress={handleSave}
             >
@@ -290,104 +291,104 @@ export default function WalkScreen() {
 
 const styles = StyleSheet.create({
   backButton: {
-    marginBottom: 16,
+    marginBottom: spacing.base,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#6366f1',
-    fontWeight: '600',
+    fontSize: typography.sizes.lg,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   title: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.text,
+    marginBottom: spacing.md,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 15,
-    color: '#6b7280',
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   optionsContainer: {
-    gap: 12,
-    marginBottom: 32,
+    gap: spacing.md,
+    marginBottom: spacing.xxxl,
   },
   optionCard: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     padding: 18,
-    borderRadius: 16,
+    borderRadius: borderRadius.lg,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: colors.gray200,
   },
   optionCardActiveGreen: {
-    backgroundColor: '#f0fdf4',
-    borderColor: '#10b981',
+    backgroundColor: colors.successLight,
+    borderColor: colors.success,
   },
   optionCardActiveRed: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#ef4444',
+    backgroundColor: colors.errorLight,
+    borderColor: colors.error,
   },
   optionCardActivePurple: {
-    backgroundColor: '#faf5ff',
-    borderColor: '#8b5cf6',
+    backgroundColor: colors.purpleLight,
+    borderColor: colors.purple,
   },
   optionCardActiveBlue: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.infoLight,
+    borderColor: colors.info,
   },
   checkbox: {
     width: 28,
     height: 28,
-    borderRadius: 8,
+    borderRadius: borderRadius.md,
     borderWidth: 2,
-    borderColor: '#d1d5db',
+    borderColor: colors.gray300,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: spacing.md,
   },
   checkboxActiveGreen: {
-    backgroundColor: '#10b981',
-    borderColor: '#10b981',
+    backgroundColor: colors.success,
+    borderColor: colors.success,
   },
   checkboxActiveRed: {
-    backgroundColor: '#ef4444',
-    borderColor: '#ef4444',
+    backgroundColor: colors.error,
+    borderColor: colors.error,
   },
   checkboxActivePurple: {
-    backgroundColor: '#8b5cf6',
-    borderColor: '#8b5cf6',
+    backgroundColor: colors.purple,
+    borderColor: colors.purple,
   },
   checkboxActiveBlue: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.info,
+    borderColor: colors.info,
   },
   optionLabel: {
-    fontSize: 17,
-    color: '#111827',
-    fontWeight: '700',
-    marginBottom: 2,
+    fontSize: typography.sizes.xl,
+    color: colors.text,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.xs,
   },
   optionHint: {
-    fontSize: 13,
-    color: '#9ca3af',
-    fontWeight: '500',
+    fontSize: typography.sizes.base,
+    color: colors.textTertiary,
+    fontWeight: typography.weights.medium,
   },
   fullWidth: {
     width: '100%',
-    marginTop: 8,
+    marginTop: spacing.md,
   },
   cancelButton: {
-    paddingVertical: 16,
+    paddingVertical: spacing.base,
     alignItems: 'center',
-    borderRadius: 12,
+    borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    marginTop: 12,
+    borderColor: colors.gray300,
+    marginTop: spacing.md,
   },
   cancelText: {
-    fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '500',
+    fontSize: typography.sizes.lg,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
 });

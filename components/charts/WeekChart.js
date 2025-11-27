@@ -1,7 +1,8 @@
-// src/components/charts/WeekChart.js
 import React, { useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { getLast7DaysStats } from '../services/chartService';
+import { colors, spacing, borderRadius, shadows } from '../../constants/theme';
 
 export const WeekChart = ({ dogId, isGuestMode }) => {
   const [data, setData] = useState([]);
@@ -23,7 +24,6 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.title}>📊 Évolution sur 7 jours</Text>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="small" color="#6366f1" />
         </View>
@@ -31,183 +31,240 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
     );
   }
 
-  const maxTotal = Math.max(...data.map(d => d.total), 1);
+  if (!data || data.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>📊 Pas encore de données cette semaine</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Obtenir la date d'aujourd'hui normalisée
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayString = today.toISOString().split('T')[0];
+
+  // Inverser les données pour afficher aujourd'hui à gauche
+  const reversedData = [...data].reverse();
+
+  // Trouver le jour avec le plus de sorties pour la hauteur max
+  const maxTotal = Math.max(...data.map(d => d.total || 0), 1);
+  const MAX_HEIGHT = 100;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📊 Évolution sur 7 jours</Text>
+      {/* Graphique */}
+      <View style={styles.chartContainer}>
+        {reversedData.map((day) => {
+          const isToday = day.dayKey === todayString;
+          const dayDate = new Date(day.date);
+          const shortDayName = dayDate.toLocaleDateString('fr-FR', { weekday: 'short' });
+          const dayNumber = dayDate.getDate();
 
-      {data.every(d => d.total === 0) ? (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Pas encore de données cette semaine</Text>
-        </View>
-      ) : (
-        <>
-          <View style={styles.chartContainer}>
-            {data.map((day, index) => {
-              const heightRatio = maxTotal > 0 ? day.total / maxTotal : 0;
-              const barHeight = Math.max(heightRatio * 100, 4);
-              const outsideHeight = day.total > 0 ? (day.outside / day.total) * 100 : 0;
+          const heightRatio = day.total > 0 ? day.total / maxTotal : 0;
+          const barHeight = heightRatio * MAX_HEIGHT;
+          const greenHeight = day.total > 0 ? (day.outside / day.total) * barHeight : 0;
+          const percentage = day.percentage || 0;
 
-              const isToday = index === data.length - 1;
-
-              return (
-                <View key={day.dayKey} style={styles.barContainer}>
-                  {/* Barre */}
-                  <View style={styles.barWrapper}>
-                    <View
+          return (
+            <View 
+              key={day.dayKey} 
+              style={[
+                styles.dayColumn,
+                isToday && styles.dayColumnToday
+              ]}
+            >
+              {/* Barre verte et grise brutes */}
+              {barHeight > 0 && (
+                <View style={[styles.bar, { height: barHeight }, isToday && styles.barToday]}>
+                  {greenHeight > 0 && (
+                    <View 
                       style={[
-                        styles.bar,
-                        { height: barHeight },
-                        isToday && styles.barToday,
-                      ]}
-                    >
-                      {/* Partie "dehors" (vert) */}
-                      <View
-                        style={[
-                          styles.barOutside,
-                          { height: `${outsideHeight}%` },
-                        ]}
-                      />
-                    </View>
-                  </View>
-
-                  {/* Pourcentage si > 0 */}
-                  {day.total > 0 && (
-                    <Text style={styles.percentage}>{day.percentage}%</Text>
+                        styles.barGreen, 
+                        { height: greenHeight, width: '100%' }
+                      ]} 
+                    />
                   )}
-
-                  {/* Label du jour */}
-                  <Text style={[styles.label, isToday && styles.labelToday]}>
-                    {day.label}
-                  </Text>
+                  {(barHeight - greenHeight) > 0 && (
+                    <View 
+                      style={{
+                        height: barHeight - greenHeight,
+                        width: '100%',
+                        backgroundColor: '#e5e7eb',
+                      }} 
+                    />
+                  )}
                 </View>
-              );
-            })}
-          </View>
+              )}
 
-          {/* Légende */}
-          <View style={styles.legend}>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#10b981' }]} />
-              <Text style={styles.legendText}>Dehors</Text>
+              {/* Pourcentage */}
+              {percentage > 0 && (
+                <Text style={[
+                  styles.percentage,
+                  isToday && styles.percentageToday
+                ]}>
+                  {percentage}%
+                </Text>
+              )}
+
+              {/* Jour et date */}
+              <Text style={[
+                styles.dayName,
+                isToday && styles.dayNameToday
+              ]}>
+                {shortDayName.charAt(0).toUpperCase() + shortDayName.slice(1)}
+              </Text>
+              <Text style={[
+                styles.dayNumber,
+                isToday && styles.dayNumberToday
+              ]}>
+                {dayNumber}
+              </Text>
             </View>
-            <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#e5e7eb' }]} />
-              <Text style={styles.legendText}>Dedans</Text>
-            </View>
-          </View>
-        </>
-      )}
+          );
+        })}
+      </View>
+
+      {/* Légende */}
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.dot, { backgroundColor: colors.success }]} />
+          <Text style={styles.legendText}>Dehors</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.dot, { backgroundColor: colors.gray200 }]} />
+          <Text style={styles.legendText}>Dedans</Text>
+        </View>
+      </View>
     </View>
   );
 };
 
+
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
+    marginBottom: spacing.xl,
+    ...shadows.base,
     borderWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
+    borderColor: colors.border,
   },
   loadingContainer: {
-    height: 140,
+    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyContainer: {
-    height: 140,
+    height: 160,
     justifyContent: 'center',
     alignItems: 'center',
   },
   emptyText: {
-    fontSize: 14,
-    color: '#9ca3af',
+    fontSize: 15,
+    color: colors.textSecondary,
     textAlign: 'center',
+    fontWeight: '600',
   },
   chartContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 120,
-    marginBottom: 16,
-    paddingBottom: 4,
+    height: 140,
+    gap: 6,
+    paddingBottom: 12,
+    marginBottom: 12,
   },
-  barContainer: {
+  dayColumn: {
     flex: 1,
     alignItems: 'center',
-    gap: 6,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.gray150,
   },
-  barWrapper: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    width: '100%',
-    paddingHorizontal: 2,
+  dayColumnToday: {
+    backgroundColor: colors.primaryLight,
+    borderWidth: 2,
+    borderColor: colors.primary,
   },
   bar: {
-    width: '100%',
-    backgroundColor: '#e5e7eb',
-    borderRadius: 6,
+    width: '70%',
+    borderRadius: borderRadius.sm,
     overflow: 'hidden',
-    minHeight: 4,
+    minHeight: 2,
   },
   barToday: {
-    borderWidth: 2,
-    borderColor: '#6366f1',
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
-  barOutside: {
-    width: '100%',
-    backgroundColor: '#10b981',
-    borderTopLeftRadius: 4,
-    borderTopRightRadius: 4,
+  barGreen: {
+    backgroundColor: colors.success,
   },
   percentage: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#6b7280',
+    color: colors.textSecondary,
+    marginTop: 6,
+    marginBottom: 4,
   },
-  label: {
-    fontSize: 11,
-    color: '#9ca3af',
+  percentageToday: {
+    color: colors.primary,
+    fontWeight: '800',
+  },
+  dayName: {
+    fontSize: 12,
     fontWeight: '600',
-    textTransform: 'capitalize',
+    color: colors.textSecondary,
   },
-  labelToday: {
-    color: '#6366f1',
+  dayNameToday: {
+    color: colors.primary,
     fontWeight: '700',
+  },
+  dayNumber: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.gray400,
+    marginTop: 2,
+  },
+  dayNumberToday: {
+    color: colors.primary,
+    fontSize: 14,
   },
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 16,
-    marginTop: 8,
+    gap: 20,
+    paddingTop: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: spacing.sm,
   },
-  legendDot: {
+  dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
   },
   legendText: {
     fontSize: 12,
-    color: '#6b7280',
+    color: colors.textSecondary,
     fontWeight: '500',
   },
 });
+
+WeekChart.propTypes = {
+  dogId: PropTypes.string,
+  isGuestMode: PropTypes.bool,
+};
+
+WeekChart.defaultProps = {
+  dogId: null,
+  isGuestMode: false,
+};

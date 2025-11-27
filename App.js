@@ -20,26 +20,25 @@ function AppNavigator() {
     return <SplashScreen onFinish={() => {}} />;
   }
 
+  // Déterminer l'écran initial
+  let initialRoute = 'Auth';
+  if (user || isGuestMode) {
+    initialRoute = currentDog ? 'Home' : 'DogSetup';
+  }
+
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {!user && !isGuestMode && (
-          <Stack.Screen name="Auth" component={AuthScreen} />
-        )}
-
-        {((user || isGuestMode) && !currentDog) && (
-          <Stack.Screen name="DogSetup" component={DogSetupScreen} />
-        )}
-
-        {((user || isGuestMode) && currentDog) && (
-          <>
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Walk" component={WalkScreen} />
-            <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
-            <Stack.Screen name="DogProfile" component={DogProfileScreen} />
-            <Stack.Screen name="Analytics" component={AnalyticsScreen} />
-          </>
-        )}
+      <Stack.Navigator
+        screenOptions={{ headerShown: false }}
+        initialRouteName={initialRoute}
+      >
+        <Stack.Screen name="Auth" component={AuthScreen} />
+        <Stack.Screen name="DogSetup" component={DogSetupScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
+        <Stack.Screen name="Walk" component={WalkScreen} />
+        <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
+        <Stack.Screen name="DogProfile" component={DogProfileScreen} />
+        <Stack.Screen name="Analytics" component={AnalyticsScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

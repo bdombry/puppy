@@ -12,6 +12,7 @@ import { GlobalStyles } from '../../styles/global';
 import { useNavigation } from '@react-navigation/native';
 import { getAdvancedStats } from '../services/analyticsService';
 import { WeekChart } from '../../components/charts/WeekChart';
+import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function AnalyticsScreen() {
   const { currentDog, isGuestMode } = useAuth();
@@ -34,7 +35,7 @@ export default function AnalyticsScreen() {
   if (loading) {
     return (
       <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop, styles.centerContainer]}>
-        <ActivityIndicator size="large" color="#6366f1" />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Analyse des données...</Text>
       </View>
     );
@@ -61,6 +62,7 @@ export default function AnalyticsScreen() {
         <Text style={styles.subtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
 
         {/* Graphique 7 jours */}
+        <Text style={styles.sectionTitle}> Evolution sur 7 jours</Text>
         <WeekChart dogId={currentDog.id} isGuestMode={isGuestMode} />
 
         {/* Stats grid */}
@@ -408,15 +410,11 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: '47%',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    ...shadows.base,
   },
   statCardFull: {
     width: '100%',
@@ -448,15 +446,11 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   progressCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.base,
+    marginBottom: spacing.md,
+    ...shadows.small,
   },
   progressHeader: {
     flexDirection: 'row',
@@ -493,26 +487,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   insightCard: {
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 20,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    padding: spacing.xl,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    marginBottom: spacing.md,
+    ...shadows.base,
   },
   insightIcon: {
     width: 64,
     height: 64,
-    borderRadius: 16,
-    backgroundColor: '#f3f4f6',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.gray100,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    marginRight: spacing.base,
   },
   insightContent: {
     flex: 1,
@@ -534,17 +524,17 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   recommendationCard: {
-    backgroundColor: '#eef2ff',
-    borderRadius: 16,
-    padding: 20,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.lg,
+    padding: spacing.xl,
     borderWidth: 1,
-    borderColor: '#c7d2fe',
+    borderColor: colors.primaryLighter,
   },
   recommendationText: {
-    fontSize: 15,
-    color: '#4338ca',
-    fontWeight: '500',
+    fontSize: typography.sizes.base,
+    color: colors.primary,
+    fontWeight: typography.weights.medium,
     lineHeight: 24,
-    marginBottom: 8,
+    marginBottom: spacing.md,
   },
 });

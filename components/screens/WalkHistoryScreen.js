@@ -13,6 +13,7 @@ import { supabase } from '../../config/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GlobalStyles } from '../../styles/global';
 import { useNavigation } from '@react-navigation/native';
+import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function WalkHistoryScreen() {
   const { user, isGuestMode, currentDog } = useAuth();
@@ -91,21 +92,19 @@ export default function WalkHistoryScreen() {
 
   const formatDate = (iso) => {
     const date = new Date(iso);
-    const now = new Date();
-    const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-
-    let dateStr = '';
-    if (diffDays === 0) dateStr = "Aujourd'hui";
-    else if (diffDays === 1) dateStr = 'Hier';
-    else if (diffDays < 7) dateStr = date.toLocaleDateString('fr-FR', { weekday: 'long' });
-    else dateStr = date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+    
+    // Format court jour/mois
+    const dayMonth = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Jour de la semaine
+    const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
 
     const timeStr = date.toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     });
 
-    return { date: dateStr, time: timeStr };
+    return { date: dayMonth, time: timeStr, day: dayName };
   };
 
   const isIncident = (walk) => {
@@ -215,7 +214,7 @@ export default function WalkHistoryScreen() {
           showsVerticalScrollIndicator={false}
         >
           {filteredWalks.map((walk) => {
-            const { date, time } = formatDate(walk.datetime);
+            const { date, time, day } = formatDate(walk.datetime);
             const incident = isIncident(walk);
 
             return (
@@ -238,6 +237,7 @@ export default function WalkHistoryScreen() {
                       </Text>
                     </View>
                     <View style={styles.dateRow}>
+                      <Text style={styles.dayText}>{day}</Text>
                       <Text style={styles.dateText}>{date}</Text>
                       <View style={styles.timeBadge}>
                         <Text style={styles.timeText}>{time}</Text>
@@ -292,55 +292,55 @@ export default function WalkHistoryScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.base,
   },
   backButton: {
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#6366f1',
-    fontWeight: '600',
+    fontSize: typography.sizes.lg,
+    color: colors.primary,
+    fontWeight: typography.weights.semibold,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 16,
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.text,
+    marginBottom: spacing.base,
   },
   quickStats: {
     flexDirection: 'row',
-    gap: 12,
+    gap: spacing.md,
   },
   statBadge: {
     flex: 1,
-    backgroundColor: '#f0fdf4',
-    padding: 12,
-    borderRadius: 12,
+    backgroundColor: colors.successLight,
+    padding: spacing.md,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
   },
   statNumber: {
     fontSize: 24,
-    fontWeight: '800',
-    color: '#10b981',
+    fontWeight: typography.weights.extrabold,
+    color: colors.success,
   },
   statLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '600',
-    marginTop: 2,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.semibold,
+    marginTop: spacing.xs,
   },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: 24,
-    marginBottom: 16,
+    paddingHorizontal: spacing.xxl,
+    marginBottom: spacing.base,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: colors.gray200,
   },
   tab: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: spacing.md,
     alignItems: 'center',
     position: 'relative',
   },
@@ -348,13 +348,13 @@ const styles = StyleSheet.create({
     // Pas de background, juste l'indicateur
   },
   tabText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#9ca3af',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.textTertiary,
   },
   tabTextActive: {
-    color: '#111827',
-    fontWeight: '700',
+    color: colors.text,
+    fontWeight: typography.weights.bold,
   },
   tabIndicator: {
     position: 'absolute',
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 3,
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.primary,
     borderTopLeftRadius: 2,
     borderTopRightRadius: 2,
   },
@@ -370,100 +370,102 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 48,
+    paddingHorizontal: spacing.huge,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 15,
-    color: '#6b7280',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
   },
   emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
+    fontSize: typography.sizes.massive,
+    marginBottom: spacing.base,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 8,
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.sm,
     textAlign: 'center',
   },
   emptyText: {
-    fontSize: 15,
-    color: '#6b7280',
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
   scroll: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.xxxl,
   },
   card: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    backgroundColor: colors.card,
+    padding: spacing.base,
+    borderRadius: borderRadius.lg,
+    marginBottom: spacing.md,
     borderWidth: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.small,
   },
   cardSuccess: {
-    borderColor: '#d1fae5',
-    backgroundColor: '#f0fdf4',
+    borderColor: colors.successLight,
+    backgroundColor: colors.successLight,
   },
   cardIncident: {
-    borderColor: '#fecaca',
-    backgroundColor: '#fef2f2',
+    borderColor: colors.errorLight,
+    backgroundColor: colors.errorLight,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: spacing.sm,
   },
   cardIcon: {
     fontSize: 20,
-    marginRight: 8,
+    marginRight: spacing.md,
   },
   cardTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   dateRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: spacing.md,
+  },
+  dayText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.bold,
+    textTransform: 'uppercase',
   },
   dateText: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.semibold,
   },
   timeBadge: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
   },
   timeText: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '700',
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.bold,
   },
   deleteButton: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    backgroundColor: '#fff',
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -473,23 +475,23 @@ const styles = StyleSheet.create({
   details: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: spacing.md,
   },
   detailBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    backgroundColor: colors.card,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
   },
   detailIcon: {
     fontSize: 16,
-    marginRight: 6,
+    marginRight: spacing.sm,
   },
   detailText: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '600',
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    fontWeight: typography.weights.semibold,
   },
 });

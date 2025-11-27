@@ -1,40 +1,23 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text } from 'react-native';
+import PropTypes from 'prop-types';
+import { onboardingStyles } from '../../styles/onboardingStyles';
 
 export default function SplashScreen({ onFinish }) {
   useEffect(() => {
     const timer = setTimeout(onFinish, 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [onFinish]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.icon}>🐕</Text>
-      <Text style={styles.title}>PuppyTracker</Text>
-      <Text style={styles.subtitle}>Suivez la propreté de votre chiot</Text>
+    <View style={onboardingStyles.splashContainer}>
+      <Text style={onboardingStyles.splashIcon}>🐕</Text>
+      <Text style={onboardingStyles.splashTitle}>PuppyTracker</Text>
+      <Text style={onboardingStyles.splashSubtitle}>Suivez la propreté de votre chiot</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#6366f1',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  icon: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#e0e7ff',
-  },
-});
+SplashScreen.propTypes = {
+  onFinish: PropTypes.func.isRequired,
+};
