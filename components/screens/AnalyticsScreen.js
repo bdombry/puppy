@@ -62,7 +62,6 @@ export default function AnalyticsScreen() {
         <Text style={styles.subtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
 
         {/* Graphique 7 jours */}
-        <Text style={styles.sectionTitle}> Evolution sur 7 jours</Text>
         <WeekChart dogId={currentDog.id} isGuestMode={isGuestMode} />
 
         {/* Stats grid */}

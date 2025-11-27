@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { getLast7DaysStats } from '../services/chartService';
-import { colors, spacing, borderRadius, shadows } from '../../constants/theme';
+import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export const WeekChart = ({ dogId, isGuestMode }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDayKey, setSelectedDayKey] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,7 +26,8 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#6366f1" />
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.loadingText}>Chargement des données...</Text>
         </View>
       </View>
     );
@@ -35,7 +37,9 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
     return (
       <View style={styles.container}>
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>📊 Pas encore de données cette semaine</Text>
+          <Text style={styles.emptyIcon}>📊</Text>
+          <Text style={styles.emptyText}>Pas encore de données cette semaine</Text>
+          <Text style={styles.emptySubtext}>Enregistre des sorties pour voir l'évolution</Text>
         </View>
       </View>
     );
@@ -46,82 +50,75 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
   today.setHours(0, 0, 0, 0);
   const todayString = today.toISOString().split('T')[0];
 
-  // Inverser les données pour afficher aujourd'hui à gauche
-  const reversedData = [...data].reverse();
+  // INVERSER : aujourd'hui à gauche
+  const chartData = [...data].reverse();
 
-  // Trouver le jour avec le plus de sorties pour la hauteur max
+  // Trouver le max pour normaliser les hauteurs
   const maxTotal = Math.max(...data.map(d => d.total || 0), 1);
-  const MAX_HEIGHT = 100;
+  const MAX_BAR_HEIGHT = 120;
+
+  const handleBarPress = (dayKey) => {
+    setSelectedDayKey(selectedDayKey === dayKey ? null : dayKey);
+  };
 
   return (
     <View style={styles.container}>
+      {/* Header simple */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Evolution 7 jours</Text>
+      </View>
+
       {/* Graphique */}
-      <View style={styles.chartContainer}>
-        {reversedData.map((day) => {
+      <View style={styles.chartArea}>
+        {chartData.map((day) => {
           const isToday = day.dayKey === todayString;
+          const isSelected = selectedDayKey === day.dayKey;
           const dayDate = new Date(day.date);
           const shortDayName = dayDate.toLocaleDateString('fr-FR', { weekday: 'short' });
-          const dayNumber = dayDate.getDate();
-
-          const heightRatio = day.total > 0 ? day.total / maxTotal : 0;
-          const barHeight = heightRatio * MAX_HEIGHT;
-          const greenHeight = day.total > 0 ? (day.outside / day.total) * barHeight : 0;
-          const percentage = day.percentage || 0;
+          
+          // Calculer les hauteurs - VERT EN BAS (base)
+          const totalHeight = day.total > 0 ? (day.total / maxTotal) * MAX_BAR_HEIGHT : 0;
+          const outsideHeight = day.total > 0 ? (day.outside / day.total) * totalHeight : 0;
+          const insideHeight = totalHeight - outsideHeight;
 
           return (
-            <View 
-              key={day.dayKey} 
-              style={[
-                styles.dayColumn,
-                isToday && styles.dayColumnToday
-              ]}
-            >
-              {/* Barre verte et grise brutes */}
-              {barHeight > 0 && (
-                <View style={[styles.bar, { height: barHeight }, isToday && styles.barToday]}>
-                  {greenHeight > 0 && (
-                    <View 
-                      style={[
-                        styles.barGreen, 
-                        { height: greenHeight, width: '100%' }
-                      ]} 
-                    />
-                  )}
-                  {(barHeight - greenHeight) > 0 && (
-                    <View 
-                      style={{
-                        height: barHeight - greenHeight,
-                        width: '100%',
-                        backgroundColor: '#e5e7eb',
-                      }} 
-                    />
-                  )}
-                </View>
-              )}
+            <View key={day.dayKey} style={styles.dayColumn}>
+              {/* Barre empilée */}
+              <TouchableOpacity 
+                style={styles.barContainer}
+                onPress={() => handleBarPress(day.dayKey)}
+                activeOpacity={0.7}
+              >
+                {totalHeight > 0 ? (
+                  <View style={[styles.bar, { height: totalHeight }]}>
+                    {/* Partie GRISE (inside) EN HAUT */}
+                    {insideHeight > 0 && (
+                      <View style={[styles.barSegment, styles.barInside, { height: insideHeight }]} />
+                    )}
+                    {/* Partie VERTE (outside) EN BAS = BASE */}
+                    {outsideHeight > 0 && (
+                      <View style={[styles.barSegment, styles.barOutside, { height: outsideHeight }]} />
+                    )}
+                  </View>
+                ) : (
+                  <View style={styles.barEmpty} />
+                )}
 
-              {/* Pourcentage */}
-              {percentage > 0 && (
-                <Text style={[
-                  styles.percentage,
-                  isToday && styles.percentageToday
-                ]}>
-                  {percentage}%
+                {/* Pourcentage au-dessus SI SÉLECTIONNÉ */}
+                {isSelected && day.total > 0 && (
+                  <View style={styles.percentageBadge}>
+                    <Text style={styles.percentageText}>{day.percentage}%</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* Label du jour */}
+              <View style={[styles.dayLabel, isToday && styles.dayLabelToday]}>
+                <Text style={[styles.dayText, isToday && styles.dayTextToday]}>
+                  {shortDayName.charAt(0).toUpperCase() + shortDayName.slice(1, 3)}
                 </Text>
-              )}
-
-              {/* Jour et date */}
-              <Text style={[
-                styles.dayName,
-                isToday && styles.dayNameToday
-              ]}>
-                {shortDayName.charAt(0).toUpperCase() + shortDayName.slice(1)}
-              </Text>
-              <Text style={[
-                styles.dayNumber,
-                isToday && styles.dayNumberToday
-              ]}>
-                {dayNumber}
-              </Text>
+                {isToday && <View style={styles.todayDot} />}
+              </View>
             </View>
           );
         })}
@@ -130,11 +127,11 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
       {/* Légende */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: colors.success }]} />
+          <View style={[styles.legendDot, styles.legendDotSuccess]} />
           <Text style={styles.legendText}>Dehors</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: colors.gray200 }]} />
+          <View style={[styles.legendDot, styles.legendDotIncident]} />
           <Text style={styles.legendText}>Dedans</Text>
         </View>
       </View>
@@ -142,120 +139,189 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
   );
 };
 
-
 const styles = StyleSheet.create({
   container: {
     backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: spacing.xl,
+    paddingRight: spacing.md,
+    paddingLeft : spacing.md,
+
     marginBottom: spacing.xl,
     ...shadows.base,
     borderWidth: 1,
     borderColor: colors.border,
   },
+  
+  // Loading & Empty
   loadingContainer: {
-    height: 160,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   emptyContainer: {
-    height: 160,
+    height: 200,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: spacing.md,
   },
   emptyText: {
-    fontSize: 15,
+    fontSize: typography.sizes.base,
+    color: colors.text,
+    fontWeight: typography.weights.bold,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
+  emptySubtext: {
+    fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     textAlign: 'center',
-    fontWeight: '600',
   },
-  chartContainer: {
+
+  // Header simple
+  header: {
+    marginBottom: spacing.lg,
+    paddingBottom: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
+  },
+  headerTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+  },
+
+  // Chart
+  chartArea: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    height: 140,
-    gap: 6,
-    paddingBottom: 12,
-    marginBottom: 12,
+    height: 160,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.xs,
   },
   dayColumn: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.sm,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.gray150,
+    justifyContent: 'flex-end',
   },
-  dayColumnToday: {
-    backgroundColor: colors.primaryLight,
-    borderWidth: 2,
-    borderColor: colors.primary,
+  barContainer: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    flex: 1,
+    position: 'relative',
   },
   bar: {
-    width: '70%',
-    borderRadius: borderRadius.sm,
+    width: 32,
+    borderRadius: borderRadius.md,
     overflow: 'hidden',
-    minHeight: 2,
+    justifyContent: 'flex-end',
+    ...shadows.small,
   },
-  barToday: {
-    borderWidth: 1,
-    borderColor: colors.primary,
+  barEmpty: {
+    width: 32,
+    height: 8,
+    borderRadius: borderRadius.sm,
+    backgroundColor: colors.gray200,
   },
-  barGreen: {
+  barSegment: {
+    width: '100%',
+  },
+  barOutside: {
     backgroundColor: colors.success,
   },
-  percentage: {
-    fontSize: 11,
-    fontWeight: '700',
+  barInside: {
+    backgroundColor: colors.gray300,
+  },
+  percentageBadge: {
+    position: 'absolute',
+    top: -28,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.md,
+    minWidth: 40,
+    alignItems: 'center',
+    ...shadows.small,
+  },
+  percentageText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+    color: colors.white,
+  },
+
+  // Day labels
+  dayLabel: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.gray100,
+    minWidth: 36,
+    alignItems: 'center',
+  },
+  dayLabelToday: {
+    backgroundColor: colors.primaryLight,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
+  },
+  dayText: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.semibold,
     color: colors.textSecondary,
-    marginTop: 6,
-    marginBottom: 4,
   },
-  percentageToday: {
+  dayTextToday: {
     color: colors.primary,
-    fontWeight: '800',
+    fontWeight: typography.weights.bold,
   },
-  dayName: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  dayNameToday: {
-    color: colors.primary,
-    fontWeight: '700',
-  },
-  dayNumber: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.gray400,
+  todayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: colors.primary,
     marginTop: 2,
   },
-  dayNumberToday: {
-    color: colors.primary,
-    fontSize: 14,
-  },
+
+  // Legend
   legend: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
-    paddingTop: spacing.md,
+    gap: spacing.xl,
+    paddingTop: spacing.base,
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: colors.gray200,
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
   },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: borderRadius.sm,
+  },
+  legendDotSuccess: {
+    backgroundColor: colors.success,
+  },
+  legendDotIncident: {
+    backgroundColor: colors.gray300,
   },
   legendText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    fontWeight: '500',
+    fontSize: typography.sizes.sm,
+    color: colors.text,
+    fontWeight: typography.weights.medium,
   },
 });
 
