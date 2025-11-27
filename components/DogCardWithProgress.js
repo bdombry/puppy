@@ -1,6 +1,7 @@
 /**
  * Composant DogCardWithProgress
  * Combine la carte du chien et la barre de propreté dans une même card
+ * 🔧 FIX: Utilisation correcte de stats.outside et stats.inside
  */
 
 import React from 'react';
@@ -122,15 +123,16 @@ export function DogCardWithProgress({
               />
             </View>
 
+            {/* 🔧 FIX: Utilisation de stats.outside et stats.inside au lieu de stats.success et stats.incidents */}
             <View style={homeStyles.statsRow}>
               <View style={homeStyles.statItem}>
                 <Text style={homeStyles.statLabel}>Réussi</Text>
-                <Text style={homeStyles.statValue}>{stats.success}</Text>
+                <Text style={homeStyles.statValue}>{stats.outside}</Text>
               </View>
               <View style={homeStyles.dividerVertical} />
               <View style={homeStyles.statItem}>
                 <Text style={homeStyles.statLabel}>Incidents</Text>
-                <Text style={homeStyles.statValue}>{stats.incidents}</Text>
+                <Text style={homeStyles.statValue}>{stats.inside}</Text>
               </View>
               <View style={homeStyles.dividerVertical} />
               <View style={homeStyles.statItem}>
@@ -154,8 +156,8 @@ DogCardWithProgress.propTypes = {
   onSettingsPress: PropTypes.func.isRequired,
   stats: PropTypes.shape({
     percentage: PropTypes.number.isRequired,
-    success: PropTypes.number.isRequired,
-    incidents: PropTypes.number.isRequired,
+    outside: PropTypes.number.isRequired,  // 🔧 Changé de success
+    inside: PropTypes.number.isRequired,   // 🔧 Changé de incidents
     total: PropTypes.number.isRequired,
   }).isRequired,
   loading: PropTypes.bool.isRequired,
