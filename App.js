@@ -10,13 +10,14 @@ import WalkScreen from './components/screens/WalkScreen';
 import WalkHistoryScreen from './components/screens/WalkHistoryScreen'; 
 import DogProfileScreen from './components/screens/DogProfileScreen';
 import AnalyticsScreen from './components/screens/AnalyticsScreen';
+import AccountScreen from './components/screens/AccountScreen';
 
 const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { loading, user, currentDog } = useAuth();
 
-  if (loading || currentDog === undefined) {
+  if (loading) {
     return <SplashScreen onFinish={() => {}} />;
   }
 
@@ -45,6 +46,7 @@ function AppNavigator() {
             <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
             <Stack.Screen name="DogProfile" component={DogProfileScreen} />
             <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+            <Stack.Screen name="Account" component={AccountScreen} />
           </Stack.Group>
         )}
       </Stack.Navigator>

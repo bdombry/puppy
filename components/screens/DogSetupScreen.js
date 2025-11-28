@@ -38,16 +38,25 @@ export default function DogSetupScreen() {
     try {
       const dogData = {
         name,
-        breed: breed || null,
-        birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
       };
+
+      // Ajouter breed seulement s'il y a une valeur
+      if (breed && breed.trim()) {
+        dogData.breed = breed.trim();
+      }
+
+      // Ajouter birth_date seulement s'il y a une valeur
+      if (birthDate) {
+        dogData.birth_date = birthDate.toISOString().split('T')[0];
+      }
 
       await saveDog(dogData);
       // No need to navigate - App.js will re-render when currentDog updates
     } catch (error) {
+      console.error('Erreur saveDog:', error);
       Alert.alert(
         'Erreur',
-        "Impossible d'enregistrer le chiot. Veuillez réessayer."
+        error?.message || "Impossible d'enregistrer le chiot. Veuillez réessayer."
       );
     } finally {
       setLoading(false);

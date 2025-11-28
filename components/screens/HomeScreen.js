@@ -159,6 +159,7 @@ export default function HomeScreen() {
             onRecordPress={() => setShowActionModal(true)}
             onHistoryPress={() => navigation.navigate('WalkHistory')}
             onAnalyticsPress={() => navigation.navigate('Analytics')}
+            onAccountPress={() => navigation.navigate('Account')}
             onLogoutPress={signOut}
           />
         </View>

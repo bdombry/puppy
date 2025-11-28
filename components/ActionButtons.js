@@ -13,6 +13,7 @@ export function ActionButtons({
   onRecordPress,
   onHistoryPress,
   onAnalyticsPress,
+  onAccountPress,
   onLogoutPress,
 }) {
   return (
@@ -50,6 +51,17 @@ export function ActionButtons({
         </View>
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[homeStyles.actionButton, homeStyles.actionButtonSecondary]}
+        onPress={onAccountPress}
+        activeOpacity={0.7}
+      >
+        <View style={homeStyles.actionButtonRow}>
+          <Text style={homeStyles.actionButtonIcon}>{EMOJI.gear}</Text>
+          <Text style={homeStyles.actionButtonTextSecondary}>Mon compte</Text>
+        </View>
+      </TouchableOpacity>
+
       <TouchableOpacity onPress={onLogoutPress} style={homeStyles.logoutButton}>
         <Text style={homeStyles.logoutText}>
           {`${EMOJI.arrowBack} Se déconnecter`}
@@ -63,5 +75,6 @@ ActionButtons.propTypes = {
   onRecordPress: PropTypes.func.isRequired,
   onHistoryPress: PropTypes.func.isRequired,
   onAnalyticsPress: PropTypes.func.isRequired,
+  onAccountPress: PropTypes.func.isRequired,
   onLogoutPress: PropTypes.func.isRequired,
 };
