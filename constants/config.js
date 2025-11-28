@@ -15,9 +15,6 @@ export const PERIODS = [
 export const DAY_NAMES = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim'];
 export const DAY_NAMES_FULL = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
 
-// ===== CONFIGURATION ESSAI =====
-export const TRIAL_DAYS = 3;
-
 // ===== EMOJIS =====
 export const EMOJI = {
   dog: '🐶',

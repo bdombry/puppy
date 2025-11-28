@@ -16,17 +16,15 @@ import { StatsCards } from '../StatsCards';
 import { ActionButtons } from '../ActionButtons';
 import { LastOutingTimer } from '../LastOutingTimer';
 import { ActionModal } from '../ActionModal';
-import { TrialModal } from '../TrialModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
-import { TRIAL_DAYS, EMOJI } from '../../constants/config';
+import { EMOJI } from '../../constants/config';
 
 export default function HomeScreen() {
-  const { currentDog, isGuestMode, getDaysInGuestMode, signOut } = useAuth();
+  const { currentDog, signOut } = useAuth();
   const navigation = useNavigation();
 
   // State local
-  const [showTrialModal, setShowTrialModal] = useState(false);
   const [showActionModal, setShowActionModal] = useState(false);
   const [progressAnim] = useState(new Animated.Value(0));
   const [refreshing, setRefreshing] = useState(false);
@@ -36,19 +34,9 @@ export default function HomeScreen() {
   // Hooks personnalisés
   const { stats, totalOutings, streakData, lastOuting, loading, refreshData } = useHomeData(
     currentDog?.id,
-    isGuestMode,
     selectedPeriod
   );
   const timeSince = useTimer(lastOuting);
-
-  const daysInTrial = getDaysInGuestMode();
-
-  // Afficher modal essai gratuit
-  useEffect(() => {
-    if (isGuestMode && daysInTrial >= TRIAL_DAYS) {
-      setShowTrialModal(true);
-    }
-  }, [daysInTrial, isGuestMode]);
 
   // Recharger les données quand l'écran reçoit le focus
   useFocusEffect(
@@ -120,11 +108,6 @@ export default function HomeScreen() {
     navigation.navigate('Walk', { type: 'incident' });
   };
 
-  const handleTrialCreateAccount = () => {
-    setShowTrialModal(false);
-    signOut();
-  };
-
   return (
     <View style={[GlobalStyles.safeArea, homeStyles.container]}>
       <ScrollView
@@ -138,11 +121,6 @@ export default function HomeScreen() {
         <View style={[homeStyles.header, { paddingTop: GlobalStyles.pageMarginTop.marginTop }]}>
           <View style={homeStyles.headerRow}>
             <Text style={homeStyles.headerTitle}>{EMOJI.wave} Bonjour 👋</Text>
-            {isGuestMode && (
-              <View style={homeStyles.trialBadge}>
-                <Text style={homeStyles.trialBadgeText}>Essai J{daysInTrial}/{TRIAL_DAYS}</Text>
-              </View>
-            )}
           </View>
           {currentDog && (
             <Text style={homeStyles.headerSubtitle}>
@@ -173,8 +151,6 @@ export default function HomeScreen() {
             streakValue={streakDisplay.value}
             streakLabel={streakDisplay.label}
             streakIcon={streakDisplay.icon}
-            isGuestMode={isGuestMode}
-            daysInTrial={daysInTrial}
             onStreakPress={handleStreakClick}
           />
 
@@ -184,7 +160,6 @@ export default function HomeScreen() {
             onHistoryPress={() => navigation.navigate('WalkHistory')}
             onAnalyticsPress={() => navigation.navigate('Analytics')}
             onLogoutPress={signOut}
-            isGuestMode={isGuestMode}
           />
         </View>
       </ScrollView>
@@ -195,13 +170,6 @@ export default function HomeScreen() {
         onClose={handleActionModalClose}
         onIncidentPress={handleRecordIncident}
         onWalkPress={handleRecordWalk}
-      />
-
-      <TrialModal
-        visible={showTrialModal}
-        dogName={currentDog?.name}
-        onCreateAccount={handleTrialCreateAccount}
-        onDismiss={() => setShowTrialModal(false)}
       />
     </View>
   );

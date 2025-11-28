@@ -143,3 +143,15 @@ export const shadows = {
     elevation: 8,
   },
 };
+
+// ===== EXPORT OBJECT THEME =====
+export const theme = {
+  colors,
+  typography: {
+    size: typography.sizes,
+    weight: typography.weights,
+  },
+  spacing,
+  borderRadius,
+  shadows,
+};

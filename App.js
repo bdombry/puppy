@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -14,31 +14,39 @@ import AnalyticsScreen from './components/screens/AnalyticsScreen';
 const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
-  const { loading, user, isGuestMode, currentDog } = useAuth();
+  const { loading, user, currentDog } = useAuth();
 
   if (loading || currentDog === undefined) {
     return <SplashScreen onFinish={() => {}} />;
   }
 
-  // Déterminer l'écran initial
-  let initialRoute = 'Auth';
-  if (user || isGuestMode) {
-    initialRoute = currentDog ? 'Home' : 'DogSetup';
-  }
+  const isAuthenticated = user;
+  const hasCurrentDog = currentDog && currentDog.id;
 
   return (
     <NavigationContainer>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
-        initialRouteName={initialRoute}
       >
-        <Stack.Screen name="Auth" component={AuthScreen} />
-        <Stack.Screen name="DogSetup" component={DogSetupScreen} />
-        <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="Walk" component={WalkScreen} />
-        <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
-        <Stack.Screen name="DogProfile" component={DogProfileScreen} />
-        <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+        {!isAuthenticated ? (
+          <Stack.Screen 
+            name="Auth" 
+            component={AuthScreen}
+            options={{ animationEnabled: false }}
+          />
+        ) : !hasCurrentDog ? (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen name="DogSetup" component={DogSetupScreen} />
+          </Stack.Group>
+        ) : (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Walk" component={WalkScreen} />
+            <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
+            <Stack.Screen name="DogProfile" component={DogProfileScreen} />
+            <Stack.Screen name="Analytics" component={AnalyticsScreen} />
+          </Stack.Group>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );

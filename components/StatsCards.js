@@ -14,8 +14,6 @@ export function StatsCards({
   streakValue,
   streakLabel,
   streakIcon,
-  isGuestMode,
-  daysInTrial,
   onStreakPress,
 }) {
   return (
@@ -34,10 +32,10 @@ export function StatsCards({
             <Text style={homeStyles.statIcon}>{streakIcon}</Text>
           </View>
           <Text style={homeStyles.statValue}>
-            {isGuestMode ? Math.max(0, 3 - daysInTrial) : streakValue}
+            {streakValue}
           </Text>
           <Text style={homeStyles.statLabel}>
-            {isGuestMode ? 'Jours restants' : streakLabel}
+            {streakLabel}
           </Text>
           <Text style={homeStyles.statHint}>Tap pour changer</Text>
         </TouchableOpacity>
@@ -51,7 +49,5 @@ StatsCards.propTypes = {
   streakValue: PropTypes.number.isRequired,
   streakLabel: PropTypes.string.isRequired,
   streakIcon: PropTypes.string.isRequired,
-  isGuestMode: PropTypes.bool.isRequired,
-  daysInTrial: PropTypes.number.isRequired,
   onStreakPress: PropTypes.func.isRequired,
 };

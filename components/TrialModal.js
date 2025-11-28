@@ -1,36 +1,78 @@
 /**
  * Composant TrialModal
  * Modal affichée quand l'essai gratuit est terminé
+ * Permet de créer un compte et migrer les données locales
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { EMOJI } from '../constants/config';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
 
-export function TrialModal({ visible, dogName, onCreateAccount, onDismiss }) {
+export function TrialModal({ 
+  visible, 
+  dogName, 
+  onEmailSignUp,
+  onAppleSignUp,
+  onGoogleSignUp,
+}) {
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={() => {}}>
       <View style={styles.overlay}>
-        <View style={styles.modal}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>{EMOJI.warning}</Text>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.modal}>
+            {/* Icon */}
+            <View style={styles.iconContainer}>
+              <Text style={styles.icon}>{EMOJI.warning}</Text>
+            </View>
+
+            {/* Title */}
+            <Text style={styles.title}>Essai gratuit terminé</Text>
+
+            {/* Description */}
+            <Text style={styles.description}>
+              Créé un compte pour continuer à suivre les progrès de {dogName} {EMOJI.dog}
+            </Text>
+
+            {/* Warning message */}
+            <View style={styles.warningBox}>
+              <Text style={styles.warningText}>
+                ⚠️ Toutes vos données (chien et promenades) seront migrées automatiquement
+              </Text>
+            </View>
+
+            {/* Sign up buttons */}
+            <View style={styles.buttonsContainer}>
+              {/* Email */}
+              <TouchableOpacity
+                onPress={onEmailSignUp}
+                style={[styles.button, styles.emailButton]}
+              >
+                <Text style={styles.emailIcon}>{EMOJI.email}</Text>
+                <Text style={styles.buttonText}>Créer avec email</Text>
+              </TouchableOpacity>
+
+              {/* Apple */}
+              <TouchableOpacity
+                onPress={onAppleSignUp}
+                style={[styles.button, styles.appleButton]}
+              >
+                <Text style={styles.socialIcon}>{EMOJI.apple}</Text>
+                <Text style={styles.socialButtonText}>Continuer avec Apple</Text>
+              </TouchableOpacity>
+
+              {/* Google */}
+              <TouchableOpacity
+                onPress={onGoogleSignUp}
+                style={[styles.button, styles.googleButton]}
+              >
+                <Text style={styles.socialIcon}>{EMOJI.google}</Text>
+                <Text style={styles.socialButtonText}>Continuer avec Google</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={styles.title}>Essai gratuit terminé</Text>
-          <Text style={styles.description}>
-            Créé un compte pour continuer à suivre les progrès de {dogName} {EMOJI.dog}
-          </Text>
-          <TouchableOpacity
-            onPress={onCreateAccount}
-            style={styles.button}
-          >
-            <Text style={styles.buttonText}>Créer mon compte</Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={onDismiss} style={styles.dismissButton}>
-            <Text style={styles.dismissText}>Plus tard</Text>
-          </TouchableOpacity>
-        </View>
+        </ScrollView>
       </View>
     </Modal>
   );
@@ -42,7 +84,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  scrollContent: {
     padding: spacing.xxl,
+    justifyContent: 'center',
+    minHeight: '100%',
   },
   modal: {
     backgroundColor: colors.card,
@@ -55,7 +101,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: colors.warningLight,
+    backgroundColor: colors.errorLight,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.xl,
@@ -74,38 +120,72 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     color: colors.textSecondary,
     textAlign: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
     lineHeight: 24,
   },
-  button: {
-    backgroundColor: colors.primary,
-    paddingVertical: spacing.base,
-    paddingHorizontal: spacing.xl,
-    borderRadius: borderRadius.lg,
+  warningBox: {
+    backgroundColor: colors.warningLight,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.warning,
+    padding: spacing.lg,
+    borderRadius: borderRadius.base,
+    marginBottom: spacing.xl,
+  },
+  warningText: {
+    fontSize: typography.sizes.sm,
+    color: colors.warningDark,
+    fontWeight: typography.weights.semibold,
+    lineHeight: 18,
+  },
+  buttonsContainer: {
     width: '100%',
+    gap: spacing.md,
+  },
+  button: {
+    flexDirection: 'row',
+    paddingVertical: spacing.base,
+    paddingHorizontal: spacing.lg,
+    borderRadius: borderRadius.lg,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emailButton: {
+    backgroundColor: colors.primary,
+  },
+  appleButton: {
+    backgroundColor: colors.gray900,
+  },
+  googleButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+  emailIcon: {
+    fontSize: 18,
+    marginRight: spacing.base,
+  },
+  socialIcon: {
+    fontSize: 20,
+    marginRight: spacing.base,
   },
   buttonText: {
     color: colors.white,
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
   },
-  dismissButton: {
-    marginTop: spacing.base,
-    paddingVertical: spacing.md,
-  },
-  dismissText: {
-    color: colors.textSecondary,
+  socialButtonText: {
+    color: colors.gray900,
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontWeight: typography.weights.bold,
   },
 });
 
 TrialModal.propTypes = {
   visible: PropTypes.bool.isRequired,
   dogName: PropTypes.string,
-  onCreateAccount: PropTypes.func.isRequired,
-  onDismiss: PropTypes.func.isRequired,
+  onEmailSignUp: PropTypes.func.isRequired,
+  onAppleSignUp: PropTypes.func.isRequired,
+  onGoogleSignUp: PropTypes.func.isRequired,
 };
 
 TrialModal.defaultProps = {

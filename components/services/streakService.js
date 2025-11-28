@@ -4,24 +4,16 @@ import { supabase } from '../../config/supabase';
 /**
  * Calcule le nombre de jours consécutifs avec au moins 1 enregistrement
  */
-export const getActivityStreak = async (dogId, isGuestMode = false) => {
+export const getActivityStreak = async (dogId) => {
   try {
-    let outings = [];
+    const { data, error } = await supabase
+      .from('outings')
+      .select('datetime')
+      .eq('dog_id', dogId)
+      .order('datetime', { ascending: false });
 
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      outings = data ? JSON.parse(data) : [];
-    } else {
-      const { data, error } = await supabase
-        .from('outings')
-        .select('datetime')
-        .eq('dog_id', dogId)
-        .order('datetime', { ascending: false });
-
-      if (error) throw error;
-      outings = data || [];
-    }
+    if (error) throw error;
+    const outings = data || [];
 
     if (outings.length === 0) return 0;
 
@@ -62,24 +54,16 @@ export const getActivityStreak = async (dogId, isGuestMode = false) => {
 /**
  * Calcule le nombre de jours consécutifs sans incident
  */
-export const getCleanStreak = async (dogId, isGuestMode = false) => {
+export const getCleanStreak = async (dogId) => {
   try {
-    let outings = [];
+    const { data, error } = await supabase
+      .from('outings')
+      .select('datetime, pee_location, poop_location')
+      .eq('dog_id', dogId)
+      .order('datetime', { ascending: false });
 
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      outings = data ? JSON.parse(data) : [];
-    } else {
-      const { data, error } = await supabase
-        .from('outings')
-        .select('datetime, pee_location, poop_location')
-        .eq('dog_id', dogId)
-        .order('datetime', { ascending: false });
-
-      if (error) throw error;
-      outings = data || [];
-    }
+    if (error) throw error;
+    const outings = data || [];
 
     if (outings.length === 0) return 0;
 
@@ -133,15 +117,8 @@ export const getCleanStreak = async (dogId, isGuestMode = false) => {
 /**
  * Récupère le nombre total d'enregistrements
  */
-export const getTotalRecords = async (dogId, isGuestMode = false) => {
+export const getTotalRecords = async (dogId) => {
   try {
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      const walks = data ? JSON.parse(data) : [];
-      return walks.length;
-    }
-
     const { count, error } = await supabase
       .from('outings')
       .select('*', { count: 'exact', head: true })

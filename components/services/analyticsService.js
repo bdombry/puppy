@@ -4,23 +4,15 @@ import { supabase } from '../../config/supabase';
 /**
  * Récupère toutes les stats avancées
  */
-export const getAdvancedStats = async (dogId, isGuestMode = false) => {
+export const getAdvancedStats = async (dogId) => {
   try {
-    let outings = [];
+    const { data, error } = await supabase
+      .from('outings')
+      .select('*')
+      .eq('dog_id', dogId);
 
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      outings = data ? JSON.parse(data) : [];
-    } else {
-      const { data, error } = await supabase
-        .from('outings')
-        .select('*')
-        .eq('dog_id', dogId);
-
-      if (error) throw error;
-      outings = data || [];
-    }
+    if (error) throw error;
+    const outings = data || [];
 
     // Stats pipi vs caca
     const peeCount = outings.filter(o => o.pee).length;

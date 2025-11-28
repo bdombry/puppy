@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'rea
 import { getLast7DaysStats } from '../services/chartService';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
-export const WeekChart = ({ dogId, isGuestMode }) => {
+export const WeekChart = ({ dogId }) => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDayKey, setSelectedDayKey] = useState(null);
@@ -12,7 +12,7 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      const stats = await getLast7DaysStats(dogId, isGuestMode);
+      const stats = await getLast7DaysStats(dogId);
       setData(stats);
       setLoading(false);
     };
@@ -20,7 +20,7 @@ export const WeekChart = ({ dogId, isGuestMode }) => {
     if (dogId) {
       fetchData();
     }
-  }, [dogId, isGuestMode]);
+  }, [dogId]);
 
   if (loading) {
     return (
@@ -327,10 +327,8 @@ const styles = StyleSheet.create({
 
 WeekChart.propTypes = {
   dogId: PropTypes.string,
-  isGuestMode: PropTypes.bool,
 };
 
 WeekChart.defaultProps = {
   dogId: null,
-  isGuestMode: false,
 };

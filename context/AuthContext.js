@@ -1,5 +1,4 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../config/supabase';
 
 const AuthContext = createContext();
@@ -7,30 +6,41 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isGuestMode, setIsGuestMode] = useState(false);
-  const [guestStartDate, setGuestStartDate] = useState(null);
   const [currentDog, setCurrentDog] = useState(undefined);
 
   useEffect(() => {
     checkUser();
+    
+    // Listener pour les changements d'authentification
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          await loadUserDog(session.user.id);
+        } else {
+          setUser(null);
+        }
+      }
+    );
+
+    return () => {
+      if (subscription?.unsubscribe) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const checkUser = async () => {
     try {
+      // Vérifier la session Supabase
       const { data: { session } } = await supabase.auth.getSession();
+      
       if (session?.user) {
         setUser(session.user);
         await loadUserDog(session.user.id);
       } else {
-        const guestData = await AsyncStorage.getItem('guestMode');
-        if (guestData) {
-          const { startDate, dog } = JSON.parse(guestData);
-          setIsGuestMode(true);
-          setGuestStartDate(new Date(startDate));
-          setCurrentDog(dog || null);
-        } else {
-          setCurrentDog(null);
-        }
+        // Pas de session
+        setCurrentDog(null);
       }
     } catch (error) {
       console.error('Error checking user:', error);
@@ -61,7 +71,6 @@ export const AuthProvider = ({ children }) => {
 
       setUser(data.user);
       await loadUserDog(data.user.id);
-      await migrateGuestData(data.user.id);
 
       return data.user;
     } finally {
@@ -77,7 +86,6 @@ export const AuthProvider = ({ children }) => {
 
       setUser(data.user);
       setCurrentDog(null);
-      await migrateGuestData(data.user.id);
 
       return data.user;
     } finally {
@@ -85,66 +93,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const migrateGuestData = async (userId) => {
-    try {
-      const guestData = await AsyncStorage.getItem('guestMode');
-      if (guestData) {
-        const { dog } = JSON.parse(guestData);
-        if (dog) {
-          const { data } = await supabase
-            .from('Dogs')
-            .insert([{ ...dog, user_id: userId }])
-            .select()
-            .single();
-          setCurrentDog(data);
-        }
-        await AsyncStorage.removeItem('guestMode');
-        setIsGuestMode(false);
-      }
-    } catch (error) {
-      console.error('Error migrating guest data:', error);
-    }
-  };
-
-  const startGuestMode = async () => {
-    const guestData = { startDate: new Date().toISOString(), dog: null };
-    await AsyncStorage.setItem('guestMode', JSON.stringify(guestData));
-    setIsGuestMode(true);
-    setGuestStartDate(new Date());
-    setCurrentDog(null);
-  };
-
   const saveDog = async (dogData) => {
-    if (isGuestMode) {
-      const guestData = await AsyncStorage.getItem('guestMode');
-      const parsed = JSON.parse(guestData);
-      parsed.dog = dogData;
-      await AsyncStorage.setItem('guestMode', JSON.stringify(parsed));
-      setCurrentDog(dogData);
-    } else if (user) {
-      const { data, error } = await supabase
-        .from('Dogs')
-        .insert([{ ...dogData, user_id: user.id }])
-        .select()
-        .single();
-      if (error) throw error;
-      setCurrentDog(data);
-    }
+    if (!user) throw new Error('User not authenticated');
+
+    const { data, error } = await supabase
+      .from('Dogs')
+      .insert([{ ...dogData, user_id: user.id }])
+      .select()
+      .single();
+
+    if (error) throw error;
+    setCurrentDog(data);
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    await AsyncStorage.removeItem('guestMode');
     setUser(null);
-    setIsGuestMode(false);
     setCurrentDog(null);
-  };
-
-  const getDaysInGuestMode = () => {
-    if (!guestStartDate) return 0;
-    const now = new Date();
-    const diff = now - guestStartDate;
-    return Math.floor(diff / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -152,14 +117,10 @@ export const AuthProvider = ({ children }) => {
       value={{
         user,
         loading,
-        isGuestMode,
         currentDog,
         setCurrentDog,
-        guestStartDate,
-        getDaysInGuestMode,
         signInWithEmail,
         signUpWithEmail,
-        startGuestMode,
         saveDog,
         signOut,
       }}

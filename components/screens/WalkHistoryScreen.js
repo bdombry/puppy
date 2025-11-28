@@ -16,7 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function WalkHistoryScreen() {
-  const { user, isGuestMode, currentDog } = useAuth();
+  const { user, currentDog } = useAuth();
   const [walks, setWalks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all', 'success', 'incidents'
@@ -36,19 +36,13 @@ export default function WalkHistoryScreen() {
   const fetchWalks = async () => {
     setLoading(true);
     try {
-      if (isGuestMode) {
-        const data = await AsyncStorage.getItem('guestWalks');
-        const allWalks = data ? JSON.parse(data) : [];
-        setWalks(allWalks);
-      } else {
-        const { data, error } = await supabase
-          .from('outings')
-          .select('*')
-          .eq('dog_id', currentDog?.id)
-          .order('datetime', { ascending: false });
-        if (error) throw error;
-        setWalks(data || []);
-      }
+      const { data, error } = await supabase
+        .from('outings')
+        .select('*')
+        .eq('dog_id', currentDog?.id)
+        .order('datetime', { ascending: false });
+      if (error) throw error;
+      setWalks(data || []);
     } catch (error) {
       console.error('Erreur récupération historique:', error);
     } finally {
@@ -67,20 +61,12 @@ export default function WalkHistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              if (isGuestMode) {
-                const data = await AsyncStorage.getItem('guestWalks');
-                const allWalks = data ? JSON.parse(data) : [];
-                const filtered = allWalks.filter((w) => w.id !== walk.id);
-                await AsyncStorage.setItem('guestWalks', JSON.stringify(filtered));
-                setWalks(filtered);
-              } else {
-                const { error } = await supabase
-                  .from('outings')
-                  .delete()
-                  .eq('id', walk.id);
-                if (error) throw error;
-                setWalks(walks.filter((w) => w.id !== walk.id));
-              }
+              const { error } = await supabase
+                .from('outings')
+                .delete()
+                .eq('id', walk.id);
+              if (error) throw error;
+              setWalks(walks.filter((w) => w.id !== walk.id));
             } catch (error) {
               Alert.alert('Erreur', 'Impossible de supprimer');
             }

@@ -8,17 +8,18 @@ import {
   StyleSheet,
   Alert,
   Platform,
-  Modal,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
+import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { EMOJI } from '../../constants/config';
 
 export default function DogProfileScreen() {
-  const { currentDog, isGuestMode, user, setCurrentDog } = useAuth();
+  const { currentDog, user, setCurrentDog } = useAuth();
   const navigation = useNavigation();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -54,25 +55,15 @@ export default function DogProfileScreen() {
         birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
       };
 
-      if (isGuestMode) {
-        // Mode invité
-        const guestData = await AsyncStorage.getItem('guestMode');
-        const parsed = JSON.parse(guestData);
-        parsed.dog = { ...parsed.dog, ...dogData };
-        await AsyncStorage.setItem('guestMode', JSON.stringify(parsed));
-        setCurrentDog(parsed.dog);
-      } else {
-        // Mode connecté
-        const { data, error } = await supabase
-          .from('Dogs')
-          .update(dogData)
-          .eq('id', currentDog.id)
-          .select()
-          .single();
+      const { data, error } = await supabase
+        .from('Dogs')
+        .update(dogData)
+        .eq('id', currentDog.id)
+        .select()
+        .single();
 
-        if (error) throw error;
-        setCurrentDog(data);
-      }
+      if (error) throw error;
+      setCurrentDog(data);
 
       Alert.alert('✅ Succès', 'Les informations ont été mises à jour');
       setIsEditing(false);
@@ -96,28 +87,21 @@ export default function DogProfileScreen() {
           onPress: async () => {
             setLoading(true);
             try {
-              if (isGuestMode) {
-                // Reset mode invité
-                await AsyncStorage.removeItem('guestMode');
-                await AsyncStorage.removeItem('guestWalks');
-                navigation.replace('Auth');
-              } else {
-                // Suppression en base
-                // D'abord supprimer tous les outings
-                await supabase
-                  .from('outings')
-                  .delete()
-                  .eq('dog_id', currentDog.id);
+              // Suppression en base
+              // D'abord supprimer tous les outings
+              await supabase
+                .from('outings')
+                .delete()
+                .eq('dog_id', currentDog.id);
 
-                // Puis supprimer le chien
-                const { error } = await supabase
-                  .from('Dogs')
-                  .delete()
-                  .eq('id', currentDog.id);
+              // Puis supprimer le chien
+              const { error } = await supabase
+                .from('Dogs')
+                .delete()
+                .eq('id', currentDog.id);
 
-                if (error) throw error;
-                navigation.replace('DogSetup');
-              }
+              if (error) throw error;
+              navigation.replace('DogSetup');
             } catch (error) {
               Alert.alert('Erreur', 'Impossible de supprimer le profil');
               console.error(error);
@@ -141,7 +125,7 @@ export default function DogProfileScreen() {
     return (
       <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>🐶</Text>
+          <Text style={styles.emptyIcon}>{EMOJI.dog}</Text>
           <Text style={styles.emptyText}>Aucun chien enregistré</Text>
         </View>
       </View>
@@ -164,7 +148,7 @@ export default function DogProfileScreen() {
         {/* Avatar */}
         <View style={styles.avatarContainer}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarEmoji}>🐶</Text>
+            <Text style={styles.avatarEmoji}>{EMOJI.dog}</Text>
           </View>
           {!isEditing && (
             <TouchableOpacity
@@ -292,8 +276,8 @@ export default function DogProfileScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
-    paddingBottom: 40,
+    padding: spacing.xl,
+    paddingBottom: spacing.huge,
   },
   centerContainer: {
     flex: 1,
@@ -301,143 +285,137 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#6366f1',
-    fontWeight: '600',
+    fontSize: typography.sizes.base,
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 32,
+    fontSize: typography.sizes.xxxl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.gray900,
+    marginBottom: spacing.xxxl,
   },
   avatarContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#eef2ff',
+    backgroundColor: colors.primaryLighter,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
+    marginBottom: spacing.lg,
+    ...shadows.large,
   },
   avatarEmoji: {
     fontSize: 64,
   },
   editButton: {
-    backgroundColor: '#6366f1',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.base,
+    borderRadius: borderRadius.full,
+    ...shadows.base,
   },
   editButtonText: {
     color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: spacing.xxxl,
   },
   formGroup: {
-    marginBottom: 24,
+    marginBottom: spacing.xxxl,
   },
   label: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 8,
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+    color: colors.gray700,
+    marginBottom: spacing.base,
   },
   input: {
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#111827',
+    borderColor: colors.gray200,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    fontSize: typography.sizes.base,
+    color: colors.gray900,
+    fontWeight: typography.weights.normal,
   },
   valueText: {
-    fontSize: 17,
-    color: '#111827',
-    fontWeight: '600',
-    paddingVertical: 8,
+    fontSize: typography.sizes.lg,
+    color: colors.gray900,
+    fontWeight: typography.weights.bold,
+    paddingVertical: spacing.base,
   },
   ageText: {
-    fontSize: 14,
-    color: '#6366f1',
-    fontWeight: '600',
-    marginTop: 4,
+    fontSize: typography.sizes.sm,
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
+    marginTop: spacing.base,
   },
   dateButton: {
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    padding: 16,
+    borderColor: colors.gray200,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
   },
   dateButtonText: {
-    fontSize: 16,
-    color: '#374151',
+    fontSize: typography.sizes.base,
+    color: colors.gray700,
   },
   actions: {
-    gap: 12,
+    gap: spacing.base,
   },
   button: {
-    paddingVertical: 16,
-    borderRadius: 16,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.xl,
     alignItems: 'center',
   },
   buttonPrimary: {
-    backgroundColor: '#6366f1',
-    shadowColor: '#6366f1',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    backgroundColor: colors.primary,
+    ...shadows.base,
   },
   buttonPrimaryText: {
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
   buttonSecondary: {
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: colors.gray200,
   },
   buttonSecondaryText: {
-    color: '#6b7280',
-    fontSize: 17,
-    fontWeight: '700',
+    color: colors.gray600,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
   buttonDanger: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderWidth: 2,
-    borderColor: '#ef4444',
+    borderColor: colors.error,
   },
   buttonDangerText: {
-    color: '#ef4444',
-    fontSize: 17,
-    fontWeight: '700',
+    color: colors.error,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
   },
   emptyIcon: {
     fontSize: 64,
-    marginBottom: 16,
+    marginBottom: spacing.lg,
   },
   emptyText: {
-    fontSize: 17,
-    color: '#6b7280',
+    fontSize: typography.sizes.lg,
+    color: colors.gray600,
     textAlign: 'center',
   },
 });

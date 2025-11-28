@@ -14,7 +14,6 @@ export function ActionButtons({
   onHistoryPress,
   onAnalyticsPress,
   onLogoutPress,
-  isGuestMode,
 }) {
   return (
     <View>
@@ -53,7 +52,7 @@ export function ActionButtons({
 
       <TouchableOpacity onPress={onLogoutPress} style={homeStyles.logoutButton}>
         <Text style={homeStyles.logoutText}>
-          {isGuestMode ? `${EMOJI.arrowBack} Recommencer` : `${EMOJI.arrowBack} Se déconnecter`}
+          {`${EMOJI.arrowBack} Se déconnecter`}
         </Text>
       </TouchableOpacity>
     </View>
@@ -65,5 +64,4 @@ ActionButtons.propTypes = {
   onHistoryPress: PropTypes.func.isRequired,
   onAnalyticsPress: PropTypes.func.isRequired,
   onLogoutPress: PropTypes.func.isRequired,
-  isGuestMode: PropTypes.bool.isRequired,
 };

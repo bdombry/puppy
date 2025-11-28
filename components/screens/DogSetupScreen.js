@@ -25,7 +25,7 @@ export default function DogSetupScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { saveDog } = useAuth();
+  const { saveDog, signOut } = useAuth();
   const navigation = useNavigation();
 
   const handleSave = async () => {
@@ -43,13 +43,7 @@ export default function DogSetupScreen() {
       };
 
       await saveDog(dogData);
-
-      Alert.alert('Succès', 'Votre chiot a été enregistré ! 🎉', [
-        {
-          text: 'OK',
-          onPress: () => navigation.replace('Home'),
-        },
-      ]);
+      // No need to navigate - App.js will re-render when currentDog updates
     } catch (error) {
       Alert.alert(
         'Erreur',
@@ -60,13 +54,17 @@ export default function DogSetupScreen() {
     }
   };
 
+  const handleBack = async () => {
+    await signOut();
+  };
+
   return (
     <ScrollView
       style={onboardingStyles.container}
       contentContainerStyle={onboardingStyles.scrollContent}
       scrollEnabled={false}
     >
-      <BackButton onPress={() => navigation.navigate('Auth')} />
+      <BackButton onPress={handleBack} />
 
       <OnboardingHeader
         icon={EMOJI.dog}

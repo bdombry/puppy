@@ -8,7 +8,7 @@ import { getPeeStats, getTotalOutings } from '../components/services/supabaseSer
 import { getActivityStreak, getCleanStreak } from '../components/services/streakService';
 import { getLastOuting } from '../components/services/timerService';
 
-export function useHomeData(dogId, isGuestMode, selectedPeriod) {
+export function useHomeData(dogId, selectedPeriod) {
   const [stats, setStats] = useState({
     outside: 0,
     inside: 0,
@@ -35,11 +35,11 @@ export function useHomeData(dogId, isGuestMode, selectedPeriod) {
       setError(null);
 
       const [peeStats, total, activityStreak, cleanStreak, lastOut] = await Promise.all([
-        getPeeStats(dogId, isGuestMode, selectedPeriod),
-        getTotalOutings(dogId, isGuestMode),
-        getActivityStreak(dogId, isGuestMode),
-        getCleanStreak(dogId, isGuestMode),
-        getLastOuting(dogId, isGuestMode),
+        getPeeStats(dogId, selectedPeriod),
+        getTotalOutings(dogId),
+        getActivityStreak(dogId),
+        getCleanStreak(dogId),
+        getLastOuting(dogId),
       ]);
 
       setStats(peeStats);
@@ -55,7 +55,7 @@ export function useHomeData(dogId, isGuestMode, selectedPeriod) {
     } finally {
       setLoading(false);
     }
-  }, [dogId, isGuestMode, selectedPeriod]);
+  }, [dogId, selectedPeriod]);
 
   useEffect(() => {
     loadData();

@@ -4,20 +4,8 @@ import { supabase } from '../../config/supabase';
 /**
  * Récupère le dernier outing d'un chien
  */
-export const getLastOuting = async (dogId, isGuestMode = false) => {
+export const getLastOuting = async (dogId) => {
   try {
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      const walks = data ? JSON.parse(data) : [];
-      
-      if (walks.length === 0) return null;
-      
-      // Trier par date décroissante et prendre le premier
-      walks.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-      return walks[0];
-    }
-
     // Mode connecté
     const { data, error } = await supabase
       .from('outings')

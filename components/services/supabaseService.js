@@ -4,12 +4,11 @@ import { supabase } from '../../config/supabase';
 /**
  * Récupère les stats de propreté pour un chien avec filtre de période
  * @param {string} dogId - ID du chien
- * @param {boolean} isGuestMode - Mode invité
  * @param {string} period - '1w' | '1m' | '3m' | '6m' | 'all'
  */
-export const getPeeStats = async (dogId, isGuestMode = false, period = '1w') => {
+export const getPeeStats = async (dogId, period = '1w') => {
   try {
-    console.log('🔍 getPeeStats appelé avec:', { dogId, isGuestMode, period });
+    console.log('🔍 getPeeStats appelé avec:', { dogId, period });
     
     // Calcul de la date de début selon la période
     let startDate = null;
@@ -36,45 +35,6 @@ export const getPeeStats = async (dogId, isGuestMode = false, period = '1w') => 
       console.log('📅 Date de début:', startDate.toISOString());
     } else {
       console.log('📅 Période: ALL TIME');
-    }
-
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      let walks = data ? JSON.parse(data) : [];
-      
-      console.log('📊 Total walks avant filtre:', walks.length);
-      
-      // Filtrer par période
-      if (startDate) {
-        walks = walks.filter(w => {
-          const walkDate = new Date(w.datetime);
-          return walkDate >= startDate;
-        });
-        console.log('📊 Walks après filtre:', walks.length);
-      }
-      
-      let outside = 0;
-      let inside = 0;
-      
-      walks.forEach(walk => {
-        const hasOutside = 
-          (walk.pee && walk.pee_location === 'outside') || 
-          (walk.poop && walk.poop_location === 'outside');
-        
-        const hasInside = 
-          (walk.pee && walk.pee_location === 'inside') || 
-          (walk.poop && walk.poop_location === 'inside');
-        
-        if (hasOutside) outside++;
-        if (hasInside) inside++;
-      });
-      
-      const total = outside + inside;
-      const percentage = total === 0 ? 0 : Math.round((outside / total) * 100);
-
-      console.log('✅ Résultats:', { outside, inside, total, percentage });
-      return { outside, inside, total, percentage };
     }
 
     // Mode connecté - Supabase
@@ -128,15 +88,8 @@ export const getPeeStats = async (dogId, isGuestMode = false, period = '1w') => 
 /**
  * Récupère le nombre total d'enregistrements (toujours ALL TIME)
  */
-export const getTotalOutings = async (dogId, isGuestMode = false) => {
+export const getTotalOutings = async (dogId) => {
   try {
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      const walks = data ? JSON.parse(data) : [];
-      return walks.length;
-    }
-
     const { count, error } = await supabase
       .from('outings')
       .select('*', { count: 'exact', head: true })

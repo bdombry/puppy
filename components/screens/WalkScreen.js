@@ -19,7 +19,7 @@ import { colors, spacing, borderRadius, shadows, typography } from '../../consta
 export default function WalkScreen() {
   const navigation = useNavigation();
   const route = useRoute();
-  const { currentDog, user, isGuestMode } = useAuth();
+  const { currentDog, user } = useAuth();
   
   // Type: 'incident' ou 'walk'
   const eventType = route.params?.type || 'walk';
@@ -30,17 +30,6 @@ export default function WalkScreen() {
   const [treat, setTreat] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const saveGuestWalk = async (walk) => {
-    try {
-      const existing = await AsyncStorage.getItem('guestWalks');
-      const walks = existing ? JSON.parse(existing) : [];
-      walks.push({ id: Date.now(), ...walk });
-      await AsyncStorage.setItem('guestWalks', JSON.stringify(walks));
-    } catch (err) {
-      console.log('Erreur stockage invité:', err);
-    }
-  };
 
   const handleSave = async () => {
     // Validation
@@ -81,24 +70,14 @@ export default function WalkScreen() {
         location: locationData,
       };
 
-      if (isGuestMode) {
-        await saveGuestWalk(walkData);
-        Alert.alert(
-          '✅ Enregistré !',
-          isIncident
-            ? "L'incident a été noté."
-            : 'La sortie a été notée.'
-        );
-      } else {
-        const { error } = await supabase.from('outings').insert([walkData]);
-        if (error) throw error;
-        Alert.alert(
-          '✅ Enregistré !',
-          isIncident
-            ? "L'incident a été synchronisé."
-            : 'La sortie a été synchronisée.'
-        );
-      }
+      const { error } = await supabase.from('outings').insert([walkData]);
+      if (error) throw error;
+      Alert.alert(
+        '✅ Enregistré !',
+        isIncident
+          ? "L'incident a été synchronisé."
+          : 'La sortie a été synchronisée.'
+      );
 
       navigation.goBack();
     } catch (err) {

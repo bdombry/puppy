@@ -15,7 +15,7 @@ import { WeekChart } from '../../components/charts/WeekChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function AnalyticsScreen() {
-  const { currentDog, isGuestMode } = useAuth();
+  const { currentDog } = useAuth();
   const navigation = useNavigation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +27,7 @@ export default function AnalyticsScreen() {
   const loadStats = async () => {
     if (!currentDog?.id) return;
     setLoading(true);
-    const data = await getAdvancedStats(currentDog.id, isGuestMode);
+    const data = await getAdvancedStats(currentDog.id);
     setStats(data);
     setLoading(false);
   };
@@ -62,7 +62,7 @@ export default function AnalyticsScreen() {
         <Text style={styles.subtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
 
         {/* Graphique 7 jours */}
-        <WeekChart dogId={currentDog.id} isGuestMode={isGuestMode} />
+        <WeekChart dogId={currentDog.id} />
 
         {/* Stats grid */}
         <View style={styles.grid}>
@@ -535,5 +535,25 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
     lineHeight: 24,
     marginBottom: spacing.md,
+  },
+  emptySubtext: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: spacing.xl,
+    lineHeight: 22,
+  },
+  signUpButton: {
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    ...shadows.base,
+  },
+  signUpButtonText: {
+    color: colors.white,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    textAlign: 'center',
   },
 });

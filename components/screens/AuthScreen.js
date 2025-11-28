@@ -19,7 +19,7 @@ export default function AuthScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail, signUpWithEmail, startGuestMode } = useAuth();
+  const { signInWithEmail, signUpWithEmail } = useAuth();
 
   const handleEmailAuth = async () => {
     if (!email || !password) {
@@ -51,10 +51,6 @@ export default function AuthScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSkip = async () => {
-    await startGuestMode();
   };
 
   if (mode === 'signin' || mode === 'signup') {
@@ -100,7 +96,7 @@ export default function AuthScreen({ navigation }) {
           
           <AuthButton
             type="outline"
-            label={mode === 'signin' ? "Créer un compte" : 'Retour'}
+            label={mode === 'signin' ? "Créer un compte" : 'Se connecter'}
             onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
           />
         </View>
@@ -116,7 +112,7 @@ export default function AuthScreen({ navigation }) {
     >
       <OnboardingHeader
         icon={EMOJI.dog}
-        title="Bienvenue sur PuppyTracker"
+        title="Bienvenue sur PupyTrack"
         subtitle="Suivez la propreté de votre chiot et célébrez ses progrès jour après jour"
       />
 
@@ -167,12 +163,6 @@ export default function AuthScreen({ navigation }) {
           onPress={() => setMode('signup')}
         />
       </View>
-
-      <AuthButton
-        type="link"
-        label="Passer pour l'instant"
-        onPress={handleSkip}
-      />
 
       <AuthButton
         type="link"

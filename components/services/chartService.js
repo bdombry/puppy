@@ -4,7 +4,7 @@ import { supabase } from '../../config/supabase';
 /**
  * Récupère les stats des 7 derniers jours pour le graphique
  */
-export const getLast7DaysStats = async (dogId, isGuestMode = false) => {
+export const getLast7DaysStats = async (dogId) => {
   try {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -25,25 +25,17 @@ export const getLast7DaysStats = async (dogId, isGuestMode = false) => {
       });
     }
 
-    let outings = [];
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 6);
 
-    if (isGuestMode) {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      const data = await AsyncStorage.getItem('guestWalks');
-      outings = data ? JSON.parse(data) : [];
-    } else {
-      const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - 6);
+    const { data, error } = await supabase
+      .from('outings')
+      .select('datetime, pee, pee_location, poop, poop_location')
+      .eq('dog_id', dogId)
+      .gte('datetime', startDate.toISOString());
 
-      const { data, error } = await supabase
-        .from('outings')
-        .select('datetime, pee, pee_location, poop, poop_location')
-        .eq('dog_id', dogId)
-        .gte('datetime', startDate.toISOString());
-
-      if (error) throw error;
-      outings = data || [];
-    }
+    if (error) throw error;
+    const outings = data || [];
 
     // Remplir les stats par jour
     outings.forEach(outing => {
