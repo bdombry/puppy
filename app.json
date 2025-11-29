@@ -25,6 +25,18 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "description": "insight update"
+    "description": "insight update",
+    "extra": {
+      "eas": {
+        "projectId": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+      }
+    },
+    "owner": "bendombry",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/c85a1484-9e01-422c-b2d3-11ebb4059322"
+    }
   }
 }

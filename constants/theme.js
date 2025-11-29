@@ -23,6 +23,9 @@ export const colors = {
   errorLighter: '#fecaca',
   errorDark: '#dc2626',
 
+  // Danger (Rouge doux pour incidents)
+  danger: '#f87171',
+
   // Warning (Amber)
   warning: '#f59e0b',
   warningLight: '#fef3c7',

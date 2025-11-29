@@ -6,14 +6,15 @@ import { supabase } from '../../config/supabase';
  */
 export const getLast7DaysStats = async (dogId) => {
   try {
+    // Utiliser UTC pour comparer avec les données en UTC
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    today.setUTCHours(0, 0, 0, 0);
     
-    // Créer les 7 derniers jours
+    // Créer les 7 derniers jours en UTC
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
-      date.setDate(date.getDate() - i);
+      date.setUTCDate(date.getUTCDate() - i);
       days.push({
         date: date,
         dayKey: date.toISOString().split('T')[0],
@@ -26,7 +27,7 @@ export const getLast7DaysStats = async (dogId) => {
     }
 
     const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - 6);
+    startDate.setUTCDate(startDate.getUTCDate() - 6);
 
     const { data, error } = await supabase
       .from('outings')
@@ -37,24 +38,33 @@ export const getLast7DaysStats = async (dogId) => {
     if (error) throw error;
     const outings = data || [];
 
+
     // Remplir les stats par jour
     outings.forEach(outing => {
       const outingDate = new Date(outing.datetime);
+      // Extraire la date en UTC
       const dayKey = outingDate.toISOString().split('T')[0];
       
       const dayData = days.find(d => d.dayKey === dayKey);
       if (!dayData) return;
 
-      const hasOutside = 
-        (outing.pee && outing.pee_location === 'outside') || 
-        (outing.poop && outing.poop_location === 'outside');
+      // Une outing = 1 enregistrement
+      // On regarde si AU MOINS UN besoin (pee ou poop) est dedans (inside)
+      // Si oui = incident, sinon = succès
       
-      const hasInside = 
-        (outing.pee && outing.pee_location === 'inside') || 
-        (outing.poop && outing.poop_location === 'inside');
+      const peeIsInside = outing.pee && outing.pee_location === 'inside';
+      const poopIsInside = outing.poop && outing.poop_location === 'inside';
+      const peeIsOutside = outing.pee && outing.pee_location === 'outside';
+      const poopIsOutside = outing.poop && outing.poop_location === 'outside';
 
-      if (hasOutside) dayData.outside++;
-      if (hasInside) dayData.inside++;
+      // Priorité: si AU MOINS UN besoin est dedans = INCIDENT
+      if (peeIsInside || poopIsInside) {
+        dayData.inside++;
+      } else if (peeIsOutside || poopIsOutside) {
+        // Sinon si au moins un est dehors = SUCCÈS
+        dayData.outside++;
+      }
+      // Sinon: aucun besoin (pee=false et poop=false) = pas compté
     });
 
     // Calculer les totaux et pourcentages

@@ -22,6 +22,18 @@ export const WeekChart = ({ dogId }) => {
     }
   }, [dogId]);
 
+  // Refetch toutes les 5 secondes pour voir les changements en temps réel
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (dogId) {
+        const stats = await getLast7DaysStats(dogId);
+        setData(stats);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dogId]);
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -45,17 +57,16 @@ export const WeekChart = ({ dogId }) => {
     );
   }
 
-  // Obtenir la date d'aujourd'hui normalisée
+  // Obtenir la date d'aujourd'hui normalisée en UTC
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  today.setUTCHours(0, 0, 0, 0);
   const todayString = today.toISOString().split('T')[0];
 
   // INVERSER : aujourd'hui à gauche
   const chartData = [...data].reverse();
 
-  // Trouver le max pour normaliser les hauteurs
-  const maxTotal = Math.max(...data.map(d => d.total || 0), 1);
-  const MAX_BAR_HEIGHT = 120;
+  // Hauteur fixe pour toutes les barres
+  const BAR_HEIGHT = 120;
 
   const handleBarPress = (dayKey) => {
     setSelectedDayKey(selectedDayKey === dayKey ? null : dayKey);
@@ -73,41 +84,37 @@ export const WeekChart = ({ dogId }) => {
         {chartData.map((day) => {
           const isToday = day.dayKey === todayString;
           const isSelected = selectedDayKey === day.dayKey;
-          const dayDate = new Date(day.date);
+          const dayDate = new Date(day.dayKey);
           const shortDayName = dayDate.toLocaleDateString('fr-FR', { weekday: 'short' });
           
-          // Calculer les hauteurs - VERT EN BAS (base)
-          const totalHeight = day.total > 0 ? (day.total / maxTotal) * MAX_BAR_HEIGHT : 0;
-          const outsideHeight = day.total > 0 ? (day.outside / day.total) * totalHeight : 0;
-          const insideHeight = totalHeight - outsideHeight;
+          // Calculer les pourcentages de remplissage
+          const successPercentage = day.total > 0 ? (day.outside / day.total) * 100 : 0;
+          const incidentPercentage = day.total > 0 ? (day.inside / day.total) * 100 : 0;
 
           return (
             <View key={day.dayKey} style={styles.dayColumn}>
-              {/* Barre empilée */}
+              {/* Barre de progression avec conteneur gris */}
               <TouchableOpacity 
                 style={styles.barContainer}
                 onPress={() => handleBarPress(day.dayKey)}
                 activeOpacity={0.7}
               >
-                {totalHeight > 0 ? (
-                  <View style={[styles.bar, { height: totalHeight }]}>
-                    {/* Partie GRISE (inside) EN HAUT */}
-                    {insideHeight > 0 && (
-                      <View style={[styles.barSegment, styles.barInside, { height: insideHeight }]} />
-                    )}
-                    {/* Partie VERTE (outside) EN BAS = BASE */}
-                    {outsideHeight > 0 && (
-                      <View style={[styles.barSegment, styles.barOutside, { height: outsideHeight }]} />
-                    )}
-                  </View>
-                ) : (
-                  <View style={styles.barEmpty} />
-                )}
+                <View style={[
+                  styles.barBackground,
+                  day.total === 0 && { backgroundColor: colors.gray200 }
+                ]}>
+                  {/* Remplissage : VERT (success) EN BAS */}
+                  <View style={[styles.barFill, { height: `${successPercentage}%` }, styles.barSuccess]} />
+                </View>
 
                 {/* Pourcentage au-dessus SI SÉLECTIONNÉ */}
-                {isSelected && day.total > 0 && (
+                {isSelected && (
                   <View style={styles.percentageBadge}>
-                    <Text style={styles.percentageText}>{day.percentage}%</Text>
+                    {day.total > 0 ? (
+                      <Text style={styles.percentageText} numberOfLines={1}>{`${day.percentage}%`}</Text>
+                    ) : (
+                      <Text style={styles.percentageText}>Pas de données</Text>
+                    )}
                   </View>
                 )}
               </TouchableOpacity>
@@ -117,7 +124,6 @@ export const WeekChart = ({ dogId }) => {
                 <Text style={[styles.dayText, isToday && styles.dayTextToday]}>
                   {shortDayName.charAt(0).toUpperCase() + shortDayName.slice(1, 3)}
                 </Text>
-                {isToday && <View style={styles.todayDot} />}
               </View>
             </View>
           );
@@ -128,11 +134,11 @@ export const WeekChart = ({ dogId }) => {
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, styles.legendDotSuccess]} />
-          <Text style={styles.legendText}>Dehors</Text>
+          <Text style={styles.legendText}>Dehors (réussi)</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, styles.legendDotIncident]} />
-          <Text style={styles.legendText}>Dedans</Text>
+          <Text style={styles.legendText}>Incidents</Text>
         </View>
       </View>
     </View>
@@ -222,43 +228,43 @@ const styles = StyleSheet.create({
     flex: 1,
     position: 'relative',
   },
-  bar: {
+  barBackground: {
     width: 32,
+    height: 120,
     borderRadius: borderRadius.md,
     overflow: 'hidden',
+    backgroundColor: colors.danger,
+    borderWidth: 2,
+    borderColor: colors.gray300,
     justifyContent: 'flex-end',
     ...shadows.small,
   },
-  barEmpty: {
-    width: 32,
-    height: 8,
-    borderRadius: borderRadius.sm,
-    backgroundColor: colors.gray200,
-  },
-  barSegment: {
+  barFill: {
     width: '100%',
   },
-  barOutside: {
+  barSuccess: {
     backgroundColor: colors.success,
   },
-  barInside: {
-    backgroundColor: colors.gray300,
+  barIncident: {
+    backgroundColor: colors.danger,
   },
   percentageBadge: {
     position: 'absolute',
-    top: -28,
+    top: -32,
     backgroundColor: colors.primary,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.md,
-    minWidth: 40,
+    minWidth: 60,
     alignItems: 'center',
+    justifyContent: 'center',
     ...shadows.small,
   },
   percentageText: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,
     color: colors.white,
+    textAlign: 'center',
   },
 
   // Day labels
@@ -270,6 +276,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray100,
     minWidth: 36,
     alignItems: 'center',
+    height: 24,
   },
   dayLabelToday: {
     backgroundColor: colors.primaryLight,
@@ -283,7 +290,7 @@ const styles = StyleSheet.create({
   },
   dayTextToday: {
     color: colors.primary,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.semibold,
   },
   todayDot: {
     width: 4,
@@ -316,7 +323,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
   },
   legendDotIncident: {
-    backgroundColor: colors.gray300,
+    backgroundColor: colors.danger,
   },
   legendText: {
     fontSize: typography.sizes.sm,
@@ -326,7 +333,7 @@ const styles = StyleSheet.create({
 });
 
 WeekChart.propTypes = {
-  dogId: PropTypes.string,
+  dogId: PropTypes.number,
 };
 
 WeekChart.defaultProps = {
