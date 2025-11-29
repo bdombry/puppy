@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../config/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GlobalStyles } from '../../styles/global';
+import { screenStyles } from '../../styles/screenStyles';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
@@ -111,32 +111,27 @@ export default function WalkHistoryScreen() {
   const successCount = walks.length - incidentCount;
 
   return (
-    <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>← Retour</Text>
-        </TouchableOpacity>
+    <View style={GlobalStyles.safeArea}>
+      <ScrollView contentContainerStyle={screenStyles.screenContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={screenStyles.screenTitle}>Historique</Text>
 
-        <Text style={styles.title}>Historique</Text>
-
-        {/* Stats rapides */}
         <View style={styles.quickStats}>
           <View style={styles.statBadge}>
             <Text style={styles.statNumber}>{successCount}</Text>
-            <Text style={styles.statLabel}>réussites</Text>
+            <Text style={screenStyles.statLabel}>réussites</Text>
           </View>
-          <View style={[styles.statBadge, { backgroundColor: '#fef2f2' }]}>
-            <Text style={[styles.statNumber, { color: '#ef4444' }]}>
+          <View style={[styles.statBadge, { backgroundColor: colors.errorLight }]}>
+            <Text style={[styles.statNumber, { color: colors.error }]}>
               {incidentCount}
             </Text>
-            <Text style={styles.statLabel}>incidents</Text>
+            <Text style={screenStyles.statLabel}>incidents</Text>
           </View>
         </View>
-      </View>
+        </View>
 
-      {/* Tabs */}
-      <View style={styles.tabs}>
+        {/* Tabs */}
+        <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'all' && styles.tabActive]}
           onPress={() => setActiveTab('all')}
@@ -154,7 +149,7 @@ export default function WalkHistoryScreen() {
           <Text style={[styles.tabText, activeTab === 'success' && styles.tabTextActive]}>
             Sorties
           </Text>
-          {activeTab === 'success' && <View style={[styles.tabIndicator, { backgroundColor: '#10b981' }]} />}
+          {activeTab === 'success' && <View style={[styles.tabIndicator, { backgroundColor: colors.success }]} />}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -164,19 +159,19 @@ export default function WalkHistoryScreen() {
           <Text style={[styles.tabText, activeTab === 'incidents' && styles.tabTextActive]}>
             Incidents
           </Text>
-          {activeTab === 'incidents' && <View style={[styles.tabIndicator, { backgroundColor: '#ef4444' }]} />}
+          {activeTab === 'incidents' && <View style={[styles.tabIndicator, { backgroundColor: colors.error }]} />}
         </TouchableOpacity>
-      </View>
+        </View>
 
-      {/* Liste */}
-      {loading ? (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#6366f1" />
+        {/* Liste */}
+        {loading ? (
+        <View style={screenStyles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Chargement...</Text>
         </View>
-      ) : filteredWalks.length === 0 ? (
-        <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>
+        ) : filteredWalks.length === 0 ? (
+          <View style={screenStyles.emptyContainer}>
+          <Text style={screenStyles.emptyIcon}>
             {activeTab === 'all' ? '📝' : activeTab === 'incidents' ? '⚠️' : '✅'}
           </Text>
           <Text style={styles.emptyTitle}>
@@ -186,7 +181,7 @@ export default function WalkHistoryScreen() {
               ? 'Aucun incident'
               : 'Aucune sortie réussie'}
           </Text>
-          <Text style={styles.emptyText}>
+          <Text style={screenStyles.emptyText}>
             {activeTab === 'all'
               ? 'Commence à enregistrer les besoins de ton chiot'
               : activeTab === 'incidents'
@@ -194,11 +189,8 @@ export default function WalkHistoryScreen() {
               : 'Commence par enregistrer des sorties réussies'}
           </Text>
         </View>
-      ) : (
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          showsVerticalScrollIndicator={false}
-        >
+        ) : (
+          <View>
           {filteredWalks.map((walk) => {
             const { date, time, day } = formatDate(walk.datetime);
             const incident = isIncident(walk);
@@ -211,7 +203,6 @@ export default function WalkHistoryScreen() {
                   incident ? styles.cardIncident : styles.cardSuccess,
                 ]}
               >
-                {/* Header */}
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     <View style={styles.cardTitleRow}>
@@ -231,7 +222,6 @@ export default function WalkHistoryScreen() {
                     </View>
                   </View>
 
-                  {/* Bouton supprimer */}
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleDelete(walk)}
@@ -240,7 +230,6 @@ export default function WalkHistoryScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {/* Détails */}
                 <View style={styles.details}>
                   {walk.pee && (
                     <View style={styles.detailBadge}>
@@ -255,13 +244,13 @@ export default function WalkHistoryScreen() {
                     </View>
                   )}
                   {walk.treat && (
-                    <View style={[styles.detailBadge, { backgroundColor: '#faf5ff' }]}>
+                    <View style={[styles.detailBadge, { backgroundColor: colors.primaryLight }]}>
                       <Text style={styles.detailIcon}>🍬</Text>
                       <Text style={styles.detailText}>Friandise</Text>
                     </View>
                   )}
                   {walk.location && (
-                    <View style={[styles.detailBadge, { backgroundColor: '#eff6ff' }]}>
+                    <View style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
                       <Text style={styles.detailIcon}>📍</Text>
                       <Text style={styles.detailText}>Position GPS</Text>
                     </View>
@@ -270,34 +259,26 @@ export default function WalkHistoryScreen() {
               </View>
             );
           })}
-        </ScrollView>
-      )}
+          </View>
+        )}
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.base,
+    marginBottom: spacing.lg,
   },
-  backButton: {
-    marginBottom: spacing.md,
-  },
-  backButtonText: {
-    fontSize: typography.sizes.lg,
-    color: colors.primary,
-    fontWeight: typography.weights.semibold,
-  },
-  title: {
-    fontSize: typography.sizes.xxxl,
-    fontWeight: typography.weights.extrabold,
-    color: colors.text,
-    marginBottom: spacing.base,
+  loadingText: {
+    marginTop: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
   },
   quickStats: {
     flexDirection: 'row',
     gap: spacing.md,
+    marginTop: spacing.lg,
   },
   statBadge: {
     flex: 1,
@@ -307,20 +288,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statNumber: {
-    fontSize: 24,
+    fontSize: typography.sizes.xxl,
     fontWeight: typography.weights.extrabold,
     color: colors.success,
   },
-  statLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    fontWeight: typography.weights.semibold,
-    marginTop: spacing.xs,
-  },
   tabs: {
     flexDirection: 'row',
-    paddingHorizontal: spacing.xxl,
-    marginBottom: spacing.base,
+    marginBottom: spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray200,
   },
@@ -330,62 +304,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     position: 'relative',
   },
-  tabActive: {
-    // Pas de background, juste l'indicateur
-  },
   tabText: {
     fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
+    fontWeight: typography.weights.bold,
     color: colors.textTertiary,
   },
   tabTextActive: {
     color: colors.text,
-    fontWeight: typography.weights.bold,
+    fontWeight: typography.weights.extrabold,
   },
   tabIndicator: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -1,
     left: 0,
     right: 0,
     height: 3,
     backgroundColor: colors.primary,
-    borderTopLeftRadius: 2,
-    borderTopRightRadius: 2,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing.huge,
-  },
-  loadingText: {
-    marginTop: spacing.md,
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-  },
-  emptyIcon: {
-    fontSize: typography.sizes.massive,
-    marginBottom: spacing.base,
   },
   emptyTitle: {
-    fontSize: typography.sizes.xxl,
+    fontSize: typography.sizes.xl,
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.sm,
     textAlign: 'center',
   },
-  emptyText: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
   scroll: {
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.huge,
   },
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.successLight,
     padding: spacing.base,
     borderRadius: borderRadius.lg,
     marginBottom: spacing.md,
@@ -393,11 +340,11 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   cardSuccess: {
-    borderColor: colors.successLight,
-    backgroundColor: colors.successLight,
+    borderColor: colors.success,
+    backgroundColor: '#f0fdf4',
   },
   cardIncident: {
-    borderColor: colors.errorLight,
+    borderColor: colors.error,
     backgroundColor: colors.errorLight,
   },
   cardHeader: {
@@ -412,11 +359,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   cardIcon: {
-    fontSize: 20,
+    fontSize: typography.sizes.xl,
     marginRight: spacing.md,
   },
   cardTitle: {
-    fontSize: typography.sizes.xl,
+    fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
     color: colors.text,
   },
@@ -434,29 +381,30 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: typography.sizes.base,
     color: colors.textSecondary,
-    fontWeight: typography.weights.semibold,
+    fontWeight: typography.weights.bold,
   },
   timeBadge: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xs,
     borderRadius: borderRadius.md,
   },
   timeText: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
+    fontSize: typography.sizes.sm,
+    color: colors.text,
     fontWeight: typography.weights.bold,
   },
   deleteButton: {
     width: 36,
     height: 36,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
+    opacity: 0.7,
   },
   deleteButtonText: {
-    fontSize: 18,
+    fontSize: typography.sizes.lg,
   },
   details: {
     flexDirection: 'row',
@@ -466,18 +414,18 @@ const styles = StyleSheet.create({
   detailBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.md,
   },
   detailIcon: {
-    fontSize: 16,
+    fontSize: typography.sizes.base,
     marginRight: spacing.sm,
   },
   detailText: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     color: colors.text,
-    fontWeight: typography.weights.semibold,
+    fontWeight: typography.weights.bold,
   },
 });

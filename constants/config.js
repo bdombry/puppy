@@ -26,6 +26,7 @@ export const EMOJI = {
   analytics: '📈',
   history: '📝',
   settings: '⚙️',
+  gear: '⚙️',
   trash: '🗑️',
   timer: '⏱️',
   fire: '🔥',
@@ -43,6 +44,11 @@ export const EMOJI = {
   apple: '🍎',
   google: '🔵',
   email: '✉️',
+  map: '🗺️',
+  pin: '📍',
+  distance: '📏',
+  clock: '🕐',
+  chart: '📊',
 };
 
 // ===== TEMPS ENTRE RAFRAÎCHISSEMENTS =====

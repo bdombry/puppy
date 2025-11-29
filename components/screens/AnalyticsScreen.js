@@ -3,20 +3,18 @@ import {
   View,
   Text,
   ScrollView,
-  TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { GlobalStyles } from '../../styles/global';
-import { useNavigation } from '@react-navigation/native';
+import { screenStyles } from '../../styles/screenStyles';
 import { getAdvancedStats } from '../services/analyticsService';
 import { WeekChart } from '../../components/charts/WeekChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
-  const navigation = useNavigation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +32,7 @@ export default function AnalyticsScreen() {
 
   if (loading) {
     return (
-      <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop, styles.centerContainer]}>
+      <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop, screenStyles.loadingContainer]}>
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Analyse des données...</Text>
       </View>
@@ -43,52 +41,46 @@ export default function AnalyticsScreen() {
 
   if (!stats) {
     return (
-      <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop, styles.centerContainer]}>
-        <Text style={styles.emptyIcon}>📊</Text>
-        <Text style={styles.emptyText}>Pas encore de données à analyser</Text>
+      <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
+        <View style={screenStyles.emptyContainer}>
+          <Text style={screenStyles.emptyIcon}>📊</Text>
+          <Text style={screenStyles.emptyText}>Pas encore de données à analyser</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-      <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Text style={styles.backButtonText}>← Retour</Text>
-        </TouchableOpacity>
+    <View style={GlobalStyles.safeArea}>
+      <ScrollView contentContainerStyle={screenStyles.screenContainer} showsVerticalScrollIndicator={false}>
+        <Text style={screenStyles.screenTitle}>Analytics 📊</Text>
+        <Text style={screenStyles.screenSubtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
 
-        <Text style={styles.title}>Analytics 📊</Text>
-        <Text style={styles.subtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
-
-        {/* Graphique 7 jours */}
         <WeekChart dogId={currentDog.id} />
 
         {/* Stats grid */}
         <View style={styles.grid}>
-          {/* Total */}
-          <View style={[styles.statCard, styles.statCardFull]}>
-            <Text style={styles.statValue}>{stats.total}</Text>
-            <Text style={styles.statLabel}>Total enregistrements</Text>
+          <View style={[screenStyles.statCard, styles.statCardFull]}>
+            <Text style={[screenStyles.statValue, { fontSize: typography.sizes.xxxl }]}>{stats.total}</Text>
+            <Text style={[screenStyles.statLabel, styles.statCardLabel]}>Total enregistrements</Text>
           </View>
 
-          {/* Pipi vs Caca */}
-          <View style={styles.statCard}>
+          <View style={[screenStyles.statCard, { flex: 1 }]}>
             <Text style={styles.statIcon}>💧</Text>
-            <Text style={styles.statValue}>{stats.peeCount}</Text>
-            <Text style={styles.statLabel}>Pipis</Text>
+            <Text style={screenStyles.statValue}>{stats.peeCount}</Text>
+            <Text style={[screenStyles.statLabel, styles.statCardLabel]}>Pipis</Text>
           </View>
 
-          <View style={styles.statCard}>
+          <View style={[screenStyles.statCard, { flex: 1 }]}>
             <Text style={styles.statIcon}>💩</Text>
-            <Text style={styles.statValue}>{stats.poopCount}</Text>
-            <Text style={styles.statLabel}>Cacas</Text>
+            <Text style={screenStyles.statValue}>{stats.poopCount}</Text>
+            <Text style={[screenStyles.statLabel, styles.statCardLabel]}>Cacas</Text>
           </View>
         </View>
 
         {/* Taux de réussite par type */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Taux de réussite par type</Text>
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>Taux de réussite par type</Text>
 
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
@@ -118,15 +110,15 @@ export default function AnalyticsScreen() {
         </View>
 
         {/* Friandises */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Récompenses 🍬</Text>
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>Récompenses 🍬</Text>
 
           <View style={styles.insightCard}>
             <View style={styles.insightIcon}>
               <Text style={{ fontSize: 32 }}>🍬</Text>
             </View>
             <View style={styles.insightContent}>
-              <Text style={styles.insightValue}>{stats.treatPercentage}%</Text>
+              <Text style={screenStyles.statValue}>{stats.treatPercentage}%</Text>
               <Text style={styles.insightLabel}>des sorties récompensées</Text>
               <Text style={styles.insightSubtext}>
                 {stats.treatGiven} friandises données
@@ -136,8 +128,8 @@ export default function AnalyticsScreen() {
         </View>
 
         {/* Insights */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Insights 💡</Text>
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>Insights 💡</Text>
 
           {/* Tendance */}
           {stats.trend && (
@@ -305,8 +297,8 @@ export default function AnalyticsScreen() {
         </View>
 
         {/* Recommandations */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recommandations 💪</Text>
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>Recommandations 💪</Text>
 
           <View style={styles.recommendationCard}>
             {stats.treatPercentage < 50 && (
@@ -357,63 +349,16 @@ export default function AnalyticsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 24,
-    paddingBottom: 40,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  backButton: {
-    marginBottom: 16,
-  },
-  backButtonText: {
-    fontSize: 16,
-    color: '#6366f1',
-    fontWeight: '600',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#6b7280',
-    marginBottom: 24,
-  },
   loadingText: {
-    marginTop: 12,
-    fontSize: 15,
-    color: '#6b7280',
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 17,
-    color: '#6b7280',
-    textAlign: 'center',
+    marginTop: spacing.md,
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
   },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  statCard: {
-    flex: 1,
-    minWidth: '47%',
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-    alignItems: 'center',
-    ...shadows.base,
+    gap: spacing.md,
+    marginBottom: spacing.xl,
   },
   statCardFull: {
     width: '100%',
@@ -421,31 +366,14 @@ const styles = StyleSheet.create({
   },
   statIcon: {
     fontSize: 32,
-    marginBottom: 8,
+    marginBottom: spacing.xs,
   },
-  statValue: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
+  statCardLabel: {
+    fontSize: typography.sizes.base,
+    color: colors.text,
   },
   progressCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.lg,
     padding: spacing.base,
     marginBottom: spacing.md,
@@ -455,40 +383,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: spacing.md,
   },
   progressLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
   },
   progressValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#10b981',
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.extrabold,
+    color: colors.success,
   },
   progressBar: {
     width: '100%',
     height: 10,
-    backgroundColor: '#e5e7eb',
-    borderRadius: 6,
+    backgroundColor: colors.gray200,
+    borderRadius: borderRadius.base,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#10b981',
-    borderRadius: 6,
+    backgroundColor: colors.success,
   },
   progressSubtext: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '500',
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.medium,
   },
   insightCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.white,
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: spacing.md,
@@ -507,27 +434,21 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   insightLabel: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  insightValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 4,
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.xs,
   },
   insightSubtext: {
-    fontSize: 13,
-    color: '#9ca3af',
+    fontSize: typography.sizes.sm,
+    color: colors.textTertiary,
   },
   recommendationCard: {
     backgroundColor: colors.primaryLight,
     borderRadius: borderRadius.lg,
-    padding: spacing.xl,
+    padding: spacing.lg,
     borderWidth: 1,
-    borderColor: colors.primaryLighter,
+    borderColor: '#dbeafe',
   },
   recommendationText: {
     fontSize: typography.sizes.base,
@@ -535,25 +456,5 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
     lineHeight: 24,
     marginBottom: spacing.md,
-  },
-  emptySubtext: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: spacing.xl,
-    lineHeight: 22,
-  },
-  signUpButton: {
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.xl,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.xl,
-    ...shadows.base,
-  },
-  signUpButtonText: {
-    color: colors.white,
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    textAlign: 'center',
   },
 });

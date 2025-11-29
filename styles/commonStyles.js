@@ -223,4 +223,85 @@ export const commonStyles = StyleSheet.create({
     backgroundColor: colors.success,
     borderRadius: borderRadius.sm,
   },
+
+  // ===== SECTIONS =====
+  sectionContainer: {
+    marginBottom: spacing.xl,
+  },
+  sectionHeader: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  sectionSubtitle: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.normal,
+    color: colors.textSecondary,
+  },
+
+  // ===== FORMS =====
+  formGroup: {
+    marginBottom: spacing.lg,
+  },
+  formLabel: {
+    fontSize: typography.sizes.sm,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  formField: {
+    backgroundColor: colors.white,
+    borderWidth: 1.5,
+    borderColor: colors.gray200,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+    fontSize: typography.sizes.base,
+    color: colors.text,
+  },
+  formFieldError: {
+    borderColor: colors.error,
+  },
+  formError: {
+    fontSize: typography.sizes.sm,
+    color: colors.error,
+    fontWeight: typography.weights.medium,
+    marginTop: spacing.xs,
+  },
+
+  // ===== TABS =====
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
+    marginBottom: spacing.lg,
+  },
+  tabBarItem: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  tabBarItemText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.textTertiary,
+  },
+  tabBarItemActive: {
+    color: colors.text,
+  },
+  tabBarIndicator: {
+    position: 'absolute',
+    bottom: -1,
+    left: 0,
+    right: 0,
+    height: 3,
+    backgroundColor: colors.primary,
+  },
 });

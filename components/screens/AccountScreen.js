@@ -12,6 +12,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
+import { screenStyles } from '../../styles/screenStyles';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { EMOJI } from '../../constants/config';
 
@@ -68,40 +69,38 @@ export default function AccountScreen() {
   };
 
   return (
-    <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>← Retour</Text>
+    <View style={GlobalStyles.safeArea}>
+      <ScrollView contentContainerStyle={screenStyles.screenContainer}>
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>{EMOJI.arrowBack}</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>{EMOJI.gear} Mon compte</Text>
+          <Text style={screenStyles.screenTitle}>Mon compte</Text>
         </View>
 
-        <View style={styles.content}>
-          {/* Section Email */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{EMOJI.envelope} Email</Text>
-            <View style={styles.infoBox}>
-              <Text style={styles.email}>{user?.email}</Text>
-            </View>
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>{EMOJI.envelope} Email</Text>
+          <View style={styles.infoBox}>
+            <Text style={styles.email}>{user?.email}</Text>
           </View>
+        </View>
 
-          {/* Section Danger */}
-          <View style={[styles.section, styles.sectionDanger]}>
-            <Text style={styles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
-            <TouchableOpacity
-              style={styles.buttonDanger}
-              onPress={handleDeletePress}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color={colors.white} size="small" />
-              ) : (
-                <Text style={styles.buttonDangerText}>Supprimer mon compte</Text>
-              )}
-            </TouchableOpacity>
-          </View>
+        <View style={[screenStyles.section, styles.sectionDanger]}>
+          <Text style={screenStyles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
+          <TouchableOpacity
+            style={[screenStyles.button, screenStyles.buttonDanger]}
+            onPress={handleDeletePress}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.white} size="small" />
+            ) : (
+              <Text style={screenStyles.buttonDangerText}>Supprimer mon compte</Text>
+            )}
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -109,51 +108,27 @@ export default function AccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
   },
   backButton: {
-    marginBottom: spacing.md,
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
   },
-  backButtonText: {
-    fontSize: typography.sizes.base,
-    color: colors.primary,
-    fontWeight: typography.weights.semibold,
-  },
-  title: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-  },
-
-  content: {
-    padding: spacing.lg,
-    gap: spacing.lg,
-  },
-
-  section: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...shadows.small,
+  backIcon: {
+    fontSize: 20,
   },
   sectionDanger: {
     borderColor: colors.error,
     backgroundColor: `${colors.error}10`,
   },
-
-  sectionTitle: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-
   infoBox: {
     backgroundColor: colors.gray100,
     borderRadius: borderRadius.md,
@@ -164,19 +139,6 @@ const styles = StyleSheet.create({
   email: {
     fontSize: typography.sizes.base,
     color: colors.text,
-    fontWeight: typography.weights.semibold,
-  },
-
-  buttonDanger: {
-    paddingVertical: spacing.md,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.error,
-    alignItems: 'center',
-    ...shadows.small,
-  },
-  buttonDangerText: {
-    fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
-    color: colors.white,
   },
 });

@@ -7,8 +7,7 @@ export const homeStyles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.lg,
   },
   headerRow: {
     flexDirection: 'row',
@@ -20,6 +19,34 @@ export const homeStyles = StyleSheet.create({
     fontWeight: typography.weights.extrabold,
     color: colors.text,
     letterSpacing: -0.5,
+  },
+  headerAccountButtonRight: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...shadows.base,
+  },
+  headerAccountButtonLeft: {
+    width: 48,
+    height: 48,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAccountButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerAccountEmoji: {
+    fontSize: 20,
   },
   headerSubtitle: {
     fontSize: typography.sizes.lg,
@@ -41,7 +68,6 @@ export const homeStyles = StyleSheet.create({
     color: colors.warningDark,
   },
   content: {
-    paddingHorizontal: spacing.xxl,
   },
   dogCard: {
     backgroundColor: colors.card,
@@ -339,6 +365,11 @@ export const homeStyles = StyleSheet.create({
   actionButtonPrimary: {
     backgroundColor: colors.primary,
     ...shadows.base,
+    paddingVertical: spacing.xl + spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 3,
+    borderColor: colors.purpleDark,
+    marginBottom: spacing.lg,
   },
   actionButtonSecondary: {
     backgroundColor: colors.card,
@@ -353,10 +384,19 @@ export const homeStyles = StyleSheet.create({
     fontSize: typography.sizes.xl,
     marginRight: spacing.md,
   },
+  actionButtonPrimaryIcon: {
+    fontSize: typography.sizes.xxxl,
+    marginRight: spacing.md,
+  },
   actionButtonTextPrimary: {
     color: colors.white,
     fontSize: typography.sizes.lg,
     fontWeight: typography.weights.bold,
+  },
+  actionButtonTextPrimaryBig: {
+    color: colors.white,
+    fontSize: typography.sizes.xxl,
+    fontWeight: typography.weights.extrabold,
   },
   actionButtonTextSecondary: {
     color: colors.text,

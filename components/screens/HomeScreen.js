@@ -5,6 +5,7 @@ import {
   ScrollView,
   Animated,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -13,12 +14,17 @@ import { homeStyles } from '../../styles/homeStyles';
 import { useNavigation } from '@react-navigation/native';
 import { DogCardWithProgress } from '../DogCardWithProgress';
 import { StatsCards } from '../StatsCards';
-import { ActionButtons } from '../ActionButtons';
+import { RecordButton } from '../buttons/RecordButton';
+import { HistoryButton } from '../buttons/HistoryButton';
+import { AnalyticsButton } from '../buttons/AnalyticsButton';
+import { AccountButton } from '../buttons/AccountButton';
+import { LogoutButton } from '../buttons/LogoutButton';
 import { LastOutingTimer } from '../LastOutingTimer';
 import { ActionModal } from '../ActionModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
 import { EMOJI } from '../../constants/config';
+import { screenStyles } from '../../styles/screenStyles';
 
 export default function HomeScreen() {
   const { currentDog, signOut } = useAuth();
@@ -109,18 +115,24 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={[GlobalStyles.safeArea, homeStyles.container]}>
+    <View style={GlobalStyles.safeArea}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={screenStyles.screenContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#6366f1" />
         }
       >
         {/* HEADER */}
-        <View style={[homeStyles.header, { paddingTop: GlobalStyles.pageMarginTop.marginTop }]}>
+        <View style={homeStyles.header}>
           <View style={homeStyles.headerRow}>
-            <Text style={homeStyles.headerTitle}>{EMOJI.wave} Bonjour 👋</Text>
+            <Text style={homeStyles.headerTitle}>Bonjour {EMOJI.wave}</Text>
+            <TouchableOpacity
+              style={homeStyles.headerAccountButtonRight}
+              onPress={() => navigation.navigate('Account')}
+            >
+              <Text style={homeStyles.headerAccountEmoji}>🧑</Text>
+            </TouchableOpacity>
           </View>
           {currentDog && (
             <Text style={homeStyles.headerSubtitle}>
@@ -145,6 +157,9 @@ export default function HomeScreen() {
             />
           )}
 
+          {/* BOUTONS Enregistrement sorties incidents */}
+          <RecordButton onPress={() => setShowActionModal(true)} />
+          
           {/* STATS CARDS */}
           <StatsCards
             totalOutings={totalOutings}
@@ -155,13 +170,8 @@ export default function HomeScreen() {
           />
 
           {/* BOUTONS D'ACTION */}
-          <ActionButtons
-            onRecordPress={() => setShowActionModal(true)}
-            onHistoryPress={() => navigation.navigate('WalkHistory')}
-            onAnalyticsPress={() => navigation.navigate('Analytics')}
-            onAccountPress={() => navigation.navigate('Account')}
-            onLogoutPress={signOut}
-          />
+
+          <LogoutButton onPress={signOut} />
         </View>
       </ScrollView>
 

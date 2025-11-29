@@ -10,10 +10,10 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { GlobalStyles } from '../../styles/global';
+import { screenStyles } from '../../styles/screenStyles';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { supabase } from '../../config/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 
 export default function WalkScreen() {
@@ -88,37 +88,23 @@ export default function WalkScreen() {
   };
 
   return (
-    <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24 }}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Retour</Text>
-        </TouchableOpacity>
-
+    <View style={GlobalStyles.safeArea}>
+      <ScrollView contentContainerStyle={screenStyles.screenContainer}>
         {/* HEADER */}
-        <View style={{ alignItems: 'center', marginBottom: 32 }}>
-          <View
-            style={{
-              width: 80,
-              height: 80,
-              borderRadius: 40,
-              backgroundColor: isIncident ? colors.errorLight : colors.successLight,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: spacing.base,
-            }}
-          >
-            <Text style={{ fontSize: 48 }}>
+        <View style={styles.header}>
+          <View style={[
+            screenStyles.avatar,
+            { backgroundColor: isIncident ? colors.errorLight : colors.successLight }
+          ]}>
+            <Text style={screenStyles.avatarEmoji}>
               {isIncident ? '⚠️' : '🌳'}
             </Text>
           </View>
 
-          <Text style={styles.title}>
+          <Text style={screenStyles.screenTitle}>
             {isIncident ? 'Incident à la maison' : 'Sortie réussie'}
           </Text>
-          <Text style={styles.subtitle}>
+          <Text style={screenStyles.screenSubtitle}>
             {isIncident
               ? `Qu'a fait ${currentDog?.name} à l'intérieur ?`
               : `Qu'a fait ${currentDog?.name} dehors ?`}
@@ -127,7 +113,6 @@ export default function WalkScreen() {
 
         {/* OPTIONS */}
         <View style={styles.optionsContainer}>
-          {/* PIPI */}
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -143,7 +128,7 @@ export default function WalkScreen() {
                   pee && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
                 ]}
               >
-                {pee && <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>✓</Text>}
+                {pee && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💧 Pipi</Text>
@@ -154,7 +139,6 @@ export default function WalkScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* CACA */}
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -170,7 +154,7 @@ export default function WalkScreen() {
                   poop && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
                 ]}
               >
-                {poop && <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>✓</Text>}
+                {poop && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💩 Caca</Text>
@@ -181,7 +165,6 @@ export default function WalkScreen() {
             </View>
           </TouchableOpacity>
 
-          {/* FRIANDISE (seulement pour sortie) */}
           {!isIncident && (
             <TouchableOpacity
               style={[
@@ -198,7 +181,7 @@ export default function WalkScreen() {
                     treat && styles.checkboxActivePurple,
                   ]}
                 >
-                  {treat && <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>✓</Text>}
+                  {treat && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.optionLabel}>🍬 Friandise</Text>
@@ -208,7 +191,6 @@ export default function WalkScreen() {
             </TouchableOpacity>
           )}
 
-          {/* LOCALISATION */}
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -224,7 +206,7 @@ export default function WalkScreen() {
                   locationEnabled && styles.checkboxActiveBlue,
                 ]}
               >
-                {locationEnabled && <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>✓</Text>}
+                {locationEnabled && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>📍 Localisation</Text>
@@ -237,26 +219,26 @@ export default function WalkScreen() {
         {loading ? (
           <ActivityIndicator
             size="large"
-            color="#6366f1"
-            style={{ marginTop: 24 }}
+            color={colors.primary}
+            style={{ marginTop: spacing.lg }}
           />
         ) : (
           <>
             <TouchableOpacity
               style={[
-                GlobalStyles.buttonPrimary,
-                styles.fullWidth,
+                screenStyles.button,
+                screenStyles.buttonPrimary,
                 { backgroundColor: isIncident ? colors.error : colors.success },
               ]}
               onPress={handleSave}
             >
-              <Text style={GlobalStyles.buttonPrimaryText}>
+              <Text style={screenStyles.buttonPrimaryText}>
                 {isIncident ? '✅ Enregistrer l\'incident' : '✅ Enregistrer la sortie'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.cancelButton, styles.fullWidth]}
+              style={[screenStyles.button, styles.cancelButton]}
               onPress={() => navigation.goBack()}
             >
               <Text style={styles.cancelText}>Annuler</Text>
@@ -269,33 +251,22 @@ export default function WalkScreen() {
 }
 
 const styles = StyleSheet.create({
-  backButton: {
-    marginBottom: spacing.base,
+  header: {
+    alignItems: 'center',
+    marginBottom: spacing.xxxl,
   },
-  backButtonText: {
+  checkmark: {
+    color: colors.white,
     fontSize: typography.sizes.lg,
-    color: colors.primary,
-    fontWeight: typography.weights.semibold,
-  },
-  title: {
-    fontSize: typography.sizes.xxxl,
     fontWeight: typography.weights.extrabold,
-    color: colors.text,
-    marginBottom: spacing.md,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: typography.sizes.base,
-    color: colors.textSecondary,
-    textAlign: 'center',
   },
   optionsContainer: {
     gap: spacing.md,
     marginBottom: spacing.xxxl,
   },
   optionCard: {
-    backgroundColor: colors.card,
-    padding: 18,
+    backgroundColor: colors.white,
+    padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 2,
     borderColor: colors.gray200,
@@ -309,12 +280,12 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   optionCardActivePurple: {
-    backgroundColor: colors.purpleLight,
-    borderColor: colors.purple,
+    backgroundColor: '#faf5ff',
+    borderColor: '#d8b4fe',
   },
   optionCardActiveBlue: {
-    backgroundColor: colors.infoLight,
-    borderColor: colors.info,
+    backgroundColor: '#eff6ff',
+    borderColor: '#bfdbfe',
   },
   checkbox: {
     width: 28,
@@ -324,7 +295,7 @@ const styles = StyleSheet.create({
     borderColor: colors.gray300,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: spacing.md,
+    marginRight: spacing.lg,
   },
   checkboxActiveGreen: {
     backgroundColor: colors.success,
@@ -335,12 +306,12 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   checkboxActivePurple: {
-    backgroundColor: colors.purple,
-    borderColor: colors.purple,
+    backgroundColor: '#d8b4fe',
+    borderColor: '#d8b4fe',
   },
   checkboxActiveBlue: {
-    backgroundColor: colors.info,
-    borderColor: colors.info,
+    backgroundColor: '#bfdbfe',
+    borderColor: '#bfdbfe',
   },
   optionLabel: {
     fontSize: typography.sizes.xl,
@@ -349,25 +320,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   optionHint: {
-    fontSize: typography.sizes.base,
+    fontSize: typography.sizes.sm,
     color: colors.textTertiary,
     fontWeight: typography.weights.medium,
   },
-  fullWidth: {
-    width: '100%',
-    marginTop: spacing.md,
-  },
   cancelButton: {
-    paddingVertical: spacing.base,
-    alignItems: 'center',
-    borderRadius: borderRadius.lg,
-    borderWidth: 1,
-    borderColor: colors.gray300,
-    marginTop: spacing.md,
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.gray200,
   },
   cancelText: {
     fontSize: typography.sizes.lg,
     color: colors.textSecondary,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.bold,
   },
 });

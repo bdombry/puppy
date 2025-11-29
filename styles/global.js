@@ -1,13 +1,18 @@
 // global.js
 import { StyleSheet, Platform, StatusBar } from 'react-native';
+import { colors } from '../constants/theme';
 
 export const GlobalStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   pageMarginTop: {
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight + 8 : 60, 
     // +8 pour un petit padding supplémentaire sur Android
+  },
+  safeAreaWithPadding: {
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight + 8 : 60,
   },
   container: {
     flex: 1,

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
@@ -11,8 +12,51 @@ import WalkHistoryScreen from './components/screens/WalkHistoryScreen';
 import DogProfileScreen from './components/screens/DogProfileScreen';
 import AnalyticsScreen from './components/screens/AnalyticsScreen';
 import AccountScreen from './components/screens/AccountScreen';
+import MapScreen from './components/screens/MapScreen';
+import { Footer } from './components/Footer';
 
 const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+
+// Navigation avec Tab (Accueil + 4 écrans autour)
+function MainTabNavigator() {
+  return (
+    <Tab.Navigator
+      tabBar={(props) => <Footer {...props} />}
+      screenOptions={{
+        headerShown: false,
+        tabBarHideOnKeyboard: true,
+      }}
+      initialRouteName="Home"
+    >
+      <Tab.Screen 
+        name="DogProfile" 
+        component={DogProfileScreen}
+        options={{ title: 'Profil' }}
+      />
+      <Tab.Screen 
+        name="Map" 
+        component={MapScreen}
+        options={{ title: 'Map' }}
+      />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen}
+        options={{ title: 'Accueil' }}
+      />
+      <Tab.Screen 
+        name="WalkHistory" 
+        component={WalkHistoryScreen}
+        options={{ title: 'Historique' }}
+      />
+      <Tab.Screen 
+        name="Analytics" 
+        component={AnalyticsScreen}
+        options={{ title: 'Stats' }}
+      />
+    </Tab.Navigator>
+  );
+}
 
 function AppNavigator() {
   const { loading, user, currentDog } = useAuth();
@@ -41,11 +85,8 @@ function AppNavigator() {
           </Stack.Group>
         ) : (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
-            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="Walk" component={WalkScreen} />
-            <Stack.Screen name="WalkHistory" component={WalkHistoryScreen} />
-            <Stack.Screen name="DogProfile" component={DogProfileScreen} />
-            <Stack.Screen name="Analytics" component={AnalyticsScreen} />
             <Stack.Screen name="Account" component={AccountScreen} />
           </Stack.Group>
         )}

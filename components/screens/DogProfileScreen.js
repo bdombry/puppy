@@ -13,9 +13,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
+import { screenStyles } from '../../styles/screenStyles';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { EMOJI } from '../../constants/config';
 
 export default function DogProfileScreen() {
@@ -84,30 +84,44 @@ export default function DogProfileScreen() {
         {
           text: 'Supprimer',
           style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              // Suppression en base
-              // D'abord supprimer tous les outings
-              await supabase
-                .from('outings')
-                .delete()
-                .eq('dog_id', currentDog.id);
+          onPress: () => {
+            // Deuxième confirmation
+            Alert.alert(
+              '⚠️⚠️ Confirmation finale',
+              `Dernière chance ! Êtes-vous sûr de vouloir supprimer ${currentDog?.name} ?\n\nCette action est IRRÉVERSIBLE.`,
+              [
+                { text: 'Annuler', style: 'cancel' },
+                {
+                  text: 'OUI, SUPPRIMER',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setLoading(true);
+                    try {
+                      // Suppression en base
+                      // D'abord supprimer tous les outings
+                      await supabase
+                        .from('outings')
+                        .delete()
+                        .eq('dog_id', currentDog.id);
 
-              // Puis supprimer le chien
-              const { error } = await supabase
-                .from('Dogs')
-                .delete()
-                .eq('id', currentDog.id);
+                      // Puis supprimer le chien
+                      const { error } = await supabase
+                        .from('Dogs')
+                        .delete()
+                        .eq('id', currentDog.id);
 
-              if (error) throw error;
-              navigation.replace('DogSetup');
-            } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer le profil');
-              console.error(error);
-            } finally {
-              setLoading(false);
-            }
+                      if (error) throw error;
+                      navigation.replace('DogSetup');
+                    } catch (error) {
+                      Alert.alert('Erreur', 'Impossible de supprimer le profil');
+                      console.error(error);
+                    } finally {
+                      setLoading(false);
+                    }
+                  },
+                },
+              ]
+            );
           },
         },
       ]
@@ -124,31 +138,24 @@ export default function DogProfileScreen() {
   if (!currentDog) {
     return (
       <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-        <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>{EMOJI.dog}</Text>
-          <Text style={styles.emptyText}>Aucun chien enregistré</Text>
+        <View style={screenStyles.emptyContainer}>
+          <Text style={screenStyles.emptyIcon}>{EMOJI.dog}</Text>
+          <Text style={screenStyles.emptyText}>Aucun chien enregistré</Text>
         </View>
       </View>
     );
   }
 
   return (
-    <View style={[GlobalStyles.safeArea, GlobalStyles.pageMarginTop]}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Header */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Retour</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Profil du chien</Text>
+    <View style={GlobalStyles.safeArea}>
+      <ScrollView contentContainerStyle={screenStyles.screenContainer}>
+        {/* Titre */}
+        <Text style={screenStyles.screenTitle}>Profil du chien</Text>
 
         {/* Avatar */}
-        <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarEmoji}>{EMOJI.dog}</Text>
+        <View style={styles.avatarSection}>
+          <View style={screenStyles.avatar}>
+            <Text style={screenStyles.avatarEmoji}>{EMOJI.dog}</Text>
           </View>
           {!isEditing && (
             <TouchableOpacity
@@ -162,40 +169,44 @@ export default function DogProfileScreen() {
 
         {/* Formulaire */}
         <View style={styles.form}>
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Nom *</Text>
+          <View style={screenStyles.formGroup}>
+            <Text style={screenStyles.label}>Nom *</Text>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={screenStyles.input}
                 value={name}
                 onChangeText={setName}
                 placeholder="Ex: Max"
                 editable={!loading}
               />
             ) : (
-              <Text style={styles.valueText}>{currentDog.name}</Text>
+              <View style={screenStyles.valueBox}>
+                <Text style={screenStyles.value}>{currentDog.name}</Text>
+              </View>
             )}
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Race</Text>
+          <View style={screenStyles.formGroup}>
+            <Text style={screenStyles.label}>Race</Text>
             {isEditing ? (
               <TextInput
-                style={styles.input}
+                style={screenStyles.input}
                 value={breed}
                 onChangeText={setBreed}
                 placeholder="Ex: Golden Retriever"
                 editable={!loading}
               />
             ) : (
-              <Text style={styles.valueText}>
-                {currentDog.breed || 'Non renseignée'}
-              </Text>
+              <View style={screenStyles.valueBox}>
+                <Text style={screenStyles.value}>
+                  {currentDog.breed || 'Non renseignée'}
+                </Text>
+              </View>
             )}
           </View>
 
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Date de naissance</Text>
+          <View style={screenStyles.formGroup}>
+            <Text style={screenStyles.label}>Date de naissance</Text>
             {isEditing ? (
               <>
                 <TouchableOpacity
@@ -225,15 +236,19 @@ export default function DogProfileScreen() {
               </>
             ) : (
               <View>
-                <Text style={styles.valueText}>
-                  {currentDog.birth_date
-                    ? new Date(currentDog.birth_date).toLocaleDateString('fr-FR')
-                    : 'Non renseignée'}
-                </Text>
-                {currentDog.birth_date && (
-                  <Text style={styles.ageText}>
-                    {getDogAge(currentDog.birth_date)}
+                <View style={screenStyles.valueBox}>
+                  <Text style={screenStyles.value}>
+                    {currentDog.birth_date
+                      ? new Date(currentDog.birth_date).toLocaleDateString('fr-FR')
+                      : 'Non renseignée'}
                   </Text>
+                </View>
+                {currentDog.birth_date && (
+                  <View style={styles.ageBox}>
+                    <Text style={styles.ageText}>
+                      {EMOJI.fire} {getDogAge(currentDog.birth_date)}
+                    </Text>
+                  </View>
                 )}
               </View>
             )}
@@ -242,31 +257,31 @@ export default function DogProfileScreen() {
 
         {/* Boutons d'action */}
         {isEditing ? (
-          <View style={styles.actions}>
+          <View style={screenStyles.buttonRow}>
             <TouchableOpacity
-              style={[styles.button, styles.buttonPrimary]}
+              style={[screenStyles.button, screenStyles.buttonPrimary]}
               onPress={handleSave}
               disabled={loading}
             >
-              <Text style={styles.buttonPrimaryText}>
+              <Text style={screenStyles.buttonPrimaryText}>
                 {loading ? 'Enregistrement...' : '✅ Enregistrer'}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.buttonSecondary]}
+              style={[screenStyles.button, screenStyles.buttonSecondary]}
               onPress={handleCancel}
               disabled={loading}
             >
-              <Text style={styles.buttonSecondaryText}>Annuler</Text>
+              <Text style={screenStyles.buttonSecondaryText}>Annuler</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity
-            style={[styles.button, styles.buttonDanger]}
+            style={[screenStyles.button, screenStyles.buttonDanger]}
             onPress={handleDelete}
           >
-            <Text style={styles.buttonDangerText}>🗑️ Supprimer le profil</Text>
+            <Text style={screenStyles.buttonDangerText}>🗑️ Supprimer le profil</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
@@ -275,147 +290,54 @@ export default function DogProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: spacing.xl,
-    paddingBottom: spacing.huge,
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButton: {
-    marginBottom: spacing.lg,
-  },
-  backButtonText: {
-    fontSize: typography.sizes.base,
-    color: colors.primary,
-    fontWeight: typography.weights.bold,
-  },
-  title: {
-    fontSize: typography.sizes.xxxl,
-    fontWeight: typography.weights.extrabold,
-    color: colors.gray900,
-    marginBottom: spacing.xxxl,
-  },
-  avatarContainer: {
+  avatarSection: {
     alignItems: 'center',
     marginBottom: spacing.xxxl,
-  },
-  avatar: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: colors.primaryLighter,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.lg,
-    ...shadows.large,
-  },
-  avatarEmoji: {
-    fontSize: 64,
   },
   editButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: spacing.xl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.base,
+    backgroundColor: colors.primary,
     borderRadius: borderRadius.full,
-    ...shadows.base,
+    ...shadows.small,
   },
   editButtonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
   },
   form: {
-    marginBottom: spacing.xxxl,
-  },
-  formGroup: {
-    marginBottom: spacing.xxxl,
-  },
-  label: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.bold,
-    color: colors.gray700,
-    marginBottom: spacing.base,
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: colors.gray200,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    fontSize: typography.sizes.base,
-    color: colors.gray900,
-    fontWeight: typography.weights.normal,
-  },
-  valueText: {
-    fontSize: typography.sizes.lg,
-    color: colors.gray900,
-    fontWeight: typography.weights.bold,
-    paddingVertical: spacing.base,
-  },
-  ageText: {
-    fontSize: typography.sizes.sm,
-    color: colors.primary,
-    fontWeight: typography.weights.bold,
-    marginTop: spacing.base,
+    marginBottom: spacing.lg,
   },
   dateButton: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: colors.gray200,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.background,
+    borderWidth: 1.5,
+    borderColor: colors.primary,
     borderRadius: borderRadius.lg,
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
   },
   dateButtonText: {
     fontSize: typography.sizes.base,
-    color: colors.gray700,
+    color: colors.text,
+    fontWeight: typography.weights.normal,
   },
-  actions: {
-    gap: spacing.base,
+  ageBox: {
+    backgroundColor: colors.warningLight,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+    marginTop: spacing.base,
   },
-  button: {
-    paddingVertical: spacing.lg,
-    borderRadius: borderRadius.xl,
-    alignItems: 'center',
-  },
-  buttonPrimary: {
-    backgroundColor: colors.primary,
-    ...shadows.base,
-  },
-  buttonPrimaryText: {
-    color: '#fff',
-    fontSize: typography.sizes.lg,
+  ageText: {
+    fontSize: typography.sizes.base,
+    color: colors.warning,
     fontWeight: typography.weights.bold,
-  },
-  buttonSecondary: {
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: colors.gray200,
-  },
-  buttonSecondaryText: {
-    color: colors.gray600,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-  },
-  buttonDanger: {
-    backgroundColor: colors.errorLight,
-    borderWidth: 2,
-    borderColor: colors.error,
-  },
-  buttonDangerText: {
-    color: colors.error,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-  },
-  emptyIcon: {
-    fontSize: 64,
-    marginBottom: spacing.lg,
-  },
-  emptyText: {
-    fontSize: typography.sizes.lg,
-    color: colors.gray600,
-    textAlign: 'center',
   },
 });
