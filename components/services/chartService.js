@@ -48,23 +48,22 @@ export const getLast7DaysStats = async (dogId) => {
       const dayData = days.find(d => d.dayKey === dayKey);
       if (!dayData) return;
 
-      // Une outing = 1 enregistrement
-      // On regarde si AU MOINS UN besoin (pee ou poop) est dedans (inside)
-      // Si oui = incident, sinon = succès
-      
-      const peeIsInside = outing.pee && outing.pee_location === 'inside';
-      const poopIsInside = outing.poop && outing.poop_location === 'inside';
-      const peeIsOutside = outing.pee && outing.pee_location === 'outside';
-      const poopIsOutside = outing.poop && outing.poop_location === 'outside';
-
-      // Priorité: si AU MOINS UN besoin est dedans = INCIDENT
-      if (peeIsInside || poopIsInside) {
-        dayData.inside++;
-      } else if (peeIsOutside || poopIsOutside) {
-        // Sinon si au moins un est dehors = SUCCÈS
-        dayData.outside++;
+      // Compter pipi et caca indépendamment
+      if (outing.pee) {
+        if (outing.pee_location === 'outside') {
+          dayData.outside++;
+        } else if (outing.pee_location === 'inside') {
+          dayData.inside++;
+        }
       }
-      // Sinon: aucun besoin (pee=false et poop=false) = pas compté
+      
+      if (outing.poop) {
+        if (outing.poop_location === 'outside') {
+          dayData.outside++;
+        } else if (outing.poop_location === 'inside') {
+          dayData.inside++;
+        }
+      }
     });
 
     // Calculer les totaux et pourcentages

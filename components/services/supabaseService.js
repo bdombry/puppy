@@ -61,17 +61,25 @@ export const getPeeStats = async (dogId, period = '1w') => {
     let outside = 0;
     let inside = 0;
     
+    // Compter pipi et caca indépendamment
     events.forEach(event => {
-      const hasOutside = 
-        (event.pee && event.pee_location === 'outside') || 
-        (event.poop && event.poop_location === 'outside');
+      // Compte pipi
+      if (event.pee) {
+        if (event.pee_location === 'outside') {
+          outside++;
+        } else if (event.pee_location === 'inside') {
+          inside++;
+        }
+      }
       
-      const hasInside = 
-        (event.pee && event.pee_location === 'inside') || 
-        (event.poop && event.poop_location === 'inside');
-      
-      if (hasOutside) outside++;
-      if (hasInside) inside++;
+      // Compte caca
+      if (event.poop) {
+        if (event.poop_location === 'outside') {
+          outside++;
+        } else if (event.poop_location === 'inside') {
+          inside++;
+        }
+      }
     });
     
     const total = outside + inside;
