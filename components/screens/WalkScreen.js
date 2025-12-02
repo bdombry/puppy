@@ -12,7 +12,6 @@ import { useAuth } from '../../context/AuthContext';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import * as Location from 'expo-location';
 import { supabase } from '../../config/supabase';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { scheduleNotificationFromOuting } from '../services/notificationService';
@@ -29,9 +28,7 @@ export default function WalkScreen() {
   const [pee, setPee] = useState(false);
   const [poop, setPoop] = useState(false);
   const [treat, setTreat] = useState(false);
-  const [locationEnabled, setLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [testMode, setTestMode] = useState(false); // 🧪 Mode test
 
   const handleSave = async () => {
     // Validation
@@ -45,18 +42,6 @@ export default function WalkScreen() {
 
     setLoading(true);
     try {
-      let locationData = null;
-      if (locationEnabled) {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === 'granted') {
-          const loc = await Location.getCurrentPositionAsync({});
-          locationData = {
-            latitude: loc.coords.latitude,
-            longitude: loc.coords.longitude,
-          };
-        }
-      }
-
       // Automatique : incident = inside, sortie = outside
       const location = isIncident ? 'inside' : 'outside';
 
@@ -69,7 +54,6 @@ export default function WalkScreen() {
         poop,
         poop_location: poop ? location : null,
         treat,
-        location: locationData,
       };
 
       const { error } = await supabase.from('outings').insert([walkData]);
@@ -77,7 +61,7 @@ export default function WalkScreen() {
       
       // 🔔 Programmer la notification
       const outingTime = new Date(walkData.datetime);
-      await scheduleNotificationFromOuting(outingTime, currentDog.name, testMode);
+      await scheduleNotificationFromOuting(outingTime, currentDog.name);
       
       Alert.alert(
         '✅ Enregistré !',
@@ -197,55 +181,6 @@ export default function WalkScreen() {
               </View>
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              locationEnabled && styles.optionCardActiveBlue,
-            ]}
-            onPress={() => setLocationEnabled(!locationEnabled)}
-            activeOpacity={0.7}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View
-                style={[
-                  styles.checkbox,
-                  locationEnabled && styles.checkboxActiveBlue,
-                ]}
-              >
-                {locationEnabled && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}>📍 Localisation</Text>
-                <Text style={styles.optionHint}>Enregistrer la position GPS</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          {/* 🧪 MODE TEST NOTIFICATION */}
-          <TouchableOpacity
-            style={[
-              styles.optionCard,
-              testMode && styles.optionCardActiveYellow,
-            ]}
-            onPress={() => setTestMode(!testMode)}
-            activeOpacity={0.7}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <View
-                style={[
-                  styles.checkbox,
-                  testMode && styles.checkboxActiveYellow,
-                ]}
-              >
-                {testMode && <Text style={styles.checkmark}>✓</Text>}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}>🧪 Mode test (10s)</Text>
-                <Text style={styles.optionHint}>Notif dans 10 secondes</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
         </View>
 
         {loading ? (

@@ -40,7 +40,7 @@ export const getPeeStats = async (dogId, period = '1w') => {
     // Mode connecté - Supabase
     let query = supabase
       .from('outings')
-      .select('pee, pee_location, poop, poop_location, datetime')
+        .select('pee, pee_location, poop, poop_location, datetime')
       .eq('dog_id', dogId);
 
     // Ajouter le filtre de date si nécessaire

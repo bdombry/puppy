@@ -9,7 +9,7 @@ import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { homeStyles } from '../styles/homeStyles';
 import { EMOJI } from '../constants/config';
 
-export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress }) {
+export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, onFeedingPress }) {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={homeStyles.modalOverlay}>
@@ -64,6 +64,29 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress }) 
             </View>
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={[homeStyles.modalOptionButton, homeStyles.modalOptionFeeding]}
+            onPress={onFeedingPress}
+            activeOpacity={0.8}
+          >
+            <View style={homeStyles.modalOptionRow}>
+              <View
+                style={[
+                  homeStyles.modalOptionIconContainer,
+                  homeStyles.modalOptionIconFeeding,
+                ]}
+              >
+                <Text style={homeStyles.modalOptionIcon}>🍽️</Text>
+              </View>
+              <View style={homeStyles.modalOptionInfo}>
+                <Text style={homeStyles.modalOptionTitle}>Alimentation</Text>
+                <Text style={homeStyles.modalOptionDescription}>
+                  Manger ou boire
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
           <TouchableOpacity onPress={onClose} style={homeStyles.modalCancelButton}>
             <Text style={homeStyles.modalCancelText}>Annuler</Text>
           </TouchableOpacity>
@@ -78,4 +101,5 @@ ActionModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   onIncidentPress: PropTypes.func.isRequired,
   onWalkPress: PropTypes.func.isRequired,
+  onFeedingPress: PropTypes.func.isRequired,
 };

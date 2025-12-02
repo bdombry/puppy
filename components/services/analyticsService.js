@@ -20,14 +20,8 @@ export const getAdvancedStats = async (dogId) => {
 
     // Stats friandises
     const treatGiven = outings.filter(o => o.treat).length;
-    const totalOutside = outings.filter(o => 
-      o.pee_location === 'outside' || o.poop_location === 'outside'
-    ).length;
-    const treatPercentage = totalOutside > 0 
-      ? Math.round((treatGiven / totalOutside) * 100)
-      : 0;
-
-    // Stats par type (pipi/caca) inside vs outside
+    
+    // Stats par type (pipi/caca) inside vs outside (incidents)
     const peeOutside = outings.filter(o => o.pee && o.pee_location === 'outside').length;
     const peeInside = outings.filter(o => o.pee && o.pee_location === 'inside').length;
     const poopOutside = outings.filter(o => o.poop && o.poop_location === 'outside').length;
@@ -38,6 +32,14 @@ export const getAdvancedStats = async (dogId) => {
       : 0;
     const poopSuccessRate = poopCount > 0 
       ? Math.round((poopOutside / poopCount) * 100)
+      : 0;
+
+    // Stats friandises par sortie réussie
+    const totalOutside = outings.filter(o => 
+      o.pee_location === 'outside' || o.poop_location === 'outside'
+    ).length;
+    const treatPercentage = totalOutside > 0 
+      ? Math.round((treatGiven / totalOutside) * 100)
       : 0;
 
     // Heure la plus fréquente pour les incidents

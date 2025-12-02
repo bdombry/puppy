@@ -17,6 +17,12 @@ export const PUPPY_PRESETS = {
 export const DEFAULT_NOTIFICATION_SETTINGS = {
   preset: 'medium',
   excludedRanges: [{ start: '00:00', end: '08:00' }], // Pas de notif la nuit
+  // Intervalles personnalisés par type d'événement
+  customIntervals: {
+    outing: null,         // null = utiliser le preset (heures), sinon 1-24 heures
+    eat: null,            // null = utiliser le preset (minutes), sinon 1-120 minutes
+    drink: null,          // null = utiliser le preset (minutes), sinon 1-120 minutes
+  },
 };
 
 const STORAGE_KEY = 'notificationSettings';
@@ -128,19 +134,23 @@ const getNextValidTime = (date, excludedRanges) => {
 };
 
 /**
- * Programme une notification basée sur la dernière sortie
+ * Programme une notification après une sortie
  * @param {Date} lastOutingTime - Heure de la dernière sortie
- * @param {string} dogName - Nom du chiot
- * @param {boolean} testMode - Si true, notif dans 10s au lieu de preset.interval
+ * @param {string} dogName - Nom du chien
  */
-export const scheduleNotificationFromOuting = async (lastOutingTime, dogName, testMode = false) => {
+export const scheduleNotificationFromOuting = async (lastOutingTime, dogName) => {
   try {
     // Charger les paramètres
     const settings = await loadNotificationSettings();
-    const preset = PUPPY_PRESETS[settings.preset];
+    let intervalHours = PUPPY_PRESETS[settings.preset].interval;
+    
+    // Utiliser l'intervalle personnalisé s'il existe
+    if (settings.customIntervals?.outing !== null && settings.customIntervals?.outing !== undefined) {
+      intervalHours = settings.customIntervals.outing;
+    }
 
-    if (!preset) {
-      console.error('Preset invalide:', settings.preset);
+    if (!intervalHours) {
+      console.error('Intervalle invalide');
       return false;
     }
 
@@ -152,16 +162,9 @@ export const scheduleNotificationFromOuting = async (lastOutingTime, dogName, te
       }
     }
 
-    // Calculer la prochaine notif: dernière sortie + intervalle (ou 10s en mode test)
+    // Calculer la prochaine notif: dernière sortie + intervalle
     const nextNotifTime = new Date(lastOutingTime);
-    if (testMode) {
-      // Mode test: notification dans 10 secondes
-      nextNotifTime.setSeconds(nextNotifTime.getSeconds() + 10);
-      console.log('🧪 MODE TEST: Notif dans 10 secondes');
-    } else {
-      // Mode normal: + intervalle du preset
-      nextNotifTime.setHours(nextNotifTime.getHours() + preset.interval);
-    }
+    nextNotifTime.setHours(nextNotifTime.getHours() + intervalHours);
 
     // Vérifier les plages d'exclusion
     const validTime = getNextValidTime(nextNotifTime, settings.excludedRanges);
@@ -184,8 +187,7 @@ export const scheduleNotificationFromOuting = async (lastOutingTime, dogName, te
         },
       });
 
-      const displayTime = testMode ? `${seconds}s` : `${Math.floor(seconds / 60)}min`;
-      console.log(`✅ Notif programmée dans ${displayTime}`);
+      console.log(`✅ Notif programmée dans ${Math.floor(seconds / 60)}min`);
       return true;
     }
 

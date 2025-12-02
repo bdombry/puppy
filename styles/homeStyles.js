@@ -460,6 +460,10 @@ export const homeStyles = StyleSheet.create({
     backgroundColor: colors.successLight,
     borderColor: colors.success,
   },
+  modalOptionFeeding: {
+    backgroundColor: '#fef3c7',
+    borderColor: '#f59e0b',
+  },
   modalOptionRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -477,6 +481,9 @@ export const homeStyles = StyleSheet.create({
   },
   modalOptionIconSuccess: {
     backgroundColor: colors.successLight,
+  },
+  modalOptionIconFeeding: {
+    backgroundColor: '#fef3c7',
   },
   modalOptionIcon: {
     fontSize: typography.sizes.xxxl,
