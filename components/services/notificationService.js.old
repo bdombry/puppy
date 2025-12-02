@@ -1,0 +1,394 @@
+/**
+ * Service de gestion des notifications programmées par jour
+ * Chaque jour de la semaine a ses propres heures indépendantes
+ */
+
+import * as Notifications from 'expo-notifications';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Jours de la semaine
+const DAYS_OF_WEEK = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+
+// Configuration par défaut : même heures pour tous les jours
+export const DEFAULT_NOTIFICATION_SETTINGS = {
+  enabled: true,
+  days: {
+    lundi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    mardi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    mercredi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    jeudi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    vendredi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    samedi: { enabled: true, times: [9, 11, 14, 18, 21] },
+    dimanche: { enabled: true, times: [9, 11, 14, 18, 21] },
+  },
+};
+
+// Templates prédéfinis par âge du chiot
+export const PUPPY_PRESETS = {
+  'young': { // 2-3 mois
+    label: '🐶 Chiot 2-3 mois',
+    description: 'Toutes les 2h',
+    times: [8, 10, 12, 14, 16, 18, 20, 22],
+  },
+  'medium': { // 4-6 mois
+    label: '🐕 Chiot 4-6 mois',
+    description: 'Toutes les 3h',
+    times: [7, 10, 13, 16, 19, 22],
+  },
+  'older': { // 6+ mois
+    label: '🐕‍🦺 Chien 6+ mois',
+    description: 'Toutes les 4h',
+    times: [6, 10, 14, 18, 22],
+  },
+};
+
+const STORAGE_KEY = 'notificationSettings';
+
+// Flag en mémoire pour tracker l'initialisation (évite AsyncStorage qui peut bloquer indéfiniment)
+let notificationsInitialized = false;
+
+/**
+ * Migre les anciennes données vers le nouveau format
+ */
+const migrateOldSettings = (oldSettings) => {
+  // Si le format est déjà le nouveau, retourner tel quel
+  if (oldSettings.days && typeof oldSettings.days === 'object') {
+    return oldSettings;
+  }
+
+  // Sinon, c'est l'ancien format, migrer
+  console.log('🔄 Migration des anciens paramètres...');
+  
+  // Générer les heures par défaut depuis les anciens paramètres
+  let times = [];
+  if (oldSettings.useCustom && oldSettings.customTimes) {
+    times = oldSettings.customTimes;
+  } else if (oldSettings.startHour !== undefined) {
+    for (let h = oldSettings.startHour; h <= oldSettings.endHour; h += oldSettings.intervalHours) {
+      times.push(h);
+    }
+  } else {
+    times = [9, 11, 14, 18, 21]; // Par défaut
+  }
+
+  // Créer le nouveau format
+  const newSettings = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATION_SETTINGS));
+  for (const day of DAYS_OF_WEEK) {
+    newSettings.days[day].times = times;
+    newSettings.days[day].enabled = oldSettings.enabled !== false;
+  }
+
+  console.log('✅ Migration réussie');
+  return newSettings;
+};
+
+/**
+ * Configure le handler des notifications
+ */
+export const configureNotificationHandler = () => {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: true,
+      shouldShowList: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  });
+};
+
+/**
+ * Demande les permissions de notification
+ */
+export const requestNotificationPermissions = async () => {
+  try {
+    const { status } = await Notifications.requestPermissionsAsync();
+    console.log('✅ Status permission notifications:', status);
+    return status === 'granted';
+  } catch (error) {
+    console.error('❌ Erreur demande permission notifications:', error);
+    return false;
+  }
+};
+
+/**
+ * Convertir jour de la semaine en numéro (0 = dimanche, ..., 6 = samedi)
+ */
+const getDayNumber = (dayName) => {
+  const dayMap = {
+    dimanche: 0,
+    lundi: 1,
+    mardi: 2,
+    mercredi: 3,
+    jeudi: 4,
+    vendredi: 5,
+    samedi: 6,
+  };
+  return dayMap[dayName.toLowerCase()];
+};
+
+/**
+ * Calculer les secondes jusqu'au prochain déclenchement de notification
+ * @param {number} dayNumber - Jour de la semaine (0 = dimanche, 1 = lundi, etc.)
+ * @param {number} hour - Heure du jour (0-23)
+ * @returns {number} Nombre de secondes jusqu'au déclenchement
+ */
+const getSecondsUntilNextTrigger = (dayNumber, hour) => {
+  const now = new Date();
+  const currentDay = now.getDay(); // 0 = dimanche, 1 = lundi
+  
+  // Créer une date pour aujourd'hui à l'heure spécifiée
+  let nextTrigger = new Date();
+  nextTrigger.setHours(hour, 0, 0, 0);
+  
+  // Calculer le décalage en jours
+  let daysUntilTarget = dayNumber - currentDay;
+  
+  // Si le jour cible est aujourd'hui
+  if (daysUntilTarget === 0) {
+    // Si l'heure est déjà passée, programmer pour la semaine prochaine
+    if (nextTrigger <= now) {
+      daysUntilTarget = 7;
+    }
+  } else if (daysUntilTarget < 0) {
+    // Le jour cible est dans le passé cette semaine, ajouter 7 jours
+    daysUntilTarget += 7;
+  }
+  
+  nextTrigger.setDate(nextTrigger.getDate() + daysUntilTarget);
+  
+  // Retourner les secondes jusqu'au déclenchement
+  return Math.max(1, Math.floor((nextTrigger - now) / 1000));
+};
+
+/**
+ * Programme les notifications selon les paramètres par jour
+ */
+export const scheduleReminders = async (dogName, settings) => {
+  try {
+    console.log('🔔 Programmation notifications par jour:', settings);
+
+    // 1. Supprimer TOUTES les anciennes notifications (y compris les doublons)
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    console.log(`🗑️ Suppression de ${scheduled.length} notifications existantes...`);
+    
+    for (let notif of scheduled) {
+      try {
+        await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+      } catch (err) {
+        console.warn(`⚠️ Erreur suppression notif ${notif.identifier}:`, err.message);
+      }
+    }
+    
+    // Vérifier qu'on a bien tout supprimé
+    const remaining = await Notifications.getAllScheduledNotificationsAsync();
+    if (remaining.length > 0) {
+      console.warn(`⚠️ ${remaining.length} notifications restent après nettoyage!`);
+    } else {
+      console.log('✅ Toutes les notifications anciennes supprimées');
+    }
+
+    // 2. Si désactivé, arrêter
+    if (!settings.enabled) {
+      console.log('⸸️ Notifications désactivées');
+      return;
+    }
+
+    // 3. Programmer les notifications pour chaque jour
+    let totalScheduled = 0;
+    for (const dayName of DAYS_OF_WEEK) {
+      const dayConfig = settings.days[dayName];
+      
+      if (!dayConfig || !dayConfig.enabled || !dayConfig.times || dayConfig.times.length === 0) {
+        console.log(`⏸️ ${dayName}: aucune notification`);
+        continue;
+      }
+
+      const dayNumber = getDayNumber(dayName);
+
+        for (const hour of dayConfig.times) {
+          try {
+            // Créer un ID unique pour éviter les doublons
+            const notificationId = `${dayName}-${hour}`;
+            
+            // Calculer les secondes jusqu'au prochain déclenchement
+            const secondsUntilTrigger = getSecondsUntilNextTrigger(dayNumber, hour);
+
+            await Notifications.scheduleNotificationAsync({
+              identifier: notificationId,
+              content: {
+                title: `Sortie de ${dogName} ! 🐶`,
+                body: `C'est l'heure pour une balade ✨`,
+                sound: 'default',
+                badge: 1,
+              },
+              trigger: {
+                seconds: secondsUntilTrigger,
+                repeats: true, // Répète chaque semaine
+              },
+            });
+            totalScheduled++;
+            console.log(`  ✅ ${dayName} ${hour}h: dans ${Math.floor(secondsUntilTrigger / 60)}min`);
+          } catch (error) {
+            console.error(`❌ Erreur programmation ${dayName} ${hour}h:`, error);
+          }
+        }      console.log(`✅ ${dayName}: ${dayConfig.times.length} notification(s)`);
+    }
+
+    console.log(`✅ Total ${totalScheduled} notifications programmées`);
+  } catch (error) {
+    console.error('❌ Erreur scheduleReminders:', error);
+  }
+};
+
+/**
+ * Charge les paramètres de notification depuis le stockage
+ */
+export const loadNotificationSettings = async () => {
+  try {
+    const saved = await AsyncStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const settings = JSON.parse(saved);
+      // Migrer si nécessaire
+      const migratedSettings = migrateOldSettings(settings);
+      console.log('📂 Paramètres chargés');
+      return migratedSettings;
+    }
+    console.log('📂 Utilisation des paramètres par défaut');
+    return JSON.parse(JSON.stringify(DEFAULT_NOTIFICATION_SETTINGS));
+  } catch (error) {
+    console.error('❌ Erreur chargement paramètres:', error);
+    return JSON.parse(JSON.stringify(DEFAULT_NOTIFICATION_SETTINGS));
+  }
+};
+
+/**
+ * Sauvegarde les paramètres de notification
+ */
+export const saveNotificationSettings = async (settings) => {
+  try {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    console.log('💾 Paramètres sauvegardés');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur sauvegarde paramètres:', error);
+    return false;
+  }
+};
+
+/**
+ * Initialise les notifications au démarrage de l'app (non-bloquant)
+ */
+export const initializeNotifications = async (dogName) => {
+  try {
+    // Configurer le handler
+    configureNotificationHandler();
+
+    // Demander les permissions avec un timeout de 5 secondes
+    const permissionPromise = requestNotificationPermissions();
+    const hasPermission = await Promise.race([
+      permissionPromise,
+      new Promise(resolve => setTimeout(() => resolve(false), 5000))
+    ]);
+
+    if (!hasPermission) {
+      console.log('⚠️ Permissions notifications refusées ou timeout');
+      return false;
+    }
+
+    // Charger les paramètres avec un timeout
+    const settingsPromise = loadNotificationSettings();
+    const settings = await Promise.race([
+      settingsPromise,
+      new Promise(resolve => setTimeout(() => resolve(DEFAULT_NOTIFICATION_SETTINGS), 3000))
+    ]);
+
+    // Vérifier avec le flag en mémoire (AUCUN risque de blocage AsyncStorage)
+    if (!notificationsInitialized) {
+      // Première fois : programmer les notifications EN ARRIÈRE-PLAN (non-bloquant)
+      console.log('📱 Programmation initiale des notifications (en arrière-plan)');
+      notificationsInitialized = true;  // Set flag IMMÉDIATEMENT avant l'async
+      scheduleReminders(dogName, settings).catch(error => {
+        console.error('⚠️ Erreur programmation arrière-plan:', error);
+      });
+    } else {
+      console.log('✅ Notifications déjà initialisées');
+    }    return true;
+  } catch (error) {
+    console.error('❌ Erreur initialisation notifications:', error);
+    return false;
+  }
+};
+
+/**
+ * Met à jour et reprogramme les notifications (avec flag pour éviter les tests)
+ */
+export const updateNotificationSettings = async (dogName, newSettings, testNotification = false) => {
+  try {
+    // Sauvegarder
+    await saveNotificationSettings(newSettings);
+
+    // scheduleReminders va nettoyer et reprogrammer automatiquement
+    await scheduleReminders(dogName, newSettings);
+
+    // Envoyer UNE seule notification de test si demandé
+    if (testNotification) {
+      await Notifications.scheduleNotificationAsync({
+        identifier: 'test-notif',
+        content: {
+          title: `Notification test ! 🎉`,
+          body: `Paramètres sauvegardés avec succès`,
+          sound: 'default',
+        },
+        trigger: { seconds: 1 },
+      });
+      console.log('✅ Notification de test envoyée');
+    }
+
+    console.log('✅ Notifications mises à jour');
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur mise à jour notifications:', error);
+    return false;
+  }
+};
+
+/**
+ * Désactive temporairement les notifications
+ */
+export const disableNotificationsUntil = async (durationMinutes) => {
+  try {
+    const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    for (let notif of scheduled) {
+      await Notifications.cancelScheduledNotificationAsync(notif.identifier);
+    }
+    console.log(`⏸️ Notifications désactivées pour ${durationMinutes} min`);
+
+    // Réactiver après la durée
+    setTimeout(async () => {
+      const settings = await loadNotificationSettings();
+      const dogName = await AsyncStorage.getItem('dogName') || 'ton chiot';
+      await scheduleReminders(dogName, settings);
+      console.log('🔔 Notifications réactivées');
+    }, durationMinutes * 60 * 1000);
+
+    return true;
+  } catch (error) {
+    console.error('❌ Erreur désactivation notifications:', error);
+    return false;
+  }
+};
+
+/**
+ * Applique un preset d'âge du chiot
+ */
+export const applyPuppyPreset = (presetKey, settings) => {
+  const preset = PUPPY_PRESETS[presetKey];
+  if (!preset) return settings;
+
+  const newSettings = JSON.parse(JSON.stringify(settings));
+  for (const day of DAYS_OF_WEEK) {
+    newSettings.days[day].times = [...preset.times];
+  }
+  return newSettings;
+};
+

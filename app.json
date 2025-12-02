@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "pupy-track",
-    "slug": "snack-8d5a7e98-da91-4ab9-999c-68351051b8ae",
+    "slug": "pupytracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,14 +13,19 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bendombry.pupytracker",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.bendombry.pupytracker"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -28,7 +33,7 @@
     "description": "insight update",
     "extra": {
       "eas": {
-        "projectId": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+        "projectId": "43323095-10c1-4fc7-8bcc-80d8405839ad"
       }
     },
     "owner": "bendombry",
@@ -36,7 +41,7 @@
       "policy": "appVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/c85a1484-9e01-422c-b2d3-11ebb4059322"
+      "url": "https://u.expo.dev/43323095-10c1-4fc7-8bcc-80d8405839ad"
     }
   }
 }

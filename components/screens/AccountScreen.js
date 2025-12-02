@@ -21,6 +21,10 @@ export default function AccountScreen() {
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
 
+  const handleNotificationSettings = () => {
+    navigation.navigate('NotificationSettings');
+  };
+
   const handleDeletePress = () => {
     Alert.alert(
       '⚠️ Supprimer le compte',
@@ -88,6 +92,16 @@ export default function AccountScreen() {
           </View>
         </View>
 
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>⏰ Notifications</Text>
+          <TouchableOpacity
+            style={[screenStyles.button, styles.notificationButton]}
+            onPress={handleNotificationSettings}
+          >
+            <Text style={screenStyles.buttonText}>Paramètres de notification</Text>
+          </TouchableOpacity>
+        </View>
+
         <View style={[screenStyles.section, styles.sectionDanger]}>
           <Text style={screenStyles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
           <TouchableOpacity
@@ -140,5 +154,10 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.text,
     fontWeight: typography.weights.bold,
+  },
+  notificationButton: {
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
+    borderWidth: 1,
   },
 });

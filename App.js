@@ -13,7 +13,9 @@ import DogProfileScreen from './components/screens/DogProfileScreen';
 import AnalyticsScreen from './components/screens/AnalyticsScreen';
 import AccountScreen from './components/screens/AccountScreen';
 import MapScreen from './components/screens/MapScreen';
+import { NotificationSettingsScreen } from './components/screens/NotificationSettingsScreen';
 import { Footer } from './components/Footer';
+import { initializeNotifications } from './components/services/notificationService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -61,6 +63,16 @@ function MainTabNavigator() {
 function AppNavigator() {
   const { loading, user, currentDog } = useAuth();
 
+  // Initialiser les notifications quand on a un chien
+  useEffect(() => {
+    if (currentDog && currentDog.name) {
+      console.log('📱 Initialisation des notifications pour:', currentDog.name);
+      initializeNotifications().catch(error => {
+        console.error('⚠️ Erreur initialisation notifications:', error);
+      });
+    }
+  }, [currentDog]);
+
   if (loading) {
     return <SplashScreen onFinish={() => {}} />;
   }
@@ -88,6 +100,17 @@ function AppNavigator() {
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="Walk" component={WalkScreen} />
             <Stack.Screen name="Account" component={AccountScreen} />
+            <Stack.Screen 
+              name="NotificationSettings" 
+              options={{ headerShown: false }}
+            >
+              {({ navigation }) => (
+                <NotificationSettingsScreen 
+                  dogName={currentDog?.name || 'ton chiot'}
+                  onGoBack={() => navigation.goBack()}
+                />
+              )}
+            </Stack.Screen>
           </Stack.Group>
         )}
       </Stack.Navigator>

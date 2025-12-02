@@ -15,6 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { supabase } from '../../config/supabase';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
+import { scheduleNotificationFromOuting } from '../services/notificationService';
 
 export default function WalkScreen() {
   const navigation = useNavigation();
@@ -30,6 +31,7 @@ export default function WalkScreen() {
   const [treat, setTreat] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [testMode, setTestMode] = useState(false); // 🧪 Mode test
 
   const handleSave = async () => {
     // Validation
@@ -72,6 +74,11 @@ export default function WalkScreen() {
 
       const { error } = await supabase.from('outings').insert([walkData]);
       if (error) throw error;
+      
+      // 🔔 Programmer la notification
+      const outingTime = new Date(walkData.datetime);
+      await scheduleNotificationFromOuting(outingTime, currentDog.name, testMode);
+      
       Alert.alert(
         '✅ Enregistré !',
         isIncident
@@ -214,6 +221,31 @@ export default function WalkScreen() {
               </View>
             </View>
           </TouchableOpacity>
+
+          {/* 🧪 MODE TEST NOTIFICATION */}
+          <TouchableOpacity
+            style={[
+              styles.optionCard,
+              testMode && styles.optionCardActiveYellow,
+            ]}
+            onPress={() => setTestMode(!testMode)}
+            activeOpacity={0.7}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View
+                style={[
+                  styles.checkbox,
+                  testMode && styles.checkboxActiveYellow,
+                ]}
+              >
+                {testMode && <Text style={styles.checkmark}>✓</Text>}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.optionLabel}>🧪 Mode test (10s)</Text>
+                <Text style={styles.optionHint}>Notif dans 10 secondes</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
         </View>
 
         {loading ? (
@@ -287,6 +319,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#eff6ff',
     borderColor: '#bfdbfe',
   },
+  optionCardActiveYellow: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fbbf24',
+  },
   checkbox: {
     width: 28,
     height: 28,
@@ -312,6 +348,10 @@ const styles = StyleSheet.create({
   checkboxActiveBlue: {
     backgroundColor: '#bfdbfe',
     borderColor: '#bfdbfe',
+  },
+  checkboxActiveYellow: {
+    backgroundColor: '#fbbf24',
+    borderColor: '#fbbf24',
   },
   optionLabel: {
     fontSize: typography.sizes.xl,
