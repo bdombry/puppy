@@ -57,7 +57,7 @@ export function ProgressSection({
       ) : (
         <>
           <View style={homeStyles.statsHeader}>
-            <Text style={homeStyles.statsTitle}>Propreté</Text>
+            <Text style={homeStyles.statsTitle}>Besoins dehors</Text>
             <Text style={homeStyles.statsPercentage}>{stats.percentage}%</Text>
           </View>
 
@@ -82,7 +82,7 @@ export function ProgressSection({
             </View>
             <View style={homeStyles.legendItem}>
               <View style={[homeStyles.legendDot, homeStyles.legendDotIncident]} />
-              <Text style={homeStyles.legendText}>{stats.inside} incidents</Text>
+              <Text style={homeStyles.legendText}>{stats.inside} accidents</Text>
             </View>
           </View>
 

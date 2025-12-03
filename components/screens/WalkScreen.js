@@ -15,6 +15,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../config/supabase';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { scheduleNotificationFromOuting } from '../services/notificationService';
+import { getNowLocal } from '../services/dateService';
 import { getDogMessages } from '../../constants/dogMessages';
 
 export default function WalkScreen() {
@@ -44,11 +45,12 @@ export default function WalkScreen() {
     setLoading(true);
     try {
       const location = isIncident ? 'inside' : 'outside';
+      const datetimeISO = getNowLocal();
 
       const walkData = {
         dog_id: currentDog.id,
         user_id: user?.id || null,
-        datetime: new Date().toISOString(),
+        datetime: datetimeISO,
         pee,
         pee_location: pee ? location : null,
         poop,
@@ -59,7 +61,7 @@ export default function WalkScreen() {
       const { error } = await supabase.from('outings').insert([walkData]);
       if (error) throw error;
 
-      const outingTime = new Date(walkData.datetime);
+      const outingTime = new Date(datetimeISO);
       await scheduleNotificationFromOuting(outingTime, currentDog.name);
 
       let successMessage = '';
@@ -80,7 +82,10 @@ export default function WalkScreen() {
           : `La sortie a été synchronisée. ${successMessage}`
       );
 
-      navigation.goBack();
+      // Petit délai pour s'assurer que Supabase a bien sauvegardé avant de naviguer
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1000);
     } catch (err) {
       Alert.alert('❌ Erreur', err.message);
     } finally {
@@ -102,7 +107,7 @@ export default function WalkScreen() {
           </View>
 
           <Text style={screenStyles.screenTitle}>
-            {isIncident ? 'Incident à la maison' : 'Sortie réussie'}
+            {isIncident ? 'Accident à la maison' : 'Besoin dehors'}
           </Text>
           <Text style={screenStyles.screenSubtitle}>
             {isIncident
@@ -208,7 +213,7 @@ export default function WalkScreen() {
               onPress={handleSave}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                {isIncident ? '✅ Enregistrer l\'incident' : '✅ Enregistrer la sortie'}
+                {isIncident ? '✅ Enregistrer l\'accident' : '✅ Enregistrer le besoin'}
               </Text>
             </TouchableOpacity>
 

@@ -2,21 +2,11 @@
 import { supabase } from '../../config/supabase';
 
 /**
- * Récupère le dernier outing ou activity d'un chien
- * Combine les données des tables outings et activities
+ * Récupère la dernière balade (activity uniquement)
+ * Une balade = promenade enregistrée dans activities
  */
 export const getLastOuting = async (dogId) => {
   try {
-    // Récupérer le dernier outing
-    const { data: outingData, error: outingError } = await supabase
-      .from('outings')
-      .select('datetime, pee_location, poop_location')
-      .eq('dog_id', dogId)
-      .order('datetime', { ascending: false })
-      .limit(1)
-      .single();
-
-    // Récupérer la dernière activity
     const { data: activityData, error: activityError } = await supabase
       .from('activities')
       .select('datetime')
@@ -25,24 +15,58 @@ export const getLastOuting = async (dogId) => {
       .limit(1)
       .single();
 
-    // Ignorer les erreurs "pas de résultat" (PGRST116)
-    const hasOuting = outingData && (!outingError || outingError.code === 'PGRST116');
-    const hasActivity = activityData && (!activityError || activityError.code === 'PGRST116');
-
-    // Comparer les datetimes et retourner le plus récent
-    if (hasOuting && hasActivity) {
-      const outingDate = new Date(outingData.datetime);
-      const activityDate = new Date(activityData.datetime);
-      return outingDate > activityDate ? outingData : activityData;
-    } else if (hasOuting) {
-      return outingData;
-    } else if (hasActivity) {
+    if (activityData && (!activityError || activityError.code === 'PGRST116')) {
       return activityData;
     }
     
     return null;
   } catch (error) {
     console.error('Erreur getLastOuting:', error);
+    return null;
+  }
+};
+
+/**
+ * Récupère le dernier besoin (outing OU activity avec pipi/caca)
+ * Un besoin = pipi/caca enregistré dans outings OU activity
+ */
+export const getLastNeed = async (dogId) => {
+  try {
+    // Récupérer le dernier besoin dans outings
+    const { data: outingData, error: outingError } = await supabase
+      .from('outings')
+      .select('datetime')
+      .eq('dog_id', dogId)
+      .order('datetime', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Récupérer la dernière activité avec pipi ou caca
+    const { data: activityData, error: activityError } = await supabase
+      .from('activities')
+      .select('datetime')
+      .eq('dog_id', dogId)
+      .or('pee.eq.true,poop.eq.true')
+      .order('datetime', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Comparer les deux et retourner la plus récente
+    let lastNeed = null;
+    
+    if (outingData && (!outingError || outingError.code === 'PGRST116')) {
+      lastNeed = outingData;
+    }
+    
+    if (activityData && (!activityError || activityError.code === 'PGRST116')) {
+      if (!lastNeed || new Date(activityData.datetime) > new Date(lastNeed.datetime)) {
+        lastNeed = activityData;
+      }
+    }
+    
+    return lastNeed;
+  } catch (error) {
+    console.error('Erreur getLastNeed:', error);
     return null;
   }
 };

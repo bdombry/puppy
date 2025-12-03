@@ -81,8 +81,8 @@ export default function AnalyticsScreen() {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
       >
-        <Text style={screenStyles.screenTitle}>Analytics 📊</Text>
-        <Text style={screenStyles.screenSubtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
+        <Text style={screenStyles.screenTitle}>Suivi 📊</Text>
+        <Text style={screenStyles.screenSubtitle}>Analyse détaillée des besoins de {currentDog.name}</Text>
 
         <WeekChart dogId={currentDog.id} />
 
@@ -106,9 +106,9 @@ export default function AnalyticsScreen() {
           </View>
         </View>
 
-        {/* Taux de réussite par type */}
+        {/* Taux de réussite des besoins */}
         <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>Taux de réussite par type</Text>
+          <Text style={screenStyles.sectionTitle}>Taux de réussite</Text>
 
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
@@ -139,7 +139,7 @@ export default function AnalyticsScreen() {
 
         {/* Friandises */}
         <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>Récompenses 🍬</Text>
+          <Text style={screenStyles.sectionTitle}>Friandises 🍬</Text>
 
           <View style={styles.insightCard}>
             <View style={styles.insightIcon}>

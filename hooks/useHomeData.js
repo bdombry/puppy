@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getPeeStats, getTotalOutings } from '../components/services/supabaseService';
 import { getActivityStreak, getCleanStreak } from '../components/services/streakService';
-import { getLastOuting } from '../components/services/timerService';
+import { getLastOuting, getLastNeed } from '../components/services/timerService';
 
 export function useHomeData(dogId, selectedPeriod) {
   const [stats, setStats] = useState({
@@ -21,6 +21,7 @@ export function useHomeData(dogId, selectedPeriod) {
     clean: 0,
   });
   const [lastOuting, setLastOuting] = useState(null);
+  const [lastNeed, setLastNeed] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -34,12 +35,13 @@ export function useHomeData(dogId, selectedPeriod) {
       setLoading(true);
       setError(null);
 
-      const [peeStats, total, activityStreak, cleanStreak, lastOut] = await Promise.all([
+      const [peeStats, total, activityStreak, cleanStreak, lastOut, lastN] = await Promise.all([
         getPeeStats(dogId, selectedPeriod),
         getTotalOutings(dogId),
         getActivityStreak(dogId),
         getCleanStreak(dogId),
         getLastOuting(dogId),
+        getLastNeed(dogId),
       ]);
 
       setStats(peeStats);
@@ -49,6 +51,7 @@ export function useHomeData(dogId, selectedPeriod) {
         clean: cleanStreak,
       });
       setLastOuting(lastOut);
+      setLastNeed(lastN);
     } catch (err) {
       console.error('❌ Erreur chargement données HomeScreen:', err);
       setError(err.message);
@@ -66,6 +69,7 @@ export function useHomeData(dogId, selectedPeriod) {
     totalOutings,
     streakData,
     lastOuting,
+    lastNeed,
     loading,
     error,
     refreshData: loadData,

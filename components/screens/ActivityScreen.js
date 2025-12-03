@@ -17,6 +17,8 @@ import { screenStyles } from '../../styles/screenStyles';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../config/supabase';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
+import { formatDateTimeLocal } from '../services/dateService';
+import { getDogMessages } from '../../constants/dogMessages';
 
 export default function ActivityScreen() {
   const navigation = useNavigation();
@@ -60,13 +62,16 @@ export default function ActivityScreen() {
   const handleSave = async () => {
     setLoading(true);
     try {
+      // Utiliser la fonction centralisée pour formatter la date
+      const datetimeISO = formatDateTimeLocal(datetime);
+
       const activityData = {
         dog_id: currentDog.id,
         user_id: user?.id,
         title: title.trim() || null,
         description: description.trim() || null,
         location: location.trim() || null,
-        datetime: datetime.toISOString(),
+        datetime: datetimeISO,
         duration_minutes: duration ? parseInt(duration) : null,
         pee,
         pee_incident: pee && peeIncident ? true : false,
@@ -95,7 +100,11 @@ export default function ActivityScreen() {
 
       console.log('✅ Activité enregistrée avec succès');
       Alert.alert('✅ Enregistré !', 'La balade a été enregistrée avec succès');
-      navigation.goBack();
+      
+      // Délai pour s'assurer que Supabase a bien sauvegardé avant de naviguer
+      setTimeout(() => {
+        navigation.goBack();
+      }, 1000);
     } catch (err) {
       console.error('❌ Erreur handleSave:', err);
       Alert.alert('❌ Erreur', err.message || 'Erreur lors de l\'enregistrement');

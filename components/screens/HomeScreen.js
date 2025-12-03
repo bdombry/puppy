@@ -20,6 +20,7 @@ import { AnalyticsButton } from '../buttons/AnalyticsButton';
 import { AccountButton } from '../buttons/AccountButton';
 import { LogoutButton } from '../buttons/LogoutButton';
 import { LastOutingTimer } from '../LastOutingTimer';
+import { TimersSection } from '../TimersSection';
 import { ActionModal } from '../ActionModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
@@ -38,11 +39,12 @@ export default function HomeScreen() {
   const [streakMode, setStreakMode] = useState('activity');
 
   // Hooks personnalisés
-  const { stats, totalOutings, streakData, lastOuting, loading, refreshData } = useHomeData(
+  const { stats, totalOutings, streakData, lastOuting, lastNeed, loading, refreshData } = useHomeData(
     currentDog?.id,
     selectedPeriod
   );
   const timeSince = useTimer(lastOuting);
+  const timeSinceNeed = useTimer(lastNeed);
 
   // Recharger les données quand l'écran reçoit le focus
   useFocusEffect(
@@ -90,7 +92,7 @@ export default function HomeScreen() {
       case 'clean':
         return {
           value: streakData.clean,
-          label: streakData.clean <= 1 ? 'Jour propre' : 'Jours propres',
+          label: streakData.clean <= 1 ? 'Jour sans incident' : 'Jours sans incident',
           icon: EMOJI.sparkle,
         };
       default:
@@ -146,11 +148,11 @@ export default function HomeScreen() {
           </View>
           {currentDog && (
             <Text style={homeStyles.headerSubtitle}>
-              Apprentissage de la propreté de {currentDog.name}
+              Suivi des besoins de {currentDog.name}
             </Text>
           )}
 
-          <LastOutingTimer timeSince={timeSince} />
+          <TimersSection lastOuting={timeSince} lastNeed={timeSinceNeed} />
         </View>
 
         <View style={homeStyles.content}>
