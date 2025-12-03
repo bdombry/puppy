@@ -3,6 +3,7 @@ import { supabase } from '../../config/supabase';
 
 /**
  * Récupère les stats des 7 derniers jours pour le graphique
+ * Combine les données des tables outings et activities
  */
 export const getLast7DaysStats = async (dogId) => {
   try {
@@ -29,20 +30,29 @@ export const getLast7DaysStats = async (dogId) => {
     const startDate = new Date(today);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
 
-    const { data, error } = await supabase
+    // Récupérer outings
+    const { data: outingsData, error: outingsError } = await supabase
       .from('outings')
       .select('datetime, pee, pee_location, poop, poop_location')
       .eq('dog_id', dogId)
       .gte('datetime', startDate.toISOString());
 
-    if (error) throw error;
-    const outings = data || [];
+    if (outingsError) throw outingsError;
+    const outings = outingsData || [];
 
+    // Récupérer activities
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('datetime, pee, pee_incident, poop, poop_incident')
+      .eq('dog_id', dogId)
+      .gte('datetime', startDate.toISOString());
 
-    // Remplir les stats par jour
+    if (activitiesError) throw activitiesError;
+    const activities = activitiesData || [];
+
+    // Remplir les stats par jour depuis outings
     outings.forEach(outing => {
       const outingDate = new Date(outing.datetime);
-      // Extraire la date en UTC
       const dayKey = outingDate.toISOString().split('T')[0];
       
       const dayData = days.find(d => d.dayKey === dayKey);
@@ -62,6 +72,32 @@ export const getLast7DaysStats = async (dogId) => {
           dayData.outside++;
         } else if (outing.poop_location === 'inside') {
           dayData.inside++;
+        }
+      }
+    });
+
+    // Remplir les stats par jour depuis activities (succès ET incidents)
+    activities.forEach(activity => {
+      const activityDate = new Date(activity.datetime);
+      const dayKey = activityDate.toISOString().split('T')[0];
+      
+      const dayData = days.find(d => d.dayKey === dayKey);
+      if (!dayData) return;
+
+      // Compter les succès et incidents séparément
+      if (activity.pee) {
+        if (activity.pee_incident) {
+          dayData.inside++;
+        } else {
+          dayData.outside++;
+        }
+      }
+      
+      if (activity.poop) {
+        if (activity.poop_incident) {
+          dayData.inside++;
+        } else {
+          dayData.outside++;
         }
       }
     });

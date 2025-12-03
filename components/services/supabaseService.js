@@ -3,6 +3,7 @@ import { supabase } from '../../config/supabase';
 
 /**
  * Récupère les stats de propreté pour un chien avec filtre de période
+ * Combine les données des tables outings et activities
  * @param {string} dogId - ID du chien
  * @param {string} period - '1w' | '1m' | '3m' | '6m' | 'all'
  */
@@ -37,32 +38,49 @@ export const getPeeStats = async (dogId, period = '1w') => {
       console.log('📅 Période: ALL TIME');
     }
 
-    // Mode connecté - Supabase
-    let query = supabase
+    // Requête table outings
+    let outingsQuery = supabase
       .from('outings')
-        .select('pee, pee_location, poop, poop_location, datetime')
+      .select('pee, pee_location, poop, poop_location, datetime')
       .eq('dog_id', dogId);
 
-    // Ajouter le filtre de date si nécessaire
     if (startDate) {
-      query = query.gte('datetime', startDate.toISOString());
+      outingsQuery = outingsQuery.gte('datetime', startDate.toISOString());
     }
 
-    const { data, error } = await query;
+    const { data: outingsData, error: outingsError } = await outingsQuery;
 
-    if (error) {
-      console.error('❌ Erreur Supabase:', error);
-      throw error;
+    if (outingsError) {
+      console.error('❌ Erreur Supabase outings:', outingsError);
+      throw outingsError;
     }
 
-    const events = data || [];
-    console.log('📊 Events récupérés:', events.length);
+    // Requête table activities
+    let activitiesQuery = supabase
+      .from('activities')
+      .select('pee, pee_incident, poop, poop_incident, datetime')
+      .eq('dog_id', dogId);
+
+    if (startDate) {
+      activitiesQuery = activitiesQuery.gte('datetime', startDate.toISOString());
+    }
+
+    const { data: activitiesData, error: activitiesError } = await activitiesQuery;
+
+    if (activitiesError) {
+      console.error('❌ Erreur Supabase activities:', activitiesError);
+      throw activitiesError;
+    }
+
+    const outingsEvents = outingsData || [];
+    const activitiesEvents = activitiesData || [];
+    console.log('📊 Outings récupérés:', outingsEvents.length, 'Activities récupérées:', activitiesEvents.length);
     
     let outside = 0;
     let inside = 0;
     
-    // Compter pipi et caca indépendamment
-    events.forEach(event => {
+    // Compter pipi et caca depuis outings
+    outingsEvents.forEach(event => {
       // Compte pipi
       if (event.pee) {
         if (event.pee_location === 'outside') {
@@ -81,11 +99,28 @@ export const getPeeStats = async (dogId, period = '1w') => {
         }
       }
     });
+
+    // Compter pipi et caca depuis activities (succès = sans incident, incidents = avec incident)
+    activitiesEvents.forEach(event => {
+      // Compte pipi réussi (pee=true et pee_incident=false)
+      if (event.pee && !event.pee_incident) {
+        outside++; // Activities = succès = dehors par défaut
+      } else if (event.pee && event.pee_incident) {
+        inside++; // Activities = incident = dedans
+      }
+      
+      // Compte caca réussi (poop=true et poop_incident=false)
+      if (event.poop && !event.poop_incident) {
+        outside++; // Activities = succès = dehors par défaut
+      } else if (event.poop && event.poop_incident) {
+        inside++; // Activities = incident = dedans
+      }
+    });
     
     const total = outside + inside;
     const percentage = total === 0 ? 0 : Math.round((outside / total) * 100);
 
-    console.log('✅ Résultats:', { outside, inside, total, percentage });
+    console.log('✅ Résultats combinés:', { outside, inside, total, percentage });
     return { outside, inside, total, percentage };
   } catch (error) {
     console.error('❌ Erreur getPeeStats:', error);
@@ -95,16 +130,29 @@ export const getPeeStats = async (dogId, period = '1w') => {
 
 /**
  * Récupère le nombre total d'enregistrements (toujours ALL TIME)
+ * Combine les données des tables outings et activities
  */
 export const getTotalOutings = async (dogId) => {
   try {
-    const { count, error } = await supabase
+    // Compter outings
+    const { count: outingsCount, error: outingsError } = await supabase
       .from('outings')
       .select('*', { count: 'exact', head: true })
       .eq('dog_id', dogId);
 
-    if (error) throw error;
-    return count || 0;
+    if (outingsError) throw outingsError;
+
+    // Compter activities
+    const { count: activitiesCount, error: activitiesError } = await supabase
+      .from('activities')
+      .select('*', { count: 'exact', head: true })
+      .eq('dog_id', dogId);
+
+    if (activitiesError) throw activitiesError;
+
+    const total = (outingsCount || 0) + (activitiesCount || 0);
+    console.log('📊 Total Outings:', outingsCount, 'Activities:', activitiesCount, 'Total:', total);
+    return total;
   } catch (error) {
     console.error('Erreur getTotalOutings:', error);
     return 0;

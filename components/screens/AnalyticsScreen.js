@@ -5,8 +5,10 @@ import {
   ScrollView,
   StyleSheet,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { getAdvancedStats } from '../services/analyticsService';
@@ -17,18 +19,38 @@ export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadStats();
-  }, [currentDog]);
+  const loadStats = React.useCallback(async () => {
+    if (!currentDog?.id) {
+      setLoading(false);
+      return;
+    }
+    try {
+      setLoading(true);
+      console.log('📊 Chargement analytics pour chien:', currentDog.id);
+      const data = await getAdvancedStats(currentDog.id);
+      console.log('📊 Stats reçues:', data);
+      setStats(data);
+    } catch (err) {
+      console.error('❌ Erreur chargement analytics:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentDog?.id]);
 
-  const loadStats = async () => {
-    if (!currentDog?.id) return;
-    setLoading(true);
-    const data = await getAdvancedStats(currentDog.id);
-    setStats(data);
-    setLoading(false);
-  };
+  const handleRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadStats();
+    setRefreshing(false);
+  }, [loadStats]);
+
+  // Charger les stats quand on arrive sur l'écran
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStats();
+    }, [loadStats])
+  );
 
   if (loading) {
     return (
@@ -52,7 +74,13 @@ export default function AnalyticsScreen() {
 
   return (
     <View style={GlobalStyles.safeArea}>
-      <ScrollView contentContainerStyle={screenStyles.screenContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={screenStyles.screenContainer} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
         <Text style={screenStyles.screenTitle}>Analytics 📊</Text>
         <Text style={screenStyles.screenSubtitle}>Analyse détaillée des progrès de {currentDog.name}</Text>
 

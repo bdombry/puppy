@@ -18,39 +18,124 @@ import { colors, spacing, borderRadius, shadows, typography } from '../../consta
 export default function WalkHistoryScreen() {
   const { user, currentDog } = useAuth();
   const [walks, setWalks] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // 'all', 'success', 'incidents'
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [totalStats, setTotalStats] = useState({ successCount: 0, incidentCount: 0, activitiesCount: 0 }); // Stats globales
   const navigation = useNavigation();
+  const ITEMS_PER_PAGE = 15;
 
   useEffect(() => {
-    fetchWalks();
+    fetchInitialData();
   }, []);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('focus', () => {
-      fetchWalks();
+      fetchInitialData();
     });
     return unsubscribe;
   }, [navigation]);
 
-  const fetchWalks = async () => {
+  useEffect(() => {
+    setPage(0);
+    setHasMore(true);
+    setWalks([]);
+    setActivities([]);
+    fetchData(0, true); // Réinitialiser et charger la page 0
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (page > 0) {
+      fetchData(page, false); // Charger la page suivante
+    }
+  }, [page]);
+
+  const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Récupérer TOUS les walks une seule fois pour les stats
+      const { data: allWalks, error: walksError } = await supabase
         .from('outings')
-        .select('*')
+        .select('*', { count: 'exact' })
+        .eq('dog_id', currentDog?.id);
+      if (walksError) throw walksError;
+
+      // Récupérer le nombre total de balades
+      const { count: activitiesCount, error: activitiesError } = await supabase
+        .from('activities')
+        .select('*', { count: 'exact' })
+        .eq('dog_id', currentDog?.id);
+      if (activitiesError) throw activitiesError;
+
+      // Calculer les stats globales
+      const incidentCount = allWalks?.filter(isIncident).length || 0;
+      const successCount = (allWalks?.length || 0) - incidentCount;
+      setTotalStats({ successCount, incidentCount, activitiesCount: activitiesCount || 0 });
+
+      // Charger la première page de pagination
+      setPage(0);
+      setWalks([]);
+      setActivities([]);
+    } catch (error) {
+      console.error('Erreur récupération stats:', error);
+    } finally {
+      setLoading(false);
+      fetchData(0, true); // Lancer le chargement de la première page
+    }
+  };
+
+  const fetchData = async (pageNum = 0, reset = false) => {
+    if (reset || pageNum === 0) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      let walksQuery = supabase
+        .from('outings')
+        .select('*', { count: 'exact' })
         .eq('dog_id', currentDog?.id)
-        .order('datetime', { ascending: false });
-      if (error) throw error;
-      setWalks(data || []);
+        .order('datetime', { ascending: false })
+        .range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
+
+      let activitiesQuery = supabase
+        .from('activities')
+        .select('*', { count: 'exact' })
+        .eq('dog_id', currentDog?.id)
+        .order('datetime', { ascending: false })
+        .range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
+
+      const { data: walksData, count: walksCount } = await walksQuery;
+      const { data: activitiesData, count: activitiesCount } = await activitiesQuery;
+
+      if (reset || pageNum === 0) {
+        setWalks(walksData || []);
+        setActivities(activitiesData || []);
+      } else {
+        setWalks((prev) => [...prev, ...(walksData || [])]);
+        setActivities((prev) => [...prev, ...(activitiesData || [])]);
+      }
+
+      const totalWalks = walksCount || 0;
+      const totalActivities = activitiesCount || 0;
+      const loaded = (pageNum + 1) * ITEMS_PER_PAGE;
+      const hasMoreWalks = loaded < totalWalks;
+      const hasMoreActivities = loaded < totalActivities;
+
+      setHasMore(hasMoreWalks || hasMoreActivities);
     } catch (error) {
       console.error('Erreur récupération historique:', error);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
-  const handleDelete = async (walk) => {
+  const handleDelete = async (item, isActivity = false) => {
     Alert.alert(
       'Supprimer',
       'Veux-tu vraiment supprimer cet enregistrement ?',
@@ -61,12 +146,17 @@ export default function WalkHistoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
+              const table = isActivity ? 'activities' : 'outings';
               const { error } = await supabase
-                .from('outings')
+                .from(table)
                 .delete()
-                .eq('id', walk.id);
+                .eq('id', item.id);
               if (error) throw error;
-              setWalks(walks.filter((w) => w.id !== walk.id));
+              if (isActivity) {
+                setActivities(activities.filter((a) => a.id !== item.id));
+              } else {
+                setWalks(walks.filter((w) => w.id !== item.id));
+              }
             } catch (error) {
               Alert.alert('Erreur', 'Impossible de supprimer');
             }
@@ -107,8 +197,27 @@ export default function WalkHistoryScreen() {
     return true;
   });
 
-  const incidentCount = walks.filter(isIncident).length;
-  const successCount = walks.length - incidentCount;
+  const filteredActivities = activities.filter((activity) => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'activities') return true;
+    if (activeTab === 'success') {
+      // Balades avec AU MOINS 1 réussite (pipi/caca sans incident)
+      const hasPeeSuccess = activity.pee && !activity.pee_incident;
+      const hasPoopSuccess = activity.poop && !activity.poop_incident;
+      return hasPeeSuccess || hasPoopSuccess;
+    }
+    if (activeTab === 'incidents') {
+      // Balades avec AU MOINS 1 incident
+      return activity.pee_incident || activity.poop_incident;
+    }
+    return false;
+  });
+
+  // Combiner et trier tous les éléments par date
+  const allItems = [
+    ...(activeTab === 'activities' ? [] : filteredWalks.map((w) => ({ ...w, type: 'walk' }))),
+    ...filteredActivities.map((a) => ({ ...a, type: 'activity' })),
+  ].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
 
   return (
     <View style={GlobalStyles.safeArea}>
@@ -118,12 +227,18 @@ export default function WalkHistoryScreen() {
 
         <View style={styles.quickStats}>
           <View style={styles.statBadge}>
-            <Text style={styles.statNumber}>{successCount}</Text>
+            <Text style={styles.statNumber}>{totalStats.successCount}</Text>
             <Text style={screenStyles.statLabel}>réussites</Text>
+          </View>
+          <View style={[styles.statBadge, { backgroundColor: '#faf5ff' }]}>
+            <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>
+              {totalStats.activitiesCount}
+            </Text>
+            <Text style={screenStyles.statLabel}>balades</Text>
           </View>
           <View style={[styles.statBadge, { backgroundColor: colors.errorLight }]}>
             <Text style={[styles.statNumber, { color: colors.error }]}>
-              {incidentCount}
+              {totalStats.incidentCount}
             </Text>
             <Text style={screenStyles.statLabel}>incidents</Text>
           </View>
@@ -147,9 +262,19 @@ export default function WalkHistoryScreen() {
           onPress={() => setActiveTab('success')}
         >
           <Text style={[styles.tabText, activeTab === 'success' && styles.tabTextActive]}>
-            Sorties
+            Réussites
           </Text>
           {activeTab === 'success' && <View style={[styles.tabIndicator, { backgroundColor: colors.success }]} />}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'activities' && styles.tabActive]}
+          onPress={() => setActiveTab('activities')}
+        >
+          <Text style={[styles.tabText, activeTab === 'activities' && styles.tabTextActive]}>
+            Balades
+          </Text>
+          {activeTab === 'activities' && <View style={[styles.tabIndicator, { backgroundColor: '#8b5cf6' }]} />}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -169,48 +294,54 @@ export default function WalkHistoryScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.loadingText}>Chargement...</Text>
         </View>
-        ) : filteredWalks.length === 0 ? (
+        ) : allItems.length === 0 ? (
           <View style={screenStyles.emptyContainer}>
           <Text style={screenStyles.emptyIcon}>
-            {activeTab === 'all' ? '📝' : activeTab === 'incidents' ? '⚠️' : '✅'}
+            {activeTab === 'all' ? '📝' : activeTab === 'incidents' ? '⚠️' : activeTab === 'activities' ? '🚶' : '✅'}
           </Text>
           <Text style={styles.emptyTitle}>
             {activeTab === 'all'
               ? 'Aucun enregistrement'
               : activeTab === 'incidents'
               ? 'Aucun incident'
-              : 'Aucune sortie réussie'}
+              : activeTab === 'activities'
+              ? 'Aucune balade enregistrée'
+              : 'Aucune réussite enregistrée'}
           </Text>
           <Text style={screenStyles.emptyText}>
             {activeTab === 'all'
               ? 'Commence à enregistrer les besoins de ton chiot'
               : activeTab === 'incidents'
               ? 'Bravo ! Pas d\'incident enregistré 🎉'
-              : 'Commence par enregistrer des sorties réussies'}
+              : activeTab === 'activities'
+              ? 'Commence à enregistrer tes balades'
+              : 'Aucune sortie réussie ni balade avec besoins enregistrée'}
           </Text>
         </View>
         ) : (
           <View>
-          {filteredWalks.map((walk) => {
-            const { date, time, day } = formatDate(walk.datetime);
-            const incident = isIncident(walk);
+          {allItems.map((item) => {
+            const { date, time, day } = formatDate(item.datetime);
+            const isActivity = item.type === 'activity';
+            const incident = !isActivity && isIncident(item);
+            const hasNeeds = isActivity && (item.pee || item.poop);
 
             return (
               <View
-                key={walk.id || walk.datetime}
+                key={item.id || item.datetime}
                 style={[
                   styles.card,
-                  incident ? styles.cardIncident : styles.cardSuccess,
+                  incident ? styles.cardIncident : isActivity ? styles.cardActivity : styles.cardSuccess,
                 ]}
               >
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     <View style={styles.cardTitleRow}>
                       <Text style={styles.cardIcon}>
-                        {incident ? '⚠️' : '✅'}
+                        {isActivity ? '🚶' : incident ? '⚠️' : '✅'}
                       </Text>
                       <Text style={styles.cardTitle}>
-                        {incident ? 'Incident' : 'Sortie réussie'}
+                        {isActivity ? (item.title ? item.title : 'Balade') : incident ? 'Incident' : 'Réussite'}
                       </Text>
                     </View>
                     <View style={styles.dateRow}>
@@ -224,41 +355,80 @@ export default function WalkHistoryScreen() {
 
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => handleDelete(walk)}
+                    onPress={() => handleDelete(item, isActivity)}
                   >
                     <Text style={styles.deleteButtonText}>🗑️</Text>
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.details}>
-                  {walk.pee && (
-                    <View style={styles.detailBadge}>
-                      <Text style={styles.detailIcon}>💧</Text>
-                      <Text style={styles.detailText}>Pipi</Text>
-                    </View>
-                  )}
-                  {walk.poop && (
-                    <View style={styles.detailBadge}>
-                      <Text style={styles.detailIcon}>💩</Text>
-                      <Text style={styles.detailText}>Caca</Text>
-                    </View>
-                  )}
-                  {walk.treat && (
-                    <View style={[styles.detailBadge, { backgroundColor: colors.primaryLight }]}>
-                      <Text style={styles.detailIcon}>🍬</Text>
-                      <Text style={styles.detailText}>Friandise</Text>
-                    </View>
-                  )}
-                  {walk.location && (
-                    <View style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
-                      <Text style={styles.detailIcon}>📍</Text>
-                      <Text style={styles.detailText}>Position GPS</Text>
-                    </View>
+                  {isActivity ? (
+                    <>
+                      {item.pee && (
+                        <View style={[styles.detailBadge, item.pee_incident && { backgroundColor: colors.errorLight }]}>
+                          <Text style={styles.detailIcon}>{item.pee_incident ? '⚠️' : '💧'}</Text>
+                          <Text style={styles.detailText}>Pipi</Text>
+                        </View>
+                      )}
+                      {item.poop && (
+                        <View style={[styles.detailBadge, item.poop_incident && { backgroundColor: colors.errorLight }]}>
+                          <Text style={styles.detailIcon}>{item.poop_incident ? '⚠️' : '💩'}</Text>
+                          <Text style={styles.detailText}>Caca</Text>
+                        </View>
+                      )}
+                      {item.location && (
+                        <View style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
+                          <Text style={styles.detailIcon}>📍</Text>
+                          <Text style={styles.detailText}>{item.location}</Text>
+                        </View>
+                      )}
+                      {item.duration_minutes && (
+                        <View style={[styles.detailBadge, { backgroundColor: '#fef3c7' }]}>
+                          <Text style={styles.detailIcon}>⏱️</Text>
+                          <Text style={styles.detailText}>{item.duration_minutes}m</Text>
+                        </View>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {item.pee && (
+                        <View style={styles.detailBadge}>
+                          <Text style={styles.detailIcon}>💧</Text>
+                          <Text style={styles.detailText}>Pipi</Text>
+                        </View>
+                      )}
+                      {item.poop && (
+                        <View style={styles.detailBadge}>
+                          <Text style={styles.detailIcon}>💩</Text>
+                          <Text style={styles.detailText}>Caca</Text>
+                        </View>
+                      )}
+                      {item.treat && (
+                        <View style={[styles.detailBadge, { backgroundColor: colors.primaryLight }]}>
+                          <Text style={styles.detailIcon}>🍬</Text>
+                          <Text style={styles.detailText}>Friandise</Text>
+                        </View>
+                      )}
+                    </>
                   )}
                 </View>
               </View>
             );
           })}
+          
+          {hasMore && (
+            <TouchableOpacity
+              style={styles.loadMoreButton}
+              onPress={() => setPage(page + 1)}
+              disabled={loadingMore}
+            >
+              {loadingMore ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Text style={styles.loadMoreText}>📥 Voir plus</Text>
+              )}
+            </TouchableOpacity>
+          )}
           </View>
         )}
       </ScrollView>
@@ -347,6 +517,10 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
     backgroundColor: colors.errorLight,
   },
+  cardActivity: {
+    borderColor: '#8b5cf6',
+    backgroundColor: '#faf5ff',
+  },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -426,6 +600,22 @@ const styles = StyleSheet.create({
   detailText: {
     fontSize: typography.sizes.sm,
     color: colors.text,
+    fontWeight: typography.weights.bold,
+  },
+  loadMoreButton: {
+    marginTop: spacing.lg,
+    marginBottom: spacing.xl,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xxl,
+    backgroundColor: colors.primaryLight,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+  },
+  loadMoreText: {
+    fontSize: typography.sizes.base,
+    color: colors.primary,
     fontWeight: typography.weights.bold,
   },
 });

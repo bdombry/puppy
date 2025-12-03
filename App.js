@@ -15,6 +15,7 @@ import AccountScreen from './components/screens/AccountScreen';
 import MapScreen from './components/screens/MapScreen';
 import { NotificationSettingsScreen } from './components/screens/NotificationSettingsScreen';
 import FeedingScreen from './components/screens/FeedingScreen';
+import ActivityScreen from './components/screens/ActivityScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -101,6 +102,7 @@ function AppNavigator() {
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="Walk" component={WalkScreen} />
             <Stack.Screen name="Feeding" component={FeedingScreen} />
+            <Stack.Screen name="Activity" component={ActivityScreen} />
             <Stack.Screen name="Account" component={AccountScreen} />
             <Stack.Screen 
               name="NotificationSettings" 

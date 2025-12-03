@@ -35,8 +35,8 @@ export default function WalkScreen() {
   const handleSave = async () => {
     if (!pee && !poop) {
       Alert.alert(
-        ' Attention',
-        'Coche au moins une option (pipi ou caca) '
+        '⚠️ Attention',
+        'Coche au moins une option (pipi ou caca) 💧💩'
       );
       return;
     }
@@ -64,9 +64,9 @@ export default function WalkScreen() {
 
       let successMessage = '';
       if (pee && poop && treat) {
-        successMessage = `${messages.pronoun} a tout fait! `;
+        successMessage = `${messages.pronoun} a tout fait! 💧💩🍖`;
       } else if (pee && poop) {
-        successMessage = `${messages.pronoun} a fait pipi et caca! `;
+        successMessage = `${messages.pronoun} a fait pipi et caca! 💧💩`;
       } else if (pee) {
         successMessage = messages.peeDone;
       } else if (poop) {
@@ -74,7 +74,7 @@ export default function WalkScreen() {
       }
 
       Alert.alert(
-        ' Enregistré !',
+        '✅ Enregistré !',
         isIncident
           ? `L'incident a été synchronisé. ${successMessage}`
           : `La sortie a été synchronisée. ${successMessage}`
@@ -82,7 +82,7 @@ export default function WalkScreen() {
 
       navigation.goBack();
     } catch (err) {
-      Alert.alert(' Erreur', err.message);
+      Alert.alert('❌ Erreur', err.message);
     } finally {
       setLoading(false);
     }
@@ -97,7 +97,7 @@ export default function WalkScreen() {
             { backgroundColor: isIncident ? colors.errorLight : colors.successLight }
           ]}>
             <Text style={screenStyles.avatarEmoji}>
-              {isIncident ? '' : ''}
+              {isIncident ? '⚠️' : '🌳'}
             </Text>
           </View>
 
@@ -127,10 +127,10 @@ export default function WalkScreen() {
                   pee && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
                 ]}
               >
-                {pee && <Text style={styles.checkmark}></Text>}
+                {pee && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}> Pipi</Text>
+                <Text style={styles.optionLabel}>💧 Pipi</Text>
                 <Text style={styles.optionHint}>
                   {isIncident ? 'À l\'intérieur' : 'À l\'extérieur'}
                 </Text>
@@ -153,10 +153,10 @@ export default function WalkScreen() {
                   poop && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
                 ]}
               >
-                {poop && <Text style={styles.checkmark}></Text>}
+                {poop && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}> Caca</Text>
+                <Text style={styles.optionLabel}>💩 Caca</Text>
                 <Text style={styles.optionHint}>
                   {isIncident ? 'À l\'intérieur' : 'À l\'extérieur'}
                 </Text>
@@ -180,10 +180,10 @@ export default function WalkScreen() {
                     treat && styles.checkboxActivePurple,
                   ]}
                 >
-                  {treat && <Text style={styles.checkmark}></Text>}
+                  {treat && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.optionLabel}> Friandise</Text>
+                  <Text style={styles.optionLabel}>🍖 Friandise</Text>
                   <Text style={styles.optionHint}>Récompense donnée</Text>
                 </View>
               </View>
@@ -208,7 +208,7 @@ export default function WalkScreen() {
               onPress={handleSave}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                {isIncident ? ' Enregistrer l\'incident' : ' Enregistrer la sortie'}
+                {isIncident ? '✅ Enregistrer l\'incident' : '✅ Enregistrer la sortie'}
               </Text>
             </TouchableOpacity>
 

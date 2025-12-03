@@ -41,7 +41,7 @@ export default function FeedingScreen() {
 
   const handleRecord = async () => {
     if (selectedTypes.length === 0) {
-      Alert.alert(' Attention', 'Sélectionne au moins manger ou boire');
+      Alert.alert('⚠️ Attention', 'Sélectionne au moins manger ou boire');
       return;
     }
 
@@ -68,7 +68,7 @@ export default function FeedingScreen() {
 
       if (insertError) {
         console.error('Supabase insert error:', insertError);
-        Alert.alert(' Erreur', 'Impossible de sauvegarder l\'enregistrement');
+        Alert.alert('❌ Erreur', 'Impossible de sauvegarder l\'enregistrement');
         setLoading(false);
         return;
       }
@@ -87,11 +87,11 @@ export default function FeedingScreen() {
         message = messages.drankWater;
       }
 
-      Alert.alert(' Enregistré !', message);
+      Alert.alert('✅ Enregistré !', message);
 
       navigation.goBack();
     } catch (err) {
-      Alert.alert(' Erreur', err.message);
+      Alert.alert('❌ Erreur', err.message);
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export default function FeedingScreen() {
             screenStyles.avatar,
             { backgroundColor: colors.primaryLight }
           ]}>
-            <Text style={screenStyles.avatarEmoji}></Text>
+            <Text style={screenStyles.avatarEmoji}>🍽️</Text>
           </View>
 
           <Text style={screenStyles.screenTitle}>
@@ -132,10 +132,10 @@ export default function FeedingScreen() {
                   selectedTypes.includes('eat') && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('eat') && <Text style={styles.checkmark}></Text>}
+                {selectedTypes.includes('eat') && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}> Manger</Text>
+                <Text style={styles.optionLabel}>🍗 Manger</Text>
                 <Text style={styles.optionHint}>
                   {messages.pronoun} a mangé des croquettes
                 </Text>
@@ -158,10 +158,10 @@ export default function FeedingScreen() {
                   selectedTypes.includes('drink') && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('drink') && <Text style={styles.checkmark}></Text>}
+                {selectedTypes.includes('drink') && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}> Boire</Text>
+                <Text style={styles.optionLabel}>💧 Boire</Text>
                 <Text style={styles.optionHint}>
                   {messages.pronoun} a bu de l'eau
                 </Text>
@@ -186,7 +186,7 @@ export default function FeedingScreen() {
               onPress={handleRecord}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                 Enregistrer
+                ✅ Enregistrer
               </Text>
             </TouchableOpacity>
 

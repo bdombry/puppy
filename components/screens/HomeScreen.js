@@ -119,6 +119,11 @@ export default function HomeScreen() {
     navigation.navigate('Feeding');
   };
 
+  const handleRecordActivity = () => {
+    setShowActionModal(false);
+    navigation.navigate('Activity');
+  };
+
   return (
     <View style={GlobalStyles.safeArea}>
       <ScrollView
@@ -186,6 +191,7 @@ export default function HomeScreen() {
         onClose={handleActionModalClose}
         onIncidentPress={handleRecordIncident}
         onWalkPress={handleRecordWalk}
+        onActivityPress={handleRecordActivity}
         onFeedingPress={handleRecordFeeding}
       />
     </View>

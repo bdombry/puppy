@@ -9,7 +9,7 @@ import { Modal, View, Text, TouchableOpacity } from 'react-native';
 import { homeStyles } from '../styles/homeStyles';
 import { EMOJI } from '../constants/config';
 
-export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, onFeedingPress }) {
+export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, onActivityPress, onFeedingPress }) {
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={homeStyles.modalOverlay}>
@@ -33,7 +33,7 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>{EMOJI.incident}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Incident à la maison</Text>
+                <Text style={homeStyles.modalOptionTitle}>Incident</Text>
                 <Text style={homeStyles.modalOptionDescription}>
                   Pipi ou caca à l'intérieur
                 </Text>
@@ -56,9 +56,32 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>{EMOJI.walk}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Sortie dehors</Text>
+                <Text style={homeStyles.modalOptionTitle}>Réussite</Text>
                 <Text style={homeStyles.modalOptionDescription}>
                   Balade réussie à l'extérieur
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[homeStyles.modalOptionButton, homeStyles.modalOptionSuccess]}
+            onPress={onActivityPress}
+            activeOpacity={0.8}
+          >
+            <View style={homeStyles.modalOptionRow}>
+              <View
+                style={[
+                  homeStyles.modalOptionIconContainer,
+                  homeStyles.modalOptionIconSuccess,
+                ]}
+              >
+                <Text style={homeStyles.modalOptionIcon}>🚶</Text>
+              </View>
+              <View style={homeStyles.modalOptionInfo}>
+                <Text style={homeStyles.modalOptionTitle}>Balade</Text>
+                <Text style={homeStyles.modalOptionDescription}>
+                  Enregistrer une balade avec détails
                 </Text>
               </View>
             </View>

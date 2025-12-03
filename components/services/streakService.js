@@ -3,25 +3,37 @@ import { supabase } from '../../config/supabase';
 
 /**
  * Calcule le nombre de jours consécutifs avec au moins 1 enregistrement
+ * Combine les sorties normales + balades
  */
 export const getActivityStreak = async (dogId) => {
   try {
-    const { data, error } = await supabase
+    // Récupérer les sorties normales
+    const { data: outings, error: outingsError } = await supabase
       .from('outings')
       .select('datetime')
       .eq('dog_id', dogId)
       .order('datetime', { ascending: false });
 
-    if (error) throw error;
-    const outings = data || [];
+    if (outingsError) throw outingsError;
 
-    if (outings.length === 0) return 0;
+    // Récupérer les balades
+    const { data: activities, error: activitiesError } = await supabase
+      .from('activities')
+      .select('datetime')
+      .eq('dog_id', dogId)
+      .order('datetime', { ascending: false });
+
+    if (activitiesError) throw activitiesError;
+
+    const allRecords = [...(outings || []), ...(activities || [])];
+
+    if (allRecords.length === 0) return 0;
 
     // Groupe par jour
     const daySet = new Set();
-    outings.forEach(o => {
-      const date = new Date(o.datetime);
-      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+    allRecords.forEach(record => {
+      const date = new Date(record.datetime);
+      const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       daySet.add(dayKey);
     });
 
@@ -35,7 +47,7 @@ export const getActivityStreak = async (dogId) => {
     for (let i = 0; i < uniqueDays.length; i++) {
       const checkDate = new Date(today);
       checkDate.setDate(checkDate.getDate() - i);
-      const checkKey = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`;
+      const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
 
       if (uniqueDays.includes(checkKey)) {
         streak++;
@@ -53,29 +65,60 @@ export const getActivityStreak = async (dogId) => {
 
 /**
  * Calcule le nombre de jours consécutifs sans incident
+ * Combine les sorties normales + balades
  */
 export const getCleanStreak = async (dogId) => {
   try {
-    const { data, error } = await supabase
+    // Récupérer les sorties normales
+    const { data: outings, error: outingsError } = await supabase
       .from('outings')
       .select('datetime, pee_location, poop_location')
       .eq('dog_id', dogId)
       .order('datetime', { ascending: false });
 
-    if (error) throw error;
-    const outings = data || [];
+    if (outingsError) throw outingsError;
 
-    if (outings.length === 0) return 0;
+    // Récupérer les balades
+    const { data: activities, error: activitiesError } = await supabase
+      .from('activities')
+      .select('datetime, pee_incident, poop_incident')
+      .eq('dog_id', dogId)
+      .order('datetime', { ascending: false });
+
+    if (activitiesError) throw activitiesError;
+
+    const allOutings = outings || [];
+    const allActivities = activities || [];
+
+    if (allOutings.length === 0 && allActivities.length === 0) return 0;
 
     // Groupe par jour et vérifie s'il y a eu un incident
     const dayMap = {};
-    outings.forEach(o => {
+
+    // Ajouter les sorties
+    allOutings.forEach(o => {
       const date = new Date(o.datetime);
-      const dayKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
       
       const hasIncident = 
         o.pee_location === 'inside' || 
         o.poop_location === 'inside';
+
+      if (!dayMap[dayKey]) {
+        dayMap[dayKey] = { hasIncident: false };
+      }
+
+      if (hasIncident) {
+        dayMap[dayKey].hasIncident = true;
+      }
+    });
+
+    // Ajouter les balades avec incidents
+    allActivities.forEach(a => {
+      const date = new Date(a.datetime);
+      const dayKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      const hasIncident = a.pee_incident || a.poop_incident;
 
       if (!dayMap[dayKey]) {
         dayMap[dayKey] = { hasIncident: false };
@@ -96,7 +139,7 @@ export const getCleanStreak = async (dogId) => {
     for (let i = 0; i < days.length; i++) {
       const checkDate = new Date(today);
       checkDate.setDate(checkDate.getDate() - i);
-      const checkKey = `${checkDate.getFullYear()}-${checkDate.getMonth()}-${checkDate.getDate()}`;
+      const checkKey = `${checkDate.getFullYear()}-${String(checkDate.getMonth() + 1).padStart(2, '0')}-${String(checkDate.getDate()).padStart(2, '0')}`;
 
       if (dayMap[checkKey] && !dayMap[checkKey].hasIncident) {
         streak++;
