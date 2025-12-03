@@ -17,6 +17,7 @@ import { screenStyles } from '../../styles/screenStyles';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
 import { EMOJI } from '../../constants/config';
+import SexToggle from '../SexToggle';
 
 export default function DogProfileScreen() {
   const { currentDog, user, setCurrentDog } = useAuth();
@@ -25,6 +26,7 @@ export default function DogProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentDog?.name || '');
   const [breed, setBreed] = useState(currentDog?.breed || '');
+  const [sex, setSex] = useState(currentDog?.sex || 'female');
   const [birthDate, setBirthDate] = useState(
     currentDog?.birth_date ? new Date(currentDog.birth_date) : null
   );
@@ -52,6 +54,7 @@ export default function DogProfileScreen() {
       const dogData = {
         name: name.trim(),
         breed: breed.trim() || null,
+        sex: sex,
         birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
       };
 
@@ -65,7 +68,7 @@ export default function DogProfileScreen() {
       if (error) throw error;
       setCurrentDog(data);
 
-      Alert.alert('✅ Succès', 'Les informations ont été mises à jour');
+      Alert.alert(' Succès', 'Les informations ont été mises à jour');
       setIsEditing(false);
     } catch (error) {
       Alert.alert('Erreur', "Impossible de sauvegarder les modifications");
@@ -77,7 +80,7 @@ export default function DogProfileScreen() {
 
   const handleDelete = () => {
     Alert.alert(
-      '⚠️ Supprimer le profil',
+      ' Supprimer le profil',
       `Veux-tu vraiment supprimer le profil de ${currentDog?.name} ?\n\nToutes les données seront perdues.`,
       [
         { text: 'Annuler', style: 'cancel' },
@@ -85,9 +88,8 @@ export default function DogProfileScreen() {
           text: 'Supprimer',
           style: 'destructive',
           onPress: () => {
-            // Deuxième confirmation
             Alert.alert(
-              '⚠️⚠️ Confirmation finale',
+              ' Confirmation finale',
               `Dernière chance ! Êtes-vous sûr de vouloir supprimer ${currentDog?.name} ?\n\nCette action est IRRÉVERSIBLE.`,
               [
                 { text: 'Annuler', style: 'cancel' },
@@ -97,14 +99,11 @@ export default function DogProfileScreen() {
                   onPress: async () => {
                     setLoading(true);
                     try {
-                      // Suppression en base
-                      // D'abord supprimer tous les outings
                       await supabase
                         .from('outings')
                         .delete()
                         .eq('dog_id', currentDog.id);
 
-                      // Puis supprimer le chien
                       const { error } = await supabase
                         .from('Dogs')
                         .delete()
@@ -131,6 +130,7 @@ export default function DogProfileScreen() {
   const handleCancel = () => {
     setName(currentDog?.name || '');
     setBreed(currentDog?.breed || '');
+    setSex(currentDog?.sex || 'female');
     setBirthDate(currentDog?.birth_date ? new Date(currentDog.birth_date) : null);
     setIsEditing(false);
   };
@@ -149,10 +149,8 @@ export default function DogProfileScreen() {
   return (
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
-        {/* Titre */}
         <Text style={screenStyles.screenTitle}>Profil du chien</Text>
 
-        {/* Avatar */}
         <View style={styles.avatarSection}>
           <View style={screenStyles.avatar}>
             <Text style={screenStyles.avatarEmoji}>{EMOJI.dog}</Text>
@@ -162,12 +160,11 @@ export default function DogProfileScreen() {
               style={styles.editButton}
               onPress={() => setIsEditing(true)}
             >
-              <Text style={styles.editButtonText}>✏️ Modifier</Text>
+              <Text style={styles.editButtonText}> Modifier</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        {/* Formulaire */}
         <View style={styles.form}>
           <View style={screenStyles.formGroup}>
             <Text style={screenStyles.label}>Nom *</Text>
@@ -200,6 +197,23 @@ export default function DogProfileScreen() {
               <View style={screenStyles.valueBox}>
                 <Text style={screenStyles.value}>
                   {currentDog.breed || 'Non renseignée'}
+                </Text>
+              </View>
+            )}
+          </View>
+
+          <View style={screenStyles.formGroup}>
+            <Text style={screenStyles.label}>Sexe</Text>
+            {isEditing ? (
+              <SexToggle
+                value={sex}
+                onValueChange={setSex}
+                disabled={loading}
+              />
+            ) : (
+              <View style={screenStyles.valueBox}>
+                <Text style={screenStyles.value}>
+                  {sex === 'female' ? '♀️ Femelle' : '♂️ Mâle'}
                 </Text>
               </View>
             )}
@@ -255,7 +269,6 @@ export default function DogProfileScreen() {
           </View>
         </View>
 
-        {/* Boutons d'action */}
         {isEditing ? (
           <View style={screenStyles.buttonRow}>
             <TouchableOpacity
@@ -264,7 +277,7 @@ export default function DogProfileScreen() {
               disabled={loading}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                {loading ? 'Enregistrement...' : '✅ Enregistrer'}
+                {loading ? 'Enregistrement...' : ' Enregistrer'}
               </Text>
             </TouchableOpacity>
 
@@ -281,7 +294,7 @@ export default function DogProfileScreen() {
             style={[screenStyles.button, screenStyles.buttonDanger]}
             onPress={handleDelete}
           >
-            <Text style={screenStyles.buttonDangerText}>🗑️ Supprimer le profil</Text>
+            <Text style={screenStyles.buttonDangerText}> Supprimer le profil</Text>
           </TouchableOpacity>
         )}
       </ScrollView>

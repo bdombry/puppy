@@ -17,12 +17,6 @@ export const PUPPY_PRESETS = {
 export const DEFAULT_NOTIFICATION_SETTINGS = {
   preset: 'medium',
   excludedRanges: [{ start: '00:00', end: '08:00' }], // Pas de notif la nuit
-  // Intervalles personnalisés par type d'événement
-  customIntervals: {
-    outing: null,         // null = utiliser le preset (heures), sinon 1-24 heures
-    eat: null,            // null = utiliser le preset (minutes), sinon 1-120 minutes
-    drink: null,          // null = utiliser le preset (minutes), sinon 1-120 minutes
-  },
 };
 
 const STORAGE_KEY = 'notificationSettings';
@@ -142,15 +136,10 @@ export const scheduleNotificationFromOuting = async (lastOutingTime, dogName) =>
   try {
     // Charger les paramètres
     const settings = await loadNotificationSettings();
-    let intervalHours = PUPPY_PRESETS[settings.preset].interval;
-    
-    // Utiliser l'intervalle personnalisé s'il existe
-    if (settings.customIntervals?.outing !== null && settings.customIntervals?.outing !== undefined) {
-      intervalHours = settings.customIntervals.outing;
-    }
+    const preset = PUPPY_PRESETS[settings.preset];
 
-    if (!intervalHours) {
-      console.error('Intervalle invalide');
+    if (!preset) {
+      console.error('Preset invalide:', settings.preset);
       return false;
     }
 
@@ -164,7 +153,8 @@ export const scheduleNotificationFromOuting = async (lastOutingTime, dogName) =>
 
     // Calculer la prochaine notif: dernière sortie + intervalle
     const nextNotifTime = new Date(lastOutingTime);
-    nextNotifTime.setHours(nextNotifTime.getHours() + intervalHours);
+    // Mode normal: + intervalle du preset (en heures)
+    nextNotifTime.setHours(nextNotifTime.getHours() + preset.interval);
 
     // Vérifier les plages d'exclusion
     const validTime = getNextValidTime(nextNotifTime, settings.excludedRanges);

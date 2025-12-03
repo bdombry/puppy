@@ -13,7 +13,6 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-  TextInput,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -25,12 +24,6 @@ import {
   DEFAULT_NOTIFICATION_SETTINGS,
   PUPPY_PRESETS,
 } from '../services/notificationService';
-import { FEEDING_PRESETS } from '../services/feedingService';
-
-// Options prédéfinies pour les intervalles
-const OUTING_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 12, 24]; // heures
-const EATING_OPTIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120]; // minutes
-const DRINKING_OPTIONS = [5, 10, 15, 20, 30, 45, 60, 90, 120]; // minutes
 
 export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const [settings, setSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS);
@@ -42,15 +35,6 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [newRangeStart, setNewRangeStart] = useState(new Date(2025, 11, 2, 22, 0));
   const [newRangeEnd, setNewRangeEnd] = useState(new Date(2025, 11, 2, 8, 0));
-  const [editingOutingInterval, setEditingOutingInterval] = useState(false);
-  const [showOutingPicker, setShowOutingPicker] = useState(false);
-  const [newOutingInterval, setNewOutingInterval] = useState(new Date(2025, 11, 2, 3, 0));
-  const [editingEatInterval, setEditingEatInterval] = useState(false);
-  const [showEatPicker, setShowEatPicker] = useState(false);
-  const [newEatInterval, setNewEatInterval] = useState(new Date(2025, 11, 2, 0, 20));
-  const [editingDrinkInterval, setEditingDrinkInterval] = useState(false);
-  const [showDrinkPicker, setShowDrinkPicker] = useState(false);
-  const [newDrinkInterval, setNewDrinkInterval] = useState(new Date(2025, 11, 2, 0, 20));
 
   useEffect(() => {
     loadSettings();
@@ -59,17 +43,8 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const loadSettings = async () => {
     try {
       const loaded = await loadNotificationSettings();
-      // Merger avec les defaults pour s'assurer que customIntervals existe
-      const merged = {
-        ...DEFAULT_NOTIFICATION_SETTINGS,
-        ...loaded,
-        customIntervals: {
-          ...DEFAULT_NOTIFICATION_SETTINGS.customIntervals,
-          ...(loaded.customIntervals || {}),
-        },
-      };
-      setSettings(merged);
-      setOriginalSettings(merged); // Garder une copie originale
+      setSettings(loaded);
+      setOriginalSettings(loaded); // Garder une copie originale
     } catch (error) {
       console.error('Erreur chargement paramètres:', error);
       setSettings(DEFAULT_NOTIFICATION_SETTINGS);
@@ -172,7 +147,7 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
         <View style={styles.infoBox}>
           <Text style={styles.infoTitle}>📌 Comment ça marche ?</Text>
           <Text style={styles.infoText}>
-            Quand tu enregistres une sortie, {dogName} reçoit une notification après l'intervalle configuré (2h, 3h ou 4h) pour que tu ressortes ton chiot.
+            Quand tu enregistres une sortie, {dogName} reçoit une notification après l'intervalle du preset (2h, 3h ou 4h) pour que tu ressortes ton chiot.
           </Text>
           <Text style={styles.infoText}>
             Les heures silencieuses empêchent les notifications pendant ces périodes.
@@ -216,251 +191,6 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
               </Text>
             </View>
           )}
-        </View>
-
-        {/* CUSTOM INTERVALS */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>⏱️ Intervalle des notifications</Text>
-          <Text style={styles.sectionDescription}>
-            Personnaliser quand tu veux être notifié après chaque action
-          </Text>
-
-          {/* SORTIE */}
-          <View style={styles.intervalSection}>
-            <Text style={styles.intervalSectionTitle}>🚪 Après une sortie</Text>
-            {!editingOutingInterval ? (
-              <View style={styles.intervalDisplayBox}>
-                <View>
-                  <Text style={styles.intervalDisplayLabel}>Attendre</Text>
-                  <Text style={styles.intervalDisplayValue}>
-                    {settings.customIntervals?.outing 
-                      ? `${settings.customIntervals.outing}h` 
-                      : `${PUPPY_PRESETS[settings.preset]?.interval}h (par défaut)`}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.editIntervalButton}
-                  onPress={() => {
-                    const hours = settings.customIntervals?.outing || PUPPY_PRESETS[settings.preset]?.interval || 3;
-                    setNewOutingInterval(new Date(2025, 11, 2, hours, 0));
-                    setEditingOutingInterval(true);
-                  }}
-                >
-                  <Text style={styles.editIntervalButtonText}>Modifier</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.intervalEditBox}>
-                <Text style={styles.formLabel}>⏱️ Intervalle (heures):</Text>
-                <TouchableOpacity
-                  style={styles.timePickerButton}
-                  onPress={() => setShowOutingPicker(true)}
-                >
-                  <Text style={styles.timePickerButtonText}>
-                    {String(newOutingInterval.getHours()).padStart(2, '0')}h
-                  </Text>
-                </TouchableOpacity>
-                {showOutingPicker && (
-                  <DateTimePicker
-                    value={newOutingInterval}
-                    mode="time"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) {
-                        setNewOutingInterval(selectedDate);
-                      }
-                      setShowOutingPicker(false);
-                    }}
-                  />
-                )}
-
-                <View style={styles.formButtons}>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonConfirm]}
-                    onPress={() => {
-                      const newSettings = { ...settings };
-                      newSettings.customIntervals.outing = newOutingInterval.getHours();
-                      setSettings(newSettings);
-                      setEditingOutingInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>✓ Confirmer</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonCancel]}
-                    onPress={() => {
-                      if (settings.customIntervals?.outing) {
-                        const newSettings = { ...settings };
-                        newSettings.customIntervals.outing = null;
-                        setSettings(newSettings);
-                      }
-                      setEditingOutingInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>Réinitialiser</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* MANGER */}
-          <View style={styles.intervalSection}>
-            <Text style={styles.intervalSectionTitle}>🍽️ Après un repas</Text>
-            {!editingEatInterval ? (
-              <View style={styles.intervalDisplayBox}>
-                <View>
-                  <Text style={styles.intervalDisplayLabel}>Attendre</Text>
-                  <Text style={styles.intervalDisplayValue}>
-                    {settings.customIntervals?.eat 
-                      ? `${settings.customIntervals.eat} min` 
-                      : `${FEEDING_PRESETS[settings.preset]?.eat || 20} min (par défaut)`}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.editIntervalButton}
-                  onPress={() => {
-                    const minutes = settings.customIntervals?.eat || FEEDING_PRESETS[settings.preset]?.eat || 20;
-                    setNewEatInterval(new Date(2025, 11, 2, 0, minutes));
-                    setEditingEatInterval(true);
-                  }}
-                >
-                  <Text style={styles.editIntervalButtonText}>Modifier</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.intervalEditBox}>
-                <Text style={styles.formLabel}>⏱️ Intervalle (minutes):</Text>
-                <TouchableOpacity
-                  style={styles.timePickerButton}
-                  onPress={() => setShowEatPicker(true)}
-                >
-                  <Text style={styles.timePickerButtonText}>
-                    {String(newEatInterval.getMinutes()).padStart(2, '0')} min
-                  </Text>
-                </TouchableOpacity>
-                {showEatPicker && (
-                  <DateTimePicker
-                    value={newEatInterval}
-                    mode="time"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) {
-                        setNewEatInterval(selectedDate);
-                      }
-                      setShowEatPicker(false);
-                    }}
-                  />
-                )}
-
-                <View style={styles.formButtons}>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonConfirm]}
-                    onPress={() => {
-                      const newSettings = { ...settings };
-                      newSettings.customIntervals.eat = newEatInterval.getMinutes();
-                      setSettings(newSettings);
-                      setEditingEatInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>✓ Confirmer</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonCancel]}
-                    onPress={() => {
-                      if (settings.customIntervals?.eat) {
-                        const newSettings = { ...settings };
-                        newSettings.customIntervals.eat = null;
-                        setSettings(newSettings);
-                      }
-                      setEditingEatInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>Réinitialiser</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* BOIRE */}
-          <View style={styles.intervalSection}>
-            <Text style={styles.intervalSectionTitle}>💧 Après avoir bu</Text>
-            {!editingDrinkInterval ? (
-              <View style={styles.intervalDisplayBox}>
-                <View>
-                  <Text style={styles.intervalDisplayLabel}>Attendre</Text>
-                  <Text style={styles.intervalDisplayValue}>
-                    {settings.customIntervals?.drink 
-                      ? `${settings.customIntervals.drink} min` 
-                      : `${FEEDING_PRESETS[settings.preset]?.drink || 20} min (par défaut)`}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={styles.editIntervalButton}
-                  onPress={() => {
-                    const minutes = settings.customIntervals?.drink || FEEDING_PRESETS[settings.preset]?.drink || 20;
-                    setNewDrinkInterval(new Date(2025, 11, 2, 0, minutes));
-                    setEditingDrinkInterval(true);
-                  }}
-                >
-                  <Text style={styles.editIntervalButtonText}>Modifier</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.intervalEditBox}>
-                <Text style={styles.formLabel}>⏱️ Intervalle (minutes):</Text>
-                <TouchableOpacity
-                  style={styles.timePickerButton}
-                  onPress={() => setShowDrinkPicker(true)}
-                >
-                  <Text style={styles.timePickerButtonText}>
-                    {String(newDrinkInterval.getMinutes()).padStart(2, '0')} min
-                  </Text>
-                </TouchableOpacity>
-                {showDrinkPicker && (
-                  <DateTimePicker
-                    value={newDrinkInterval}
-                    mode="time"
-                    display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) {
-                        setNewDrinkInterval(selectedDate);
-                      }
-                      setShowDrinkPicker(false);
-                    }}
-                  />
-                )}
-
-                <View style={styles.formButtons}>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonConfirm]}
-                    onPress={() => {
-                      const newSettings = { ...settings };
-                      newSettings.customIntervals.drink = newDrinkInterval.getMinutes();
-                      setSettings(newSettings);
-                      setEditingDrinkInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>✓ Confirmer</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.formButton, styles.formButtonCancel]}
-                    onPress={() => {
-                      if (settings.customIntervals?.drink) {
-                        const newSettings = { ...settings };
-                        newSettings.customIntervals.drink = null;
-                        setSettings(newSettings);
-                      }
-                      setEditingDrinkInterval(false);
-                    }}
-                  >
-                    <Text style={styles.formButtonText}>Réinitialiser</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
-          </View>
         </View>
 
         {/* EXCLUDED RANGES */}
@@ -947,101 +677,5 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
     color: colors.white,
-  },
-
-  /* Custom Intervals */
-  intervalSection: {
-    marginBottom: spacing.lg,
-    paddingBottom: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  intervalSectionTitle: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-  intervalDisplayBox: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  intervalDisplayLabel: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    marginBottom: spacing.xs,
-  },
-  intervalDisplayValue: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-  },
-  editIntervalButton: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.md,
-  },
-  editIntervalButtonText: {
-    fontSize: typography.sizes.sm,
-    color: colors.white,
-    fontWeight: typography.weights.bold,
-  },
-  intervalEditBox: {
-    backgroundColor: colors.gray100,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
-  },
-  intervalInput: {
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.semibold,
-    color: colors.text,
-  },
-  numberPickerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.white,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.md,
-    marginBottom: spacing.lg,
-    gap: spacing.lg,
-  },
-  numberPickerButton: {
-    width: 50,
-    height: 50,
-    borderRadius: borderRadius.lg,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  numberPickerButtonText: {
-    fontSize: typography.sizes.xxl,
-    color: colors.white,
-    fontWeight: typography.weights.bold,
-  },
-  numberPickerValue: {
-    fontSize: typography.sizes.xl,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-    minWidth: 80,
-    textAlign: 'center',
   },
 });

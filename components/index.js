@@ -18,3 +18,4 @@ export { default as OnboardingHeader } from './OnboardingHeader';
 export { default as FormInput } from './FormInput';
 export { default as AuthButton } from './AuthButton';
 export { default as BackButton } from './BackButton';
+export { default as SexToggle } from './SexToggle';

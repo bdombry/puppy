@@ -16,11 +16,13 @@ import OnboardingHeader from '../OnboardingHeader';
 import FormInput from '../FormInput';
 import AuthButton from '../AuthButton';
 import BackButton from '../BackButton';
+import SexToggle from '../SexToggle';
 import { EMOJI } from '../../constants/config';
 
 export default function DogSetupScreen() {
   const [name, setName] = useState('');
   const [breed, setBreed] = useState('');
+  const [sex, setSex] = useState('female');
   const [birthDate, setBirthDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -38,6 +40,7 @@ export default function DogSetupScreen() {
     try {
       const dogData = {
         name,
+        sex,
       };
 
       // Ajouter breed seulement s'il y a une valeur
@@ -95,6 +98,15 @@ export default function DogSetupScreen() {
           value={breed}
           onChangeText={setBreed}
         />
+
+        <View style={onboardingStyles.formGroup}>
+          <Text style={onboardingStyles.label}>Sexe *</Text>
+          <SexToggle
+            value={sex}
+            onValueChange={setSex}
+            disabled={loading}
+          />
+        </View>
 
         <View style={onboardingStyles.formGroup}>
           <Text style={onboardingStyles.label}>Date de naissance (optionnel)</Text>

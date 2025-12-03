@@ -19,14 +19,17 @@ import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
 import { scheduleFeedingNotification } from '../services/feedingService';
-import { loadNotificationSettings } from '../services/notificationService';
+import { getDogMessages } from '../../constants/dogMessages';
 
 export default function FeedingScreen() {
   const navigation = useNavigation();
   const { currentDog } = useAuth();
 
-  const [selectedTypes, setSelectedTypes] = useState([]); // ['eat', 'drink'] ou vide
+  const [selectedTypes, setSelectedTypes] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // Messages personnalisés selon le sexe
+  const messages = getDogMessages(currentDog?.name, currentDog?.sex);
 
   const toggleFeedingType = (type) => {
     setSelectedTypes(prev =>
@@ -38,13 +41,12 @@ export default function FeedingScreen() {
 
   const handleRecord = async () => {
     if (selectedTypes.length === 0) {
-      Alert.alert('⚠️ Attention', 'Sélectionne au moins manger ou boire');
+      Alert.alert(' Attention', 'Sélectionne au moins manger ou boire');
       return;
     }
 
     setLoading(true);
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         Alert.alert('Erreur', 'Utilisateur non authentifié');
@@ -52,7 +54,6 @@ export default function FeedingScreen() {
         return;
       }
 
-      // Save each selected type to Supabase
       const now = new Date().toISOString();
       const records = selectedTypes.map(type => ({
         dog_id: currentDog.id,
@@ -67,36 +68,30 @@ export default function FeedingScreen() {
 
       if (insertError) {
         console.error('Supabase insert error:', insertError);
-        Alert.alert('❌ Erreur', 'Impossible de sauvegarder l\'enregistrement');
+        Alert.alert(' Erreur', 'Impossible de sauvegarder l\'enregistrement');
         setLoading(false);
         return;
       }
 
-      // Schedule notifications for each type
-      // Charger les settings de notification pour les custom intervals
-      const notificationSettings = await loadNotificationSettings();
-      
-      // Si les 2 sont sélectionnés, ça va automatiquement grouper
       for (const type of selectedTypes) {
-        await scheduleFeedingNotification(
-          type, 
-          new Date(), 
-          currentDog.name,
-          notificationSettings.customIntervals
-        );
+        await scheduleFeedingNotification(type, new Date(), currentDog.name);
       }
 
-      const message = selectedTypes.includes('eat') && selectedTypes.includes('drink')
-        ? `${currentDog.name} a mangé ET bu !`
-        : selectedTypes.includes('eat')
-          ? `${currentDog.name} a mangé !`
-          : `${currentDog.name} a bu !`;
+      // Messages personnalisés selon le sexe
+      let message = '';
+      if (selectedTypes.includes('eat') && selectedTypes.includes('drink')) {
+        message = messages.ateAndDrank;
+      } else if (selectedTypes.includes('eat')) {
+        message = messages.ateFood;
+      } else {
+        message = messages.drankWater;
+      }
 
-      Alert.alert('✅ Enregistré !', message);
+      Alert.alert(' Enregistré !', message);
 
       navigation.goBack();
     } catch (err) {
-      Alert.alert('❌ Erreur', err.message);
+      Alert.alert(' Erreur', err.message);
     } finally {
       setLoading(false);
     }
@@ -105,26 +100,23 @@ export default function FeedingScreen() {
   return (
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
-        {/* HEADER */}
         <View style={styles.header}>
           <View style={[
             screenStyles.avatar,
             { backgroundColor: colors.primaryLight }
           ]}>
-            <Text style={screenStyles.avatarEmoji}>🍽️</Text>
+            <Text style={screenStyles.avatarEmoji}></Text>
           </View>
 
           <Text style={screenStyles.screenTitle}>
             Alimentation
           </Text>
           <Text style={screenStyles.screenSubtitle}>
-            {`${currentDog?.name} a mangé ou bu ?`}
+            {messages.pronoun} a mangé ou bu ?
           </Text>
         </View>
 
-        {/* OPTIONS */}
         <View style={styles.optionsContainer}>
-          {/* MANGER */}
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -140,18 +132,17 @@ export default function FeedingScreen() {
                   selectedTypes.includes('eat') && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('eat') && <Text style={styles.checkmark}>✓</Text>}
+                {selectedTypes.includes('eat') && <Text style={styles.checkmark}></Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}>🍖 Manger</Text>
+                <Text style={styles.optionLabel}> Manger</Text>
                 <Text style={styles.optionHint}>
-                  {currentDog?.name} a mangé des croquettes
+                  {messages.pronoun} a mangé des croquettes
                 </Text>
               </View>
             </View>
           </TouchableOpacity>
 
-          {/* BOIRE */}
           <TouchableOpacity
             style={[
               styles.optionCard,
@@ -167,12 +158,12 @@ export default function FeedingScreen() {
                   selectedTypes.includes('drink') && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('drink') && <Text style={styles.checkmark}>✓</Text>}
+                {selectedTypes.includes('drink') && <Text style={styles.checkmark}></Text>}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.optionLabel}>💧 Boire</Text>
+                <Text style={styles.optionLabel}> Boire</Text>
                 <Text style={styles.optionHint}>
-                  {currentDog?.name} a bu de l'eau
+                  {messages.pronoun} a bu de l'eau
                 </Text>
               </View>
             </View>
@@ -195,7 +186,7 @@ export default function FeedingScreen() {
               onPress={handleRecord}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                ✅ Enregistrer
+                 Enregistrer
               </Text>
             </TouchableOpacity>
 

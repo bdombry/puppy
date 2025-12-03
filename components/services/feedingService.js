@@ -77,32 +77,21 @@ export const getLastDrinkingTime = async () => {
 /**
  * Programme une notification après alimentation
  * Groupe automatiquement manger + boire si dans les 5 minutes
- * Utilise les intervalles personnalisés de notificationService si définis
  * @param {string} type - 'eat' ou 'drink'
  * @param {Date} lastTime - Heure du dernier repas/boisson
  * @param {string} dogName - Nom du chien
- * @param {object} customIntervals - { eat: minutes ou null, drink: minutes ou null }
  */
-export const scheduleFeedingNotification = async (type, lastTime, dogName, customIntervals = null) => {
+export const scheduleFeedingNotification = async (type, lastTime, dogName) => {
   try {
     const settings = await loadFeedingSettings();
     
     // Déterminer les minutes d'attente
     let minutesToWait;
-    
-    // Vérifier d'abord les customIntervals (depuis notificationService)
-    if (customIntervals) {
-      minutesToWait = type === 'eat' ? customIntervals.eat : customIntervals.drink;
-    }
-    
-    // Si pas de custom interval, utiliser les settings de feedingService
-    if (!minutesToWait) {
-      if (settings.preset === 'custom') {
-        minutesToWait = type === 'eat' ? settings.customEatMinutes : settings.customDrinkMinutes;
-      } else {
-        const preset = FEEDING_PRESETS[settings.preset];
-        minutesToWait = type === 'eat' ? preset.eat : preset.drink;
-      }
+    if (settings.preset === 'custom') {
+      minutesToWait = type === 'eat' ? settings.customEatMinutes : settings.customDrinkMinutes;
+    } else {
+      const preset = FEEDING_PRESETS[settings.preset];
+      minutesToWait = type === 'eat' ? preset.eat : preset.drink;
     }
 
     // ⚠️ IMPORTANT: Sauvegarder le timestamp EN PREMIER pour que la prochaine appel le voie
@@ -133,23 +122,11 @@ export const scheduleFeedingNotification = async (type, lastTime, dogName, custo
     
     if (shouldGroup) {
       // Grouper: manger ET boire
-      // Calculer l'intervalle de l'autre type
-      let otherMinutesToWait = minutesToWait;
-      
-      if (customIntervals) {
-        otherMinutesToWait = type === 'eat' ? customIntervals.drink : customIntervals.eat;
-      }
-      
-      if (!otherMinutesToWait) {
-        if (settings.preset === 'custom') {
-          otherMinutesToWait = type === 'eat' ? settings.customDrinkMinutes : settings.customEatMinutes;
-        } else {
-          const preset = FEEDING_PRESETS[settings.preset];
-          otherMinutesToWait = type === 'eat' ? preset.drink : preset.eat;
-        }
-      }
-      
-      const maxMinutes = Math.max(minutesToWait, otherMinutesToWait);
+      const maxMinutes = Math.max(minutesToWait, 
+        type === 'eat' 
+          ? (settings.preset === 'custom' ? settings.customDrinkMinutes : FEEDING_PRESETS[settings.preset].drink)
+          : (settings.preset === 'custom' ? settings.customEatMinutes : FEEDING_PRESETS[settings.preset].eat)
+      );
       
       content = {
         title: `${dogName} 🐶`,
