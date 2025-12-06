@@ -20,10 +20,12 @@ import { AnalyticsButton } from '../buttons/AnalyticsButton';
 import { AccountButton } from '../buttons/AccountButton';
 import { LogoutButton } from '../buttons/LogoutButton';
 import { LastOutingTimer } from '../LastOutingTimer';
+import { LastNeedTimer } from '../LastNeedTimer';
 import { TimersSection } from '../TimersSection';
 import { ActionModal } from '../ActionModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
+import { useLastNeed } from '../../hooks/useLastNeed';
 import { EMOJI } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
 
@@ -39,18 +41,21 @@ export default function HomeScreen() {
   const [streakMode, setStreakMode] = useState('activity');
 
   // Hooks personnalisés
-  const { stats, totalOutings, streakData, lastOuting, lastNeed, loading, refreshData } = useHomeData(
+  const { stats, totalOutings, streakData, lastOuting, loading, refreshData, activities, outings } = useHomeData(
     currentDog?.id,
     selectedPeriod
   );
   const timeSince = useTimer(lastOuting);
-  const timeSinceNeed = useTimer(lastNeed);
+  const lastNeedTime = useLastNeed(currentDog?.id);
 
   // Recharger les données quand l'écran reçoit le focus
+  // MAIS: seulement recharger si le dogId a changé, pas à chaque retour
   useFocusEffect(
     useCallback(() => {
-      refreshData();
-    }, [refreshData])
+      // Les timers se rechargent automatiquement en arrière-plan via useHomeData
+      // Ne pas forcer refreshData() ici pour éviter retrigger la progress bar
+      console.log('🔄 HomeScreen focus - timers se mettent à jour en arrière-plan');
+    }, [])
   );
 
   // Animer la barre de progrès
@@ -152,7 +157,8 @@ export default function HomeScreen() {
             </Text>
           )}
 
-          <TimersSection lastOuting={timeSince} lastNeed={timeSinceNeed} />
+          <TimersSection lastOuting={timeSince} />
+          <LastNeedTimer lastNeedTime={lastNeedTime} />
         </View>
 
         <View style={homeStyles.content}>

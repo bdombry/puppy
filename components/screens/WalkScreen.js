@@ -7,6 +7,7 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { GlobalStyles } from '../../styles/global';
@@ -15,8 +16,11 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../config/supabase';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { scheduleNotificationFromOuting } from '../services/notificationService';
-import { getNowLocal } from '../services/dateService';
 import { getDogMessages } from '../../constants/dogMessages';
+import { validateWalkData, formatValidationErrors } from '../services/validationService';
+import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
+import { insertWithRetry } from '../services/retryService';
+import { cacheService } from '../services/cacheService';
 
 export default function WalkScreen() {
   const navigation = useNavigation();
@@ -26,15 +30,31 @@ export default function WalkScreen() {
   const eventType = route.params?.type || 'walk';
   const isIncident = eventType === 'incident';
 
+  console.log('🚶 WalkScreen montée, eventType:', eventType, 'isIncident:', isIncident);
+
   const [pee, setPee] = useState(false);
   const [poop, setPoop] = useState(false);
   const [treat, setTreat] = useState(false);
+  const [dogAskedForWalk, setDogAskedForWalk] = useState(false);
+  const [incidentReason, setIncidentReason] = useState(null);
+  const [showReasonModal, setShowReasonModal] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const incidentReasons = [
+    { label: '⏰ Pas le temps', value: 'pas_le_temps' },
+    { label: '🌙 Horaire trop tardif', value: 'trop_tard' },
+    { label: '😑 Flemme', value: 'flemme' },
+    { label: '🤔 Oublié', value: 'oublie' },
+    { label: 'ℹ️ Autre', value: 'autre' },
+  ];
 
   const messages = getDogMessages(currentDog?.name, currentDog?.sex);
 
   const handleSave = async () => {
+    console.log('🚶 WalkScreen handleSave appelé avec:', { pee, poop, treat, dogAskedForWalk });
+    
     if (!pee && !poop) {
+      console.log('❌ WalkScreen: Pas de pee ni poop, Alert affiché');
       Alert.alert(
         '⚠️ Attention',
         'Coche au moins une option (pipi ou caca) 💧💩'
@@ -42,10 +62,15 @@ export default function WalkScreen() {
       return;
     }
 
+    console.log('✅ WalkScreen: Validation réussie, création de walkData');
     setLoading(true);
     try {
       const location = isIncident ? 'inside' : 'outside';
-      const datetimeISO = getNowLocal();
+      // ✅ IMPORTANT: Créer la date en LOCAL (comme ActivityScreen)
+      // Les deux tables (outings ET activities) stockent en LOCAL dans leur champ datetime
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const datetimeISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
       const walkData = {
         dog_id: currentDog.id,
@@ -56,13 +81,33 @@ export default function WalkScreen() {
         poop,
         poop_location: poop ? location : null,
         treat,
+        dog_asked_for_walk: dogAskedForWalk,
+        incident_reason: isIncident ? incidentReason : null,
       };
+      
+      console.log('📤 WalkScreen: Données à envoyer:', walkData);
 
-      const { error } = await supabase.from('outings').insert([walkData]);
-      if (error) throw error;
+      // ✅ VALIDATION des données AVANT Supabase
+      const validation = validateWalkData(walkData);
+      if (!validation.isValid) {
+        throw new Error(formatValidationErrors(validation.errors));
+      }
 
-      const outingTime = new Date(datetimeISO);
-      await scheduleNotificationFromOuting(outingTime, currentDog.name);
+      // ✅ PROGRAMMER LES NOTIFICATIONS AVANT l'insert Supabase (c'est critique!)
+      // Comme ça, même si Supabase échoue, la notif est programmée localement
+      // Convert LOCAL datetime string to Date for notification
+      const outingTime = now; // Use the original now Date object, which is already correct
+      const notificationScheduled = await scheduleNotificationFromOuting(outingTime, currentDog.name);
+      
+      if (!notificationScheduled) {
+        console.warn('⚠️ Notification non programmée, mais on continue avec l\'insert');
+      }
+
+      // ✅ PUIS insérer en Supabase (avec retry automatique)
+      await insertWithRetry(supabase, 'outings', [walkData], {
+        maxRetries: 3,
+        context: 'WalkScreen.handleSave',
+      });
 
       let successMessage = '';
       if (pee && poop && treat) {
@@ -82,12 +127,19 @@ export default function WalkScreen() {
           : `La sortie a été synchronisée. ${successMessage}`
       );
 
-      // Petit délai pour s'assurer que Supabase a bien sauvegardé avant de naviguer
+      // 🗑️ Invalider le cache car données modifiées
+      cacheService.invalidatePattern(`home_.*_${currentDog.id}`);
+      cacheService.invalidatePattern(`walk_history.*_${currentDog.id}`);
+      // NOTE: Pas de cache pour les timers (last_outing, last_need)
+
+      // ✅ Navigation après succès
       setTimeout(() => {
-        navigation.goBack();
-      }, 1000);
+        navigation.navigate('MainTabs', { screen: 'Home' });
+      }, 1000); // Réduit de 2s à 1s puisqu'on a le retry
     } catch (err) {
-      Alert.alert('❌ Erreur', err.message);
+      logError('WalkScreen.handleSave', err);
+      const userMessage = getUserFriendlyErrorMessage(err);
+      Alert.alert('❌ Erreur', userMessage);
     } finally {
       setLoading(false);
     }
@@ -122,7 +174,10 @@ export default function WalkScreen() {
               styles.optionCard,
               pee && (isIncident ? styles.optionCardActiveRed : styles.optionCardActiveGreen),
             ]}
-            onPress={() => setPee(!pee)}
+            onPress={() => {
+              console.log('💧 WalkScreen: Toggle pee, avant:', pee);
+              setPee(!pee);
+            }}
             activeOpacity={0.7}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -148,7 +203,10 @@ export default function WalkScreen() {
               styles.optionCard,
               poop && (isIncident ? styles.optionCardActiveRed : styles.optionCardActiveGreen),
             ]}
-            onPress={() => setPoop(!poop)}
+            onPress={() => {
+              console.log('💩 WalkScreen: Toggle poop, avant:', poop);
+              setPoop(!poop);
+            }}
             activeOpacity={0.7}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -188,13 +246,122 @@ export default function WalkScreen() {
                   {treat && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.optionLabel}>🍖 Friandise</Text>
+                  <Text style={styles.optionLabel}>🍬 Friandise</Text>
                   <Text style={styles.optionHint}>Récompense donnée</Text>
                 </View>
               </View>
             </TouchableOpacity>
           )}
+
+          {/* Le chien a demandé */}
+          {!isIncident && (
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                dogAskedForWalk && styles.optionCardActiveBlue,
+              ]}
+              onPress={() => setDogAskedForWalk(!dogAskedForWalk)}
+              activeOpacity={0.7}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    dogAskedForWalk && styles.checkboxActiveBlue,
+                  ]}
+                >
+                  {dogAskedForWalk && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.optionLabel}>🐕 Le chien l'a demandé</Text>
+                  <Text style={styles.optionHint}>Initié par le chien</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Raison de l'incident */}
+          {isIncident && (
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                incidentReason && styles.optionCardActiveRed,
+              ]}
+              onPress={() => setShowReasonModal(true)}
+              activeOpacity={0.7}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View
+                  style={[
+                    styles.checkbox,
+                    incidentReason && styles.checkboxActiveRed,
+                  ]}
+                >
+                  {incidentReason && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.optionLabel}>
+                    {incidentReason
+                      ? incidentReasons.find((r) => r.value === incidentReason)?.label
+                      : '📋 Raison'}
+                  </Text>
+                  <Text style={styles.optionHint}>Pourquoi cet accident ?</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {/* Modal pour la raison de l'incident */}
+        {isIncident && (
+          <Modal
+            visible={showReasonModal}
+            transparent
+            animationType="fade"
+            onRequestClose={() => setShowReasonModal(false)}
+          >
+            <TouchableOpacity
+              style={styles.reasonModalOverlay}
+              onPress={() => setShowReasonModal(false)}
+              activeOpacity={1}
+            >
+              <View style={styles.reasonModalContent}>
+                <Text style={styles.reasonModalTitle}>Pourquoi cet accident ?</Text>
+                {incidentReasons.map((reason) => (
+                  <TouchableOpacity
+                    key={reason.value}
+                    style={[
+                      styles.reasonOption,
+                      incidentReason === reason.value && styles.reasonOptionActive,
+                    ]}
+                    onPress={() => {
+                      setIncidentReason(reason.value);
+                      setShowReasonModal(false);
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.reasonOptionText,
+                        incidentReason === reason.value && styles.reasonOptionTextActive,
+                      ]}
+                    >
+                      {reason.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                  style={styles.reasonClearButton}
+                  onPress={() => {
+                    setIncidentReason(null);
+                    setShowReasonModal(false);
+                  }}
+                >
+                  <Text style={styles.reasonClearText}>Effacer la sélection</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        )}
 
         {loading ? (
           <ActivityIndicator
@@ -208,7 +375,7 @@ export default function WalkScreen() {
               style={[
                 screenStyles.button,
                 screenStyles.buttonPrimary,
-                { backgroundColor: isIncident ? colors.error : colors.success },
+                { backgroundColor: isIncident ? colors.error : colors.success, marginBottom: spacing.lg },
               ]}
               onPress={handleSave}
             >
@@ -294,8 +461,8 @@ const styles = StyleSheet.create({
     borderColor: '#d8b4fe',
   },
   checkboxActiveBlue: {
-    backgroundColor: '#bfdbfe',
-    borderColor: '#bfdbfe',
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
   },
   checkboxActiveYellow: {
     backgroundColor: '#fbbf24',
@@ -321,5 +488,77 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     color: colors.textSecondary,
     fontWeight: typography.weights.bold,
+  },
+  reasonButton: {
+    backgroundColor: colors.white,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.xl,
+    marginTop: spacing.base,
+    marginBottom: spacing.lg,
+  },
+  reasonButtonActive: {
+    backgroundColor: '#fef2f2',
+    borderColor: colors.error,
+  },
+  reasonButtonText: {
+    fontSize: typography.sizes.lg,
+    color: colors.text,
+    fontWeight: typography.weights.bold,
+  },
+  reasonModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  reasonModalContent: {
+    backgroundColor: colors.white,
+    borderTopLeftRadius: borderRadius.xl,
+    borderTopRightRadius: borderRadius.xl,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  reasonModalTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    color: colors.text,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+  },
+  reasonOption: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+    backgroundColor: colors.white,
+  },
+  reasonOptionActive: {
+    backgroundColor: '#fef2f2',
+    borderColor: colors.error,
+  },
+  reasonOptionText: {
+    fontSize: typography.sizes.lg,
+    color: colors.text,
+    fontWeight: typography.weights.bold,
+  },
+  reasonOptionTextActive: {
+    color: colors.error,
+  },
+  reasonClearButton: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+    marginTop: spacing.md,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.gray100,
+  },
+  reasonClearText: {
+    fontSize: typography.sizes.base,
+    color: colors.textSecondary,
+    fontWeight: typography.weights.bold,
+    textAlign: 'center',
   },
 });

@@ -1,30 +1,41 @@
 /**
  * Hook pour gérer le timer de la dernière sortie
- * Met à jour le texte "il y a X temps" toutes les 10 secondes
+ * Met à jour synchronisé avec les autres timers
  */
 
 import { useEffect, useState } from 'react';
 import { formatTimeSince } from '../components/services/timerService';
-import { REFRESH_INTERVALS } from '../constants/config';
+import { timerSyncService } from '../components/services/timerSyncService';
 
 export function useTimer(lastOuting) {
   const [timeSince, setTimeSince] = useState(null);
 
   useEffect(() => {
-    if (!lastOuting) {
+    if (!lastOuting || !lastOuting.datetime) {
       setTimeSince(null);
       return;
     }
 
-    // Mettre à jour immédiatement
-    setTimeSince(formatTimeSince(lastOuting.datetime));
+    try {
+      // Mettre à jour immédiatement
+      const formatted = formatTimeSince(lastOuting.datetime);
+      setTimeSince(formatted);
 
-    // Puis mettre à jour régulièrement
-    const interval = setInterval(() => {
-      setTimeSince(formatTimeSince(lastOuting.datetime));
-    }, REFRESH_INTERVALS.timer);
+      // S'abonner aux updates synchronisées
+      const unsubscribe = timerSyncService.subscribe(() => {
+        try {
+          const formatted = formatTimeSince(lastOuting.datetime);
+          setTimeSince(formatted);
+        } catch (err) {
+          console.error('Erreur formatage timer:', err);
+        }
+      });
 
-    return () => clearInterval(interval);
+      return unsubscribe;
+    } catch (err) {
+      console.error('Erreur useTimer:', err);
+      setTimeSince(null);
+    }
   }, [lastOuting]);
 
   return timeSince;

@@ -6,49 +6,68 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [currentDog, setCurrentDog] = useState(undefined);
+  const [currentDog, setCurrentDog] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // ✅ CORRIGER la race condition: utiliser un flag pour initialiser une fois
   useEffect(() => {
-    checkUser();
-    
-    // Listener pour les changements d'authentification
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+    let isMounted = true;
+
+    const initAuth = async () => {
+      try {
+        // Étape 1: Vérifier la session SEULE (pas de listener)
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!isMounted) return; // Vérifier si le composant est encore monté
+
         if (session?.user) {
           setUser(session.user);
           await loadUserDog(session.user.id);
         } else {
           setUser(null);
+          setCurrentDog(null);
+        }
+      } catch (error) {
+        console.error('❌ Erreur AuthProvider init:', error);
+        if (isMounted) {
+          setUser(null);
+          setCurrentDog(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+          setIsInitialized(true);
+        }
+      }
+    };
+
+    // Initialiser une seule fois au montage
+    if (!isInitialized) {
+      initAuth();
+    }
+
+    // ✅ Étape 2: Écouter les changements d'auth APRÈS initialisation
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+
+        if (session?.user) {
+          setUser(session.user);
+          await loadUserDog(session.user.id);
+        } else {
+          setUser(null);
+          setCurrentDog(null);
         }
       }
     );
 
     return () => {
+      isMounted = false;
       if (subscription?.unsubscribe) {
         subscription.unsubscribe();
       }
     };
-  }, []);
-
-  const checkUser = async () => {
-    try {
-      // Vérifier la session Supabase
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        setUser(session.user);
-        await loadUserDog(session.user.id);
-      } else {
-        // Pas de session
-        setCurrentDog(null);
-      }
-    } catch (error) {
-      console.error('Error checking user:', error);
-      setCurrentDog(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [isInitialized]);
 
   const loadUserDog = async (userId) => {
     try {
@@ -73,6 +92,9 @@ export const AuthProvider = ({ children }) => {
       await loadUserDog(data.user.id);
 
       return data.user;
+    } catch (error) {
+      // ✅ Relancer l'erreur pour que le screen puisse la catcher
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -88,6 +110,9 @@ export const AuthProvider = ({ children }) => {
       setCurrentDog(null);
 
       return data.user;
+    } catch (error) {
+      // ✅ Relancer l'erreur pour que le screen puisse la catcher
+      throw error;
     } finally {
       setLoading(false);
     }

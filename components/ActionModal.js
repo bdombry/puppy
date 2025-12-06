@@ -67,9 +67,9 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>{EMOJI.incident}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Besoin échoué</Text>
+                <Text style={homeStyles.modalOptionTitle}>Incident</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Accident à la maison (pipi/caca mal placé)
+                  Pas au bon endroit
                 </Text>
               </View>
             </View>
@@ -92,7 +92,7 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
               <View style={homeStyles.modalOptionInfo}>
                 <Text style={homeStyles.modalOptionTitle}>Besoin réussi</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Pipi/caca dehors (bien placé ✓)
+                  Pipi/caca à l'endroit prévu
                 </Text>
               </View>
             </View>

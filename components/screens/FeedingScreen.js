@@ -20,6 +20,10 @@ import { colors, spacing, borderRadius, shadows, typography } from '../../consta
 import { supabase } from '../../config/supabase';
 import { scheduleFeedingNotification } from '../services/feedingService';
 import { getDogMessages } from '../../constants/dogMessages';
+import { validateFeedingData, formatValidationErrors } from '../services/validationService';
+import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
+import { insertBatchWithFallback } from '../services/retryService';
+import { cacheService } from '../services/cacheService';
 
 export default function FeedingScreen() {
   const navigation = useNavigation();
@@ -49,32 +53,42 @@ export default function FeedingScreen() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        Alert.alert('Erreur', 'Utilisateur non authentifié');
-        setLoading(false);
-        return;
+        throw new Error('Utilisateur non authentifié');
       }
 
-      const now = new Date().toISOString();
+      // Créer la date en heure locale (chaîne ISO sans conversion UTC)
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const datetimeISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
       const records = selectedTypes.map(type => ({
         dog_id: currentDog.id,
         user_id: user.id,
         type: type,
-        datetime: now,
+        datetime: datetimeISO,
       }));
 
-      const { error: insertError } = await supabase
-        .from('feeding')
-        .insert(records);
-
-      if (insertError) {
-        console.error('Supabase insert error:', insertError);
-        Alert.alert('❌ Erreur', 'Impossible de sauvegarder l\'enregistrement');
-        setLoading(false);
-        return;
+      // ✅ VALIDATION des données
+      const validation = validateFeedingData({ types: selectedTypes, datetime: datetimeISO });
+      if (!validation.isValid) {
+        throw new Error(formatValidationErrors(validation.errors));
       }
 
+      // ✅ PROGRAMMER LES NOTIFICATIONS AVANT l'insert (c'est critique!)
       for (const type of selectedTypes) {
         await scheduleFeedingNotification(type, new Date(), currentDog.name);
+      }
+
+      // ✅ PUIS insérer en Supabase (avec fallback retry)
+      const { successful, failed } = await insertBatchWithFallback(
+        supabase,
+        'feeding',
+        records,
+        { maxRetries: 3 }
+      );
+
+      if (failed.length > 0) {
+        console.warn(`⚠️ ${failed.length} enregistrement(s) échoué(s)`);
       }
 
       // Messages personnalisés selon le sexe
@@ -89,9 +103,16 @@ export default function FeedingScreen() {
 
       Alert.alert('✅ Enregistré !', message);
 
+      // 🗑️ Invalider le cache car données modifiées
+      cacheService.invalidatePattern(`home_.*_${currentDog.id}`);
+      cacheService.invalidatePattern(`walk_history.*_${currentDog.id}`);
+      // NOTE: Pas de cache pour les timers (last_outing, last_need)
+
       navigation.goBack();
     } catch (err) {
-      Alert.alert('❌ Erreur', err.message);
+      logError('FeedingScreen.handleRecord', err);
+      const userMessage = getUserFriendlyErrorMessage(err);
+      Alert.alert('❌ Erreur', userMessage);
     } finally {
       setLoading(false);
     }
@@ -182,6 +203,7 @@ export default function FeedingScreen() {
               style={[
                 screenStyles.button,
                 screenStyles.buttonPrimary,
+                { marginBottom: spacing.lg },
               ]}
               onPress={handleRecord}
             >

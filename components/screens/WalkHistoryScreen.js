@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,133 +7,41 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../config/supabase';
+import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { useNavigation } from '@react-navigation/native';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
+import { useWalkHistory } from '../../hooks/useWalkHistory';
+import { cacheService } from '../services/cacheService';
 
 export default function WalkHistoryScreen() {
   const { user, currentDog } = useAuth();
-  const [walks, setWalks] = useState([]);
-  const [activities, setActivities] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const navigation = useNavigation();
+  const { walks, activities, totalStats, loading, refreshData } = useWalkHistory(currentDog?.id);
+  
   const [loadingMore, setLoadingMore] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const [totalStats, setTotalStats] = useState({ successCount: 0, incidentCount: 0, activitiesCount: 0 }); // Stats globales
-  const navigation = useNavigation();
+  const [refreshing, setRefreshing] = useState(false);
   const ITEMS_PER_PAGE = 15;
 
-  useEffect(() => {
-    fetchInitialData();
-  }, []);
+  // Le hook useWalkHistory gère automatiquement le chargement au montage avec cache
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
-      fetchInitialData();
-    });
-    return unsubscribe;
-  }, [navigation]);
-
-  useEffect(() => {
-    setPage(0);
-    setHasMore(true);
-    setWalks([]);
-    setActivities([]);
-    fetchData(0, true); // Réinitialiser et charger la page 0
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (page > 0) {
-      fetchData(page, false); // Charger la page suivante
-    }
-  }, [page]);
-
-  const fetchInitialData = async () => {
-    setLoading(true);
-    try {
-      // Récupérer TOUS les walks une seule fois pour les stats
-      const { data: allWalks, error: walksError } = await supabase
-        .from('outings')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', currentDog?.id);
-      if (walksError) throw walksError;
-
-      // Récupérer le nombre total de balades
-      const { count: activitiesCount, error: activitiesError } = await supabase
-        .from('activities')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', currentDog?.id);
-      if (activitiesError) throw activitiesError;
-
-      // Calculer les stats globales
-      const incidentCount = allWalks?.filter(isIncident).length || 0;
-      const successCount = (allWalks?.length || 0) - incidentCount;
-      setTotalStats({ successCount, incidentCount, activitiesCount: activitiesCount || 0 });
-
-      // Charger la première page de pagination
-      setPage(0);
-      setWalks([]);
-      setActivities([]);
-    } catch (error) {
-      console.error('Erreur récupération stats:', error);
-    } finally {
-      setLoading(false);
-      fetchData(0, true); // Lancer le chargement de la première page
-    }
-  };
-
-  const fetchData = async (pageNum = 0, reset = false) => {
-    if (reset || pageNum === 0) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      let walksQuery = supabase
-        .from('outings')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', currentDog?.id)
-        .order('datetime', { ascending: false })
-        .range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
-
-      let activitiesQuery = supabase
-        .from('activities')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', currentDog?.id)
-        .order('datetime', { ascending: false })
-        .range(pageNum * ITEMS_PER_PAGE, (pageNum + 1) * ITEMS_PER_PAGE - 1);
-
-      const { data: walksData, count: walksCount } = await walksQuery;
-      const { data: activitiesData, count: activitiesCount } = await activitiesQuery;
-
-      if (reset || pageNum === 0) {
-        setWalks(walksData || []);
-        setActivities(activitiesData || []);
-      } else {
-        setWalks((prev) => [...prev, ...(walksData || [])]);
-        setActivities((prev) => [...prev, ...(activitiesData || [])]);
-      }
-
-      const totalWalks = walksCount || 0;
-      const totalActivities = activitiesCount || 0;
-      const loaded = (pageNum + 1) * ITEMS_PER_PAGE;
-      const hasMoreWalks = loaded < totalWalks;
-      const hasMoreActivities = loaded < totalActivities;
-
-      setHasMore(hasMoreWalks || hasMoreActivities);
-    } catch (error) {
-      console.error('Erreur récupération historique:', error);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  };
+  // ✅ Pull-to-refresh: invalider le cache ET recharger
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Invalider le cache pour forcer le rechargement
+    cacheService.invalidatePattern(`.*history.*_${currentDog?.id}`);
+    // Recharger les données (skip cache)
+    await refreshData();
+    setRefreshing(false);
+  }, [currentDog?.id, refreshData]);
 
   const handleDelete = async (item, isActivity = false) => {
     Alert.alert(
@@ -152,13 +60,15 @@ export default function WalkHistoryScreen() {
                 .delete()
                 .eq('id', item.id);
               if (error) throw error;
-              if (isActivity) {
-                setActivities(activities.filter((a) => a.id !== item.id));
-              } else {
-                setWalks(walks.filter((w) => w.id !== item.id));
-              }
+              
+              // 🗑️ Invalider le cache après suppression
+              cacheService.invalidatePattern(`.*history.*_${currentDog?.id}`);
+              
+              // Recharger les données
+              await refreshData();
+              Alert.alert('✅ Supprimé', 'L\'enregistrement a été supprimé');
             } catch (error) {
-              Alert.alert('Erreur', 'Impossible de supprimer');
+              Alert.alert('❌ Erreur', 'Impossible de supprimer');
             }
           },
         },
@@ -167,18 +77,20 @@ export default function WalkHistoryScreen() {
   };
 
   const formatDate = (iso) => {
-    const date = new Date(iso);
+    // iso format: "2025-12-05T22:29:00" (LOCAL, pas UTC)
+    // On extrait directement sans passer par new Date() qui convertirait en UTC
+    const [datePart, timePart] = iso.split('T');
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes] = timePart.split(':');
     
     // Format court jour/mois
-    const dayMonth = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const dayMonth = `${day}/${month}`;
     
-    // Jour de la semaine
+    // Jour de la semaine (créer une date locale correctement)
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     const dayName = date.toLocaleDateString('fr-FR', { weekday: 'short' });
 
-    const timeStr = date.toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    const timeStr = `${hours}:${minutes}`;
 
     return { date: dayMonth, time: timeStr, day: dayName };
   };
@@ -221,7 +133,13 @@ export default function WalkHistoryScreen() {
 
   return (
     <View style={GlobalStyles.safeArea}>
-      <ScrollView contentContainerStyle={screenStyles.screenContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={screenStyles.screenContainer} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
+      >
         <View style={styles.header}>
           <Text style={screenStyles.screenTitle}>Historique</Text>
 
@@ -320,20 +238,20 @@ export default function WalkHistoryScreen() {
         </View>
         ) : (
           <View>
-          {allItems.map((item) => {
-            const { date, time, day } = formatDate(item.datetime);
-            const isActivity = item.type === 'activity';
-            const incident = !isActivity && isIncident(item);
-            const hasNeeds = isActivity && (item.pee || item.poop);
+            {allItems.map((item) => {
+              const { date, time, day } = formatDate(item.datetime);
+              const isActivity = item.type === 'activity';
+              const incident = !isActivity && isIncident(item);
+              const hasNeeds = isActivity && (item.pee || item.poop);
 
-            return (
-              <View
-                key={item.id || item.datetime}
-                style={[
-                  styles.card,
-                  incident ? styles.cardIncident : isActivity ? styles.cardActivity : styles.cardSuccess,
-                ]}
-              >
+              return (
+                <View
+                  key={`${item.type}-${item.id}`}
+                  style={[
+                    styles.card,
+                    incident ? styles.cardIncident : isActivity ? styles.cardActivity : styles.cardSuccess,
+                  ]}
+                >
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     <View style={styles.cardTitleRow}>
@@ -413,22 +331,22 @@ export default function WalkHistoryScreen() {
                   )}
                 </View>
               </View>
-            );
-          })}
-          
-          {hasMore && (
-            <TouchableOpacity
-              style={styles.loadMoreButton}
-              onPress={() => setPage(page + 1)}
-              disabled={loadingMore}
-            >
-              {loadingMore ? (
-                <ActivityIndicator size="small" color={colors.primary} />
-              ) : (
-                <Text style={styles.loadMoreText}>📥 Voir plus</Text>
-              )}
-            </TouchableOpacity>
-          )}
+              );
+            })}
+            
+            {hasMore && (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                onPress={() => setPage(page + 1)}
+                disabled={loadingMore}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <Text style={styles.loadMoreText}>📥 Voir plus</Text>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>

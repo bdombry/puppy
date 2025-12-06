@@ -11,45 +11,29 @@ import { useAuth } from '../../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
-import { getAdvancedStats } from '../services/analyticsService';
 import { WeekChart } from '../../components/charts/WeekChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
+import { useAnalytics } from '../../hooks/useAnalytics';
+import { cacheService } from '../services/cacheService';
 
 export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { stats, loading, refreshData } = useAnalytics(currentDog?.id);
   const [refreshing, setRefreshing] = useState(false);
-
-  const loadStats = React.useCallback(async () => {
-    if (!currentDog?.id) {
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      console.log('📊 Chargement analytics pour chien:', currentDog.id);
-      const data = await getAdvancedStats(currentDog.id);
-      console.log('📊 Stats reçues:', data);
-      setStats(data);
-    } catch (err) {
-      console.error('❌ Erreur chargement analytics:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [currentDog?.id]);
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
-    await loadStats();
+    // Invalider cache avant rechargement
+    cacheService.invalidatePattern(`analytics_.*_${currentDog?.id}`);
+    await refreshData();
     setRefreshing(false);
-  }, [loadStats]);
+  }, [currentDog?.id, refreshData]);
 
-  // Charger les stats quand on arrive sur l'écran
+  // Recharger au retour sur l'écran
   useFocusEffect(
     React.useCallback(() => {
-      loadStats();
-    }, [loadStats])
+      refreshData();
+    }, [refreshData])
   );
 
   if (loading) {
@@ -112,27 +96,27 @@ export default function AnalyticsScreen() {
 
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>💧 Pipi</Text>
+              <Text style={styles.progressLabel}>💧 Pipis</Text>
               <Text style={styles.progressValue}>{stats.peeSuccessRate}%</Text>
             </View>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${stats.peeSuccessRate}%` }]} />
             </View>
             <Text style={styles.progressSubtext}>
-              {stats.peeOutside} dehors • {stats.peeInside} dedans
+              {stats.peeOutside} réussis • {stats.peeInside} échoués
             </Text>
           </View>
 
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressLabel}>💩 Caca</Text>
+              <Text style={styles.progressLabel}>💩 Cacas</Text>
               <Text style={styles.progressValue}>{stats.poopSuccessRate}%</Text>
             </View>
             <View style={styles.progressBar}>
               <View style={[styles.progressFill, { width: `${stats.poopSuccessRate}%` }]} />
             </View>
             <Text style={styles.progressSubtext}>
-              {stats.poopOutside} dehors • {stats.poopInside} dedans
+              {stats.poopOutside} réussis • {stats.poopInside} échoués
             </Text>
           </View>
         </View>
@@ -336,12 +320,12 @@ export default function AnalyticsScreen() {
             )}
             {stats.peeSuccessRate < 70 && (
               <Text style={styles.recommendationText}>
-                • Augmente la fréquence des sorties pour réduire les accidents de pipi
+                • Augmente la fréquence des sorties pour plus de pipis réussis
               </Text>
             )}
             {stats.poopSuccessRate < 70 && stats.peeSuccessRate >= 70 && (
               <Text style={styles.recommendationText}>
-                • Les pipis sont bien gérés ! Concentre-toi maintenant sur les cacas
+                • Les pipis sont bien gérés ! Concentre-toi maintenant sur les cacas réussis
               </Text>
             )}
             {stats.trend === 'declining' && (
