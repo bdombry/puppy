@@ -51,8 +51,68 @@ export function useWalkHistory(dogId) {
     const allActivities = activitiesRes.data || [];
 
     // Calculer les stats
-    const incidentCount = allWalks.filter(w => w.incident_reason).length;
-    const successCount = allWalks.length - incidentCount;
+    // Réussites = (pee=true AND location='outside') + (poop=true AND location='outside') dans outings
+    //           + (pee=true) + (poop=true) dans activities
+    const outingsSuccessCount = allWalks.reduce((sum, o) => {
+      let count = 0;
+      if (o.pee && o.pee_location === 'outside') count++;
+      if (o.poop && o.poop_location === 'outside') count++;
+      return sum + count;
+    }, 0);
+
+    const activitiesSuccessCount = allActivities.reduce((sum, a) => {
+      let count = 0;
+      if (a.pee) count++;
+      if (a.poop) count++;
+      return sum + count;
+    }, 0);
+
+    const successCount = outingsSuccessCount + activitiesSuccessCount;
+    
+    // Incidents = (pee=true AND location='inside') + (poop=true AND location='inside') dans outings
+    //           + pee_incident=true + poop_incident=true dans activities
+    // Incidents = nombre d'outings qui ont (pee inside OU poop inside)
+    const outingsWithIncidents = allWalks.filter(o => 
+      (o.pee && o.pee_location === 'inside') || (o.poop && o.poop_location === 'inside')
+    );
+    const outingsIncidentsCount = outingsWithIncidents.length;
+    
+    console.log('🔍 Outings with incidents:', outingsIncidentsCount, {
+      sample: outingsWithIncidents.slice(0, 3).map(o => ({
+        datetime: o.datetime,
+        pee: o.pee,
+        pee_location: o.pee_location,
+        poop: o.poop,
+        poop_location: o.poop_location,
+        incident_reason: o.incident_reason
+      }))
+    });
+
+    // Incidents = nombre d'activities qui ont (pee_incident OU poop_incident)
+    const activitiesWithIncidents = allActivities.filter(a => 
+      a.pee_incident || a.poop_incident
+    );
+    const activitiesIncidentsCount = activitiesWithIncidents.length;
+    
+    console.log('🔍 Activities with incidents:', activitiesIncidentsCount, {
+      sample: activitiesWithIncidents.slice(0, 3).map(a => ({
+        datetime: a.datetime,
+        pee_incident: a.pee_incident,
+        poop_incident: a.poop_incident
+      }))
+    });
+
+    const incidentCount = outingsIncidentsCount + activitiesIncidentsCount;
+    
+    console.log('📊 WalkHistory Stats:', {
+      outingsSuccessCount,
+      activitiesSuccessCount,
+      successCountTotal: successCount,
+      outingsIncidentsCount,
+      activitiesIncidentsCount,
+      incidentCountTotal: incidentCount,
+    });
+    
     const stats = {
       successCount,
       incidentCount,

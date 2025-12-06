@@ -33,6 +33,11 @@ export default function WalkHistoryScreen() {
 
   // Le hook useWalkHistory gère automatiquement le chargement au montage avec cache
 
+  // ✅ Réinitialiser la pagination quand on change d'onglet
+  useEffect(() => {
+    setPage(0);
+  }, [activeTab]);
+
   // ✅ Pull-to-refresh: invalider le cache ET recharger
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -40,6 +45,7 @@ export default function WalkHistoryScreen() {
     cacheService.invalidatePattern(`.*history.*_${currentDog?.id}`);
     // Recharger les données (skip cache)
     await refreshData();
+    setPage(0); // Réinitialiser la pagination
     setRefreshing(false);
   }, [currentDog?.id, refreshData]);
 
@@ -130,6 +136,10 @@ export default function WalkHistoryScreen() {
     ...(activeTab === 'activities' ? [] : filteredWalks.map((w) => ({ ...w, type: 'walk' }))),
     ...filteredActivities.map((a) => ({ ...a, type: 'activity' })),
   ].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+  // Paginer les éléments (15 par page)
+  const paginatedItems = allItems.slice(0, (page + 1) * ITEMS_PER_PAGE);
+  const hasMoreItems = allItems.length > (page + 1) * ITEMS_PER_PAGE;
 
   return (
     <View style={GlobalStyles.safeArea}>
@@ -238,7 +248,7 @@ export default function WalkHistoryScreen() {
         </View>
         ) : (
           <View>
-            {allItems.map((item) => {
+            {paginatedItems.map((item) => {
               const { date, time, day } = formatDate(item.datetime);
               const isActivity = item.type === 'activity';
               const incident = !isActivity && isIncident(item);
@@ -334,7 +344,7 @@ export default function WalkHistoryScreen() {
               );
             })}
             
-            {hasMore && (
+            {hasMoreItems && (
               <TouchableOpacity
                 style={styles.loadMoreButton}
                 onPress={() => setPage(page + 1)}

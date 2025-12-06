@@ -1,16 +1,17 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
-import { colors, spacing, borderRadius, typography } from '../constants/theme';
-import { screenStyles } from '../styles/screenStyles';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { getIncidentReasons } from '../services/analyticsService';
+import { colors, spacing, borderRadius, typography, shadows } from '../../constants/theme';
+import { screenStyles } from '../../styles/screenStyles';
 
 const REASON_LABELS = {
-  pas_le_temps: '⏰ Pas le temps',
-  trop_tard: '🌙 Horaire trop tardif',
-  flemme: '😑 Flemme',
-  oublie: '🤔 Oublié',
-  autre: 'ℹ️ Autre',
+  pas_le_temps: 'Pas le temps',
+  trop_tard: 'Horaire trop tardif',
+  flemme: 'Flemme',
+  oublie: 'Oublié',
+  autre: 'Autre',
 };
 
 const PIE_RADIUS = 70;
@@ -20,25 +21,53 @@ const PIE_CENTER_Y = 100;
 /**
  * Affiche un graphique des raisons d'incident sous forme de camembert
  * Utilise react-native-svg pour un rendu simple et performant
+ * Met à jour les données toutes les 5 secondes
  */
-export const IncidentReasonChart = ({ incidentReasons }) => {
+export const IncidentReasonChart = ({ dogId }) => {
+  const [incidentReasons, setIncidentReasons] = useState({
+    pas_le_temps: 0,
+    trop_tard: 0,
+    flemme: 0,
+    oublie: 0,
+    autre: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Fetch initial et quand dogId change
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      const reasons = await getIncidentReasons(dogId);
+      setIncidentReasons(reasons);
+      setLoading(false);
+    };
+
+    if (dogId) {
+      fetchData();
+    }
+  }, [dogId]);
+
+  // Refetch toutes les 5 secondes pour voir les changements en temps réel
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      if (dogId) {
+        const reasons = await getIncidentReasons(dogId);
+        setIncidentReasons(reasons);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [dogId]);
+
   // Calculer le total
   const total = incidentReasons ? Object.values(incidentReasons).reduce((sum, val) => sum + val, 0) : 0;
 
-  if (!incidentReasons || total === 0) {
-    return (
-      <View style={[screenStyles.infoCard, styles.chartCard]}>
-        <View style={styles.header}>
-          <Text style={styles.headerIcon}>⚠️</Text>
-          <Text style={screenStyles.sectionTitle}>Raisons des incidents</Text>
-        </View>
-        <Text style={screenStyles.emptyText}>Pas d'incidents enregistrés</Text>
-      </View>
-    );
-  }
-
+  // ⚠️ Les hooks DOIVENT être appelés avant les retours conditionnels!
   // Préparer les données pour le camembert
   const chartData = useMemo(() => {
+    if (!incidentReasons || total === 0) {
+      return [];
+    }
     return Object.entries(incidentReasons)
       .filter(([, count]) => count > 0)
       .sort(([, a], [, b]) => b - a)
@@ -48,10 +77,13 @@ export const IncidentReasonChart = ({ incidentReasons }) => {
         reason,
         color: getReasonColor(reason),
       }));
-  }, [incidentReasons]);
+  }, [incidentReasons, total]);
 
   // Générer les segments SVG
   const segments = useMemo(() => {
+    if (!chartData || chartData.length === 0) {
+      return [];
+    }
     let currentAngle = -90; // Commencer en haut
     
     return chartData.map((item) => {
@@ -73,6 +105,33 @@ export const IncidentReasonChart = ({ incidentReasons }) => {
       );
     });
   }, [chartData, total]);
+
+  if (loading) {
+    return (
+      <View style={[screenStyles.infoCard, styles.chartCard]}>
+        <View style={styles.header}>
+          <Text style={styles.headerIcon}>⚠️</Text>
+          <Text style={screenStyles.sectionTitle}>Raisons des incidents</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+          <Text style={styles.loadingText}>Chargement...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!incidentReasons || total === 0) {
+    return (
+      <View style={[screenStyles.infoCard, styles.chartCard]}>
+        <View style={styles.header}>
+          <Text style={styles.headerIcon}>⚠️</Text>
+          <Text style={screenStyles.sectionTitle}>Raisons des incidents</Text>
+        </View>
+        <Text style={screenStyles.emptyText}>Pas d'incidents enregistrés</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[screenStyles.infoCard, styles.chartCard]}>
@@ -147,34 +206,50 @@ const getReasonColor = (reason) => {
 };
 
 IncidentReasonChart.propTypes = {
-  incidentReasons: PropTypes.shape({
-    pas_le_temps: PropTypes.number,
-    trop_tard: PropTypes.number,
-    flemme: PropTypes.number,
-    oublie: PropTypes.number,
-    autre: PropTypes.number,
-  }),
+  dogId: PropTypes.string.isRequired,
 };
 
 const styles = StyleSheet.create({
   chartCard: {
-    marginBottom: spacing.lg,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.xl,
+    ...shadows.base,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.lg,
-    gap: spacing.base,
+    marginBottom: spacing.sm,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing.sm,
   },
   headerIcon: {
     fontSize: typography.sizes.xxxl,
   },
-  chartContent: {
+  loadingContainer: {
     flexDirection: 'row',
-    marginBottom: spacing.lg,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
+    paddingVertical: spacing.lg,
+    gap: spacing.base,
+  },
+  loadingText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+  },
+  chartContent: {
+    flexDirection: 'row',
+    marginBottom: spacing.sm,
+    marginTop: spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
   },
   pieWrapper: {
     alignItems: 'center',
@@ -182,7 +257,7 @@ const styles = StyleSheet.create({
   },
   legend: {
     flex: 1,
-    minWidth: 140,
+    minWidth: 120,
   },
   legendItem: {
     flexDirection: 'row',
@@ -191,27 +266,27 @@ const styles = StyleSheet.create({
     gap: spacing.base,
   },
   legendColor: {
-    width: 16,
-    height: 16,
-    borderRadius: 4,
+    width: 14,
+    height: 14,
+    borderRadius: 3,
     flexShrink: 0,
   },
   legendText: {
     flex: 1,
   },
   legendLabel: {
-    fontSize: typography.sizes.sm,
-    fontWeight: typography.weights.medium,
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
     color: colors.text,
   },
   legendValue: {
-    fontSize: typography.sizes.xs,
+    fontSize: typography.sizes.sm,
     color: colors.textSecondary,
     marginTop: 2,
   },
   footer: {
-    marginTop: spacing.lg,
-    paddingTop: spacing.md,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -220,10 +295,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.base,
-    backgroundColor: colors.primaryLight,
-    borderRadius: borderRadius.lg,
-    paddingVertical: spacing.base,
-    paddingHorizontal: spacing.lg,
   },
   totalLabel: {
     fontSize: typography.sizes.sm,

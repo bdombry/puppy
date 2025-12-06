@@ -13,14 +13,14 @@ import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { WeekChart } from '../../components/charts/WeekChart';
 import { DogCommunicationStats } from '../AskToGoOutStats';
-import { IncidentReasonChart } from '../../components/IncidentReasonChart';
+import { IncidentReasonChart } from '../charts/IncidentReasonChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { cacheService } from '../services/cacheService';
 
 export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
-  const { stats, communicationStats, incidentReasons, loading, refreshData } = useAnalytics(currentDog?.id);
+  const { stats, communicationStats, loading, refreshData } = useAnalytics(currentDog?.id);
   const [refreshing, setRefreshing] = useState(false);
 
   console.log('📱 AnalyticsScreen - communicationStats:', communicationStats);
@@ -159,7 +159,7 @@ export default function AnalyticsScreen() {
 
         {/* Raisons des incidents */}
         <View style={screenStyles.section}>
-          <IncidentReasonChart incidentReasons={incidentReasons} />
+          <IncidentReasonChart dogId={currentDog.id} />
         </View>
 
         {/* Insights */}

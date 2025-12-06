@@ -15,7 +15,7 @@ export { TrialModal } from './TrialModal';
 
 // ===== COMPOSANTS ANALYTICS =====
 export { DogCommunicationStats } from './AskToGoOutStats';
-export { IncidentReasonChart } from './IncidentReasonChart';
+export { IncidentReasonChart } from './charts/IncidentReasonChart';
 
 // ===== COMPOSANTS ONBOARDING =====
 export { default as OnboardingHeader } from './OnboardingHeader';
