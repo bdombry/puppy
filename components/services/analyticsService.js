@@ -328,3 +328,179 @@ export const getAdvancedStats = async (dogId) => {
     return null;
   }
 };
+
+/**
+ * Récupère le % de demandes de sortie du chien - DONNÉES SÉPARÉES
+ * Activities = vraies balades (communication du chien pour demander sortir)
+ * Outings réussites = pipi/caca dehors (incident_reason = null)
+ * @param {string} dogId - ID du chien
+ * @returns {object} { activitiesAsked, totalActivities, successWithDemand }
+ */
+export const getDogCommunicationStats = async (dogId) => {
+  try {
+    console.log('🗣️ getDogCommunicationStats appelé avec dogId:', dogId);
+
+    // Récupérer les ACTIVITIES (vraies balades dehors = réussites)
+    // C'est là qu'on enregistre si le chien a demandé
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('dog_asked_for_walk')
+      .eq('dog_id', dogId);
+
+    if (activitiesError) {
+      console.warn('⚠️ Erreur Supabase activities (getDogCommunicationStats):', activitiesError);
+    }
+
+    const activities = activitiesData || [];
+    const activitiesAsked = activities.filter(a => a.dog_asked_for_walk).length;
+    const totalActivities = activities.length;
+
+    // Récupérer TOUS les OUTINGS (pour compter totalSuccesses)
+    // Mais seulement les REUSSITES (incident_reason IS NULL)
+    const { data: outingsData, error: outingsError } = await supabase
+      .from('outings')
+      .select('dog_asked_for_walk, incident_reason')
+      .eq('dog_id', dogId)
+      .is('incident_reason', null); // Seulement les réussites
+
+    if (outingsError) {
+      console.warn('⚠️ Erreur Supabase outings (getDogCommunicationStats):', outingsError);
+    }
+
+    const outings = outingsData || [];
+    const outingsAsked = outings.filter(o => o.dog_asked_for_walk).length;
+    const totalSuccesses = outings.length;
+
+    // Calculer le % de demandes parmi les réussites
+    const successWithDemand = totalSuccesses > 0 ? Math.round((outingsAsked / totalSuccesses) * 100) : 0;
+
+    console.log('🗣️ Stats communication outings:', { 
+      outingsAsked,
+      totalSuccesses,
+      successWithDemand,
+      outings: outings.slice(0, 3) // Log les 3 premiers pour debug
+    });
+
+    return {
+      activitiesAsked,
+      totalActivities,
+      successWithDemand,
+      outingsAsked,
+      totalSuccesses,
+    };
+  } catch (err) {
+    console.error('❌ Erreur getDogCommunicationStats:', err);
+    return {
+      activitiesAsked: 0,
+      totalActivities: 0,
+      successWithDemand: 0,
+      outingsAsked: 0,
+      totalSuccesses: 0,
+    };
+  }
+};
+
+/**
+ * Récupère le % de demandes de sortie du chien
+ * Activities = vraies balades (communication du chien)
+ * Outings incidents = besoins urgents
+ * @param {string} dogId - ID du chien
+ * @returns {object} { totalWalks, askedToGoOut }
+ */
+export const getAskToGoOutStats = async (dogId) => {
+  try {
+    console.log('🚪 getAskToGoOutStats appelé avec dogId:', dogId);
+
+    // Récupérer les outings
+    const { data: outingsData, error: outingsError } = await supabase
+      .from('outings')
+      .select('dog_asked_for_walk')
+      .eq('dog_id', dogId);
+
+    if (outingsError) throw outingsError;
+
+    const outings = outingsData || [];
+    const outingsAsked = outings.filter(o => o.dog_asked_for_walk).length;
+
+    // Récupérer les activities
+    const { data: activitiesData, error: activitiesError } = await supabase
+      .from('activities')
+      .select('dog_asked_for_walk')
+      .eq('dog_id', dogId);
+
+    if (activitiesError) {
+      console.warn('⚠️ Erreur Supabase activities (getAskToGoOutStats):', activitiesError);
+      // Continue with outings data only
+    }
+
+    const activities = activitiesData || [];
+    const activitiesAsked = activities.filter(a => a.dog_asked_for_walk).length;
+
+    const totalWalks = outings.length + activities.length;
+    const totalAsked = outingsAsked + activitiesAsked;
+
+    console.log('🚪 Stats demande sortie:', { totalWalks, totalAsked });
+
+    return {
+      totalWalks,
+      askedToGoOut: totalAsked,
+    };
+  } catch (err) {
+    console.error('❌ Erreur getAskToGoOutStats:', err);
+    return {
+      totalWalks: 0,
+      askedToGoOut: 0,
+    };
+  }
+};
+
+/**
+ * Récupère le breakdown des raisons d'incident
+ * @param {string} dogId - ID du chien
+ * @returns {object} { pas_le_temps: X, trop_tard: X, ... }
+ */
+export const getIncidentReasons = async (dogId) => {
+  try {
+    console.log('⚠️ getIncidentReasons appelé avec dogId:', dogId);
+
+    // Récupérer les outings avec incident_reason
+    const { data: outingsData, error: outingsError } = await supabase
+      .from('outings')
+      .select('incident_reason')
+      .eq('dog_id', dogId)
+      .not('incident_reason', 'is', null);
+
+    if (outingsError) throw outingsError;
+
+    const outings = outingsData || [];
+    console.log('📋 Outings avec incident_reason:', outings.length);
+
+    // Compter par raison
+    const reasonCounts = {
+      pas_le_temps: 0,
+      trop_tard: 0,
+      flemme: 0,
+      oublie: 0,
+      autre: 0,
+    };
+
+    outings.forEach(outing => {
+      if (outing.incident_reason && reasonCounts.hasOwnProperty(outing.incident_reason)) {
+        reasonCounts[outing.incident_reason]++;
+      }
+    });
+
+    console.log('⚠️ Raisons d\'incident:', reasonCounts);
+
+    return reasonCounts;
+  } catch (err) {
+    console.error('❌ Erreur getIncidentReasons:', err);
+    return {
+      pas_le_temps: 0,
+      trop_tard: 0,
+      flemme: 0,
+      oublie: 0,
+      autre: 0,
+    };
+  }
+};

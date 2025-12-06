@@ -13,6 +13,10 @@ export { LastOutingTimer } from './LastOutingTimer';
 export { ActionModal } from './ActionModal';
 export { TrialModal } from './TrialModal';
 
+// ===== COMPOSANTS ANALYTICS =====
+export { DogCommunicationStats } from './AskToGoOutStats';
+export { IncidentReasonChart } from './IncidentReasonChart';
+
 // ===== COMPOSANTS ONBOARDING =====
 export { default as OnboardingHeader } from './OnboardingHeader';
 export { default as FormInput } from './FormInput';

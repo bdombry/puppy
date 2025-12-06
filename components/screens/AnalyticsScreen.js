@@ -12,14 +12,18 @@ import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { WeekChart } from '../../components/charts/WeekChart';
+import { DogCommunicationStats } from '../AskToGoOutStats';
+import { IncidentReasonChart } from '../../components/IncidentReasonChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { useAnalytics } from '../../hooks/useAnalytics';
 import { cacheService } from '../services/cacheService';
 
 export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
-  const { stats, loading, refreshData } = useAnalytics(currentDog?.id);
+  const { stats, communicationStats, incidentReasons, loading, refreshData } = useAnalytics(currentDog?.id);
   const [refreshing, setRefreshing] = useState(false);
+
+  console.log('📱 AnalyticsScreen - communicationStats:', communicationStats);
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -137,6 +141,25 @@ export default function AnalyticsScreen() {
               </Text>
             </View>
           </View>
+        </View>
+
+        {/* Demandes de sortie */}
+        <View style={screenStyles.section}>
+          <Text style={screenStyles.sectionTitle}>Communication 🗣️</Text>
+
+          <DogCommunicationStats 
+            activitiesAsked={communicationStats.activitiesAsked}
+            totalActivities={communicationStats.totalActivities}
+            successWithDemand={communicationStats.successWithDemand}
+            outingsAsked={communicationStats.outingsAsked}
+            totalSuccesses={communicationStats.totalSuccesses}
+            dogName={currentDog?.name}
+          />
+        </View>
+
+        {/* Raisons des incidents */}
+        <View style={screenStyles.section}>
+          <IncidentReasonChart incidentReasons={incidentReasons} />
         </View>
 
         {/* Insights */}
