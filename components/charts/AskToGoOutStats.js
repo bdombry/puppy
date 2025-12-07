@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors, spacing, typography, borderRadius, shadows } from '../constants/theme';
-import { screenStyles } from '../styles/screenStyles';
+import { colors, spacing, typography, borderRadius, shadows } from '../../constants/theme';
+import { screenStyles } from '../../styles/screenStyles';
 
 /**
  * Communication du chien - Deux blocs identiques au design Friandises
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
     ...shadows.base,
   },
   insightIcon: {

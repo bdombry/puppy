@@ -12,7 +12,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { WeekChart } from '../../components/charts/WeekChart';
-import { DogCommunicationStats } from '../AskToGoOutStats';
+import { DogCommunicationStats } from '../charts/AskToGoOutStats';
 import { IncidentReasonChart } from '../charts/IncidentReasonChart';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { useAnalytics } from '../../hooks/useAnalytics';
@@ -73,6 +73,7 @@ export default function AnalyticsScreen() {
         <Text style={screenStyles.screenSubtitle}>Analyse détaillée des besoins de {currentDog.name}</Text>
 
         <WeekChart dogId={currentDog.id} />
+        <Text style={styles.explanationNote}>* Affiche les pipi/caca réussis par jour</Text>
 
         {/* Stats grid */}
         <View style={styles.grid}>
@@ -93,6 +94,8 @@ export default function AnalyticsScreen() {
             <Text style={[screenStyles.statLabel, styles.statCardLabel]}>Cacas</Text>
           </View>
         </View>
+
+        <Text style={styles.explanationNote}>* Inclut toutes les sorties et balades enregistrées</Text>
 
         {/* Taux de réussite des besoins */}
         <View style={screenStyles.section}>
@@ -155,11 +158,13 @@ export default function AnalyticsScreen() {
             totalSuccesses={communicationStats.totalSuccesses}
             dogName={currentDog?.name}
           />
+          <Text style={styles.explanationNote}>* Montre à quel % ton chien te demande avant de faire ses besoins ou de sortir</Text>
         </View>
 
         {/* Raisons des incidents */}
         <View style={screenStyles.section}>
           <IncidentReasonChart dogId={currentDog.id} />
+          <Text style={styles.explanationNote}>* Montre les raisons des incidents quand tu les as enregistrées</Text>
         </View>
 
         {/* Insights */}
@@ -393,7 +398,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
   },
   statCardFull: {
     width: '100%',
@@ -491,5 +496,13 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
     lineHeight: 24,
     marginBottom: spacing.md,
+  },
+  explanationNote: {
+    fontSize: typography.sizes.xs,
+    color: colors.textTertiary,
+    fontStyle: 'italic',
+    marginTop: 0,
+    marginBottom: spacing.lg,
+    paddingHorizontal: spacing.sm,
   },
 });

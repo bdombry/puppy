@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     paddingRight: spacing.md,
     paddingLeft : spacing.md,
 
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
     ...shadows.base,
     borderWidth: 1,
     borderColor: colors.border,

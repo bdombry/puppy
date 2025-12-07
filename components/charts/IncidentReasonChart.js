@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
     ...shadows.base,
     borderWidth: 1,
     borderColor: colors.border,

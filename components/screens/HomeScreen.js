@@ -13,7 +13,7 @@ import { GlobalStyles } from '../../styles/global';
 import { homeStyles } from '../../styles/homeStyles';
 import { useNavigation } from '@react-navigation/native';
 import { DogCardWithProgress } from '../DogCardWithProgress';
-import { StatsCards } from '../StatsCards';
+import { StatsCards } from '../charts/StatsCards';
 import { RecordButton } from '../buttons/RecordButton';
 import { HistoryButton } from '../buttons/HistoryButton';
 import { AnalyticsButton } from '../buttons/AnalyticsButton';

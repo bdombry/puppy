@@ -6,8 +6,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { homeStyles } from '../styles/homeStyles';
-import { EMOJI } from '../constants/config';
+import { homeStyles } from '../../styles/homeStyles';
+import { EMOJI } from '../../constants/config';
 
 export function StatsCards({
   totalOutings,

@@ -6,7 +6,7 @@
 // ===== COMPOSANTS HOME =====
 export { DogCard } from './DogCard';
 export { DogCardWithProgress } from './DogCardWithProgress';
-export { StatsCards } from './StatsCards';
+export { StatsCards } from './charts/StatsCards';
 export { ProgressSection } from './ProgressSection';
 export { ActionButtons } from './ActionButtons';
 export { LastOutingTimer } from './LastOutingTimer';
@@ -14,7 +14,7 @@ export { ActionModal } from './ActionModal';
 export { TrialModal } from './TrialModal';
 
 // ===== COMPOSANTS ANALYTICS =====
-export { DogCommunicationStats } from './AskToGoOutStats';
+export { DogCommunicationStats } from './charts/AskToGoOutStats';
 export { IncidentReasonChart } from './charts/IncidentReasonChart';
 
 // ===== COMPOSANTS ONBOARDING =====
