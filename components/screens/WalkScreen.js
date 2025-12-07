@@ -130,6 +130,7 @@ export default function WalkScreen() {
       // 🗑️ Invalider le cache car données modifiées
       cacheService.invalidatePattern(`home_.*_${currentDog.id}`);
       cacheService.invalidatePattern(`walk_history.*_${currentDog.id}`);
+      cacheService.invalidatePattern(`analytics_${currentDog.id}_.*`);
       // NOTE: Pas de cache pour les timers (last_outing, last_need)
 
       // ✅ Navigation après succès

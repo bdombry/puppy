@@ -220,8 +220,11 @@ export const getAdvancedStats = async (dogId) => {
       const dayOutings = outings.filter(o => new Date(o.datetime).toISOString().split('T')[0] === date);
       const dayActivities = activities.filter(a => new Date(a.datetime).toISOString().split('T')[0] === date);
       
-      const hasIncident = dayOutings.some(o => o.pee_location === 'inside' || o.poop_location === 'inside');
-      streakInfo[date] = !hasIncident; // true = pas d'incident
+      // Vérifier les incidents dans les outings ET activities
+      const hasOutingsIncident = dayOutings.some(o => o.pee_location === 'inside' || o.poop_location === 'inside');
+      const hasActivitiesIncident = dayActivities.some(a => a.pee_incident || a.poop_incident);
+      
+      streakInfo[date] = !(hasOutingsIncident || hasActivitiesIncident); // true = pas d'incident
     });
 
     let maxStreak = 0;
