@@ -101,6 +101,14 @@ export default function WalkHistoryScreen() {
     return { date: dayMonth, time: timeStr, day: dayName };
   };
 
+  // ✅ Normaliser le datetime pour le tri (handle both UTC+00:00 and LOCAL formats)
+  const normalizeDatetime = (iso) => {
+    // Remove timezone info if present (e.g., "+00:00")
+    const cleanIso = iso.split('+')[0].split('Z')[0];
+    // Return as ISO string for proper comparison
+    return new Date(cleanIso).getTime();
+  };
+
   const isIncident = (walk) => {
     return (
       (walk.pee && walk.pee_location === 'inside') ||
@@ -135,7 +143,12 @@ export default function WalkHistoryScreen() {
   const allItems = [
     ...(activeTab === 'activities' ? [] : filteredWalks.map((w) => ({ ...w, type: 'walk' }))),
     ...filteredActivities.map((a) => ({ ...a, type: 'activity' })),
-  ].sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+  ].sort((a, b) => {
+    // Normaliser les datetimes et comparer (plus récent en premier)
+    const timeA = normalizeDatetime(a.datetime);
+    const timeB = normalizeDatetime(b.datetime);
+    return timeB - timeA; // Décroissant (plus récent d'abord)
+  });
 
   // Paginer les éléments (15 par page)
   const paginatedItems = allItems.slice(0, (page + 1) * ITEMS_PER_PAGE);

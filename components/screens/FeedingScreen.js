@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
   ScrollView,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
@@ -30,6 +31,8 @@ export default function FeedingScreen() {
   const { currentDog } = useAuth();
 
   const [selectedTypes, setSelectedTypes] = useState([]);
+  const [datetime, setDatetime] = useState(new Date());
+  const [showDateTimeEditor, setShowDateTimeEditor] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Messages personnalisés selon le sexe
@@ -57,9 +60,8 @@ export default function FeedingScreen() {
       }
 
       // Créer la date en heure locale (chaîne ISO sans conversion UTC)
-      const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
-      const datetimeISO = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
       const records = selectedTypes.map(type => ({
         dog_id: currentDog.id,
@@ -76,7 +78,7 @@ export default function FeedingScreen() {
 
       // ✅ PROGRAMMER LES NOTIFICATIONS AVANT l'insert (c'est critique!)
       for (const type of selectedTypes) {
-        await scheduleFeedingNotification(type, new Date(), currentDog.name);
+        await scheduleFeedingNotification(type, datetime, currentDog.name);
       }
 
       // ✅ PUIS insérer en Supabase (avec fallback retry)
@@ -136,6 +138,77 @@ export default function FeedingScreen() {
           <Text style={screenStyles.screenSubtitle}>
             {messages.pronoun} a mangé ou bu ?
           </Text>
+        </View>
+
+        {/* Date et Heure combinées */}
+        <View style={styles.fieldCard}>
+          <View style={styles.fieldLabelRow}>
+            <Text style={styles.fieldEmoji}>📅</Text>
+            <Text style={styles.fieldLabel}>Date et heure</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.dateTimeButton}
+            onPress={() => setShowDateTimeEditor(!showDateTimeEditor)}
+            disabled={loading}
+          >
+            <Text style={styles.dateTimeButtonText}>
+              {datetime.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })} à {datetime.toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </Text>
+          </TouchableOpacity>
+
+          {showDateTimeEditor && (
+            <View style={styles.dateTimeEditor}>
+              {/* Date picker section */}
+              <View style={styles.pickerSection}>
+                <Text style={styles.pickerLabel}>📅 Sélectionne la date</Text>
+                <View style={styles.pickerWrapper}>
+                  <DateTimePicker
+                    value={datetime}
+                    mode="date"
+                    display="spinner"
+                    onChange={(event, selectedDate) => {
+                      if (selectedDate) {
+                        setDatetime(selectedDate);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+
+              {/* Time picker section */}
+              <View style={styles.pickerSection}>
+                <Text style={styles.pickerLabel}>🕐 Sélectionne l'heure</Text>
+                <View style={styles.pickerWrapper}>
+                  <DateTimePicker
+                    value={datetime}
+                    mode="time"
+                    display="spinner"
+                    onChange={(event, selectedTime) => {
+                      if (selectedTime) {
+                        setDatetime(selectedTime);
+                      }
+                    }}
+                  />
+                </View>
+              </View>
+
+              {/* Validate button */}
+              <TouchableOpacity
+                style={styles.pickerValidateButton}
+                onPress={() => setShowDateTimeEditor(false)}
+              >
+                <Text style={styles.pickerValidateText}>✅ Valider</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
 
         <View style={styles.optionsContainer}>
@@ -285,5 +358,83 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.lg,
     color: colors.textSecondary,
     fontWeight: typography.weights.bold,
+  },
+  fieldCard: {
+    backgroundColor: colors.white,
+    padding: spacing.lg,
+    borderRadius: borderRadius.lg,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+    marginBottom: spacing.lg,
+  },
+  fieldLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: spacing.md,
+  },
+  fieldEmoji: {
+    fontSize: typography.sizes.xxl,
+    marginRight: spacing.sm,
+  },
+  fieldLabel: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+  },
+  dateTimeButton: {
+    backgroundColor: colors.gray50,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+  },
+  dateTimeButtonText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    color: colors.text,
+    textAlign: 'center',
+  },
+  dateTimeEditor: {
+    marginTop: spacing.md,
+    marginLeft: -spacing.lg,
+    marginRight: -spacing.lg,
+    marginBottom: -spacing.lg,
+    backgroundColor: colors.gray50,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray200,
+    borderBottomLeftRadius: borderRadius.md,
+    borderBottomRightRadius: borderRadius.md,
+  },
+  pickerSection: {
+    marginBottom: spacing.lg,
+  },
+  pickerLabel: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
+  },
+  pickerWrapper: {
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+    borderWidth: 1,
+    borderColor: colors.gray200,
+    overflow: 'hidden',
+  },
+  pickerValidateButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderRadius: borderRadius.md,
+    marginTop: spacing.md,
+    alignItems: 'center',
+  },
+  pickerValidateText: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.bold,
+    color: colors.white,
   },
 });

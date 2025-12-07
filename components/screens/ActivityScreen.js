@@ -33,6 +33,7 @@ export default function ActivityScreen() {
   const [datetime, setDatetime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showDateTimeEditor, setShowDateTimeEditor] = useState(false);
   const [duration, setDuration] = useState('');
   const [pee, setPee] = useState(false);
   const [peeIncident, setPeeIncident] = useState(false); // Pipi est un incident
@@ -206,15 +207,15 @@ export default function ActivityScreen() {
             />
           </View>
 
-          {/* Date */}
+          {/* Date et Heure combinées */}
           <View style={styles.fieldCard}>
             <View style={styles.fieldLabelRow}>
               <Text style={styles.fieldEmoji}>📅</Text>
-              <Text style={styles.fieldLabel}>Date de la balade</Text>
+              <Text style={styles.fieldLabel}>Date et heure</Text>
             </View>
             <TouchableOpacity
               style={styles.dateTimeButton}
-              onPress={() => setShowDatePicker(true)}
+              onPress={() => setShowDateTimeEditor(!showDateTimeEditor)}
               disabled={loading}
             >
               <Text style={styles.dateTimeButtonText}>
@@ -223,56 +224,46 @@ export default function ActivityScreen() {
                   year: 'numeric', 
                   month: 'long', 
                   day: 'numeric' 
-                })}
-              </Text>
-            </TouchableOpacity>
-            {showDatePicker && (
-              <View style={styles.pickerWrapper}>
-                <DateTimePicker
-                  value={datetime}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={handleDateChange}
-                />
-                <TouchableOpacity
-                  style={styles.pickerValidateButton}
-                  onPress={() => setShowDatePicker(false)}
-                >
-                  <Text style={styles.pickerValidateText}>✅ Valider</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-
-          {/* Heure */}
-          <View style={styles.fieldCard}>
-            <View style={styles.fieldLabelRow}>
-              <Text style={styles.fieldEmoji}>🕐</Text>
-              <Text style={styles.fieldLabel}>Heure de la balade</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.dateTimeButton}
-              onPress={() => setShowTimePicker(true)}
-              disabled={loading}
-            >
-              <Text style={styles.dateTimeButtonText}>
-                {datetime.toLocaleTimeString('fr-FR', {
+                })} à {datetime.toLocaleTimeString('fr-FR', {
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
               </Text>
             </TouchableOpacity>
-            {showTimePicker && (
-              <View style={styles.pickerWrapper}>
-                <DateTimePicker
-                  value={datetime}
-                  mode="time"
-                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                  onChange={handleTimeChange}
-                />
+            
+            {/* Éditeur date/heure - affichage conditionnel */}
+            {showDateTimeEditor && (
+              <View style={styles.dateTimeEditor}>
+                {/* Sélecteur Date */}
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerLabel}>📅 Sélectionne la date</Text>
+                  <View style={styles.pickerWrapper}>
+                    <DateTimePicker
+                      value={datetime}
+                      mode="date"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={handleDateChange}
+                    />
+                  </View>
+                </View>
+
+                {/* Sélecteur Heure */}
+                <View style={styles.pickerSection}>
+                  <Text style={styles.pickerLabel}>🕐 Sélectionne l'heure</Text>
+                  <View style={styles.pickerWrapper}>
+                    <DateTimePicker
+                      value={datetime}
+                      mode="time"
+                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      onChange={handleTimeChange}
+                    />
+                  </View>
+                </View>
+
+                {/* Bouton Fermer */}
                 <TouchableOpacity
                   style={styles.pickerValidateButton}
-                  onPress={() => setShowTimePicker(false)}
+                  onPress={() => setShowDateTimeEditor(false)}
                 >
                   <Text style={styles.pickerValidateText}>✅ Valider</Text>
                 </TouchableOpacity>
@@ -824,5 +815,27 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
     color: colors.white,
+  },
+  dateTimeEditor: {
+    marginTop: spacing.md,
+    marginLeft: -spacing.md,
+    marginRight: -spacing.md,
+    marginBottom: -spacing.md,
+    backgroundColor: colors.gray50,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.gray200,
+    borderBottomLeftRadius: borderRadius.md,
+    borderBottomRightRadius: borderRadius.md,
+  },
+  pickerSection: {
+    marginBottom: spacing.lg,
+  },
+  pickerLabel: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.semibold,
+    color: colors.text,
+    marginBottom: spacing.sm,
   },
 });
