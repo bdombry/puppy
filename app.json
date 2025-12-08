@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "pupy-track",
-    "slug": "pupytracker",
+    "slug": "snack-8d5a7e98-da91-4ab9-999c-68351051b8ae",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -33,15 +33,15 @@
     "description": "insight update",
     "extra": {
       "eas": {
-        "projectId": "43323095-10c1-4fc7-8bcc-80d8405839ad"
+        "projectId": "c85a1484-9e01-422c-b2d3-11ebb4059322"
       }
     },
     "owner": "bendombry",
     "runtimeVersion": {
-      "policy": "appVersion"
+      "policy": "sdkVersion"
     },
     "updates": {
-      "url": "https://u.expo.dev/43323095-10c1-4fc7-8bcc-80d8405839ad"
+      "url": "https://u.expo.dev/c85a1484-9e01-422c-b2d3-11ebb4059322"
     }
   }
 }
