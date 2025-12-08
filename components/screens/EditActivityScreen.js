@@ -91,13 +91,13 @@ export default function EditActivityScreen() {
       cacheService.invalidatePattern(`analytics_${currentDog?.id}_.*`);
 
       Alert.alert('✅ Modifié', 'La balade a été mise à jour');
+      setLoading(false);
       setTimeout(() => {
         navigation.goBack();
         if (onSave) onSave();
       }, 500);
     } catch (err) {
       Alert.alert('❌ Erreur', err.message || 'Impossible de modifier');
-    } finally {
       setLoading(false);
     }
   };

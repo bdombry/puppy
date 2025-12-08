@@ -29,7 +29,7 @@ export const getDogMessages = (dogName, sex) => {
     
     // Messages de sortie
     walkSuccess: `${pronoun} a fait une belle sortie! `,
-    incidentInside: `Qu'a fait ${dogName} à l'intérieur ?`,
+    incidentInside: `Qu'a fait ${dogName} ?`,
     incidentQuestion: `${pronoun} a eu un incident...`,
     
     // Messages de nourriture/boisson

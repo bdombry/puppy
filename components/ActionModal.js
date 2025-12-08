@@ -92,7 +92,7 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
               <View style={homeStyles.modalOptionInfo}>
                 <Text style={homeStyles.modalOptionTitle}>Besoin réussi</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Pipi/caca à l'endroit prévu
+                  À l'endroit prévu
                 </Text>
               </View>
             </View>
@@ -115,7 +115,7 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
               <View style={homeStyles.modalOptionInfo}>
                 <Text style={homeStyles.modalOptionTitle}>Alimentation</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Manger ou boire
+                  Recevoir des rappels
                 </Text>
               </View>
             </View>

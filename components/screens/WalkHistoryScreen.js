@@ -143,6 +143,77 @@ export default function WalkHistoryScreen() {
     );
   };
 
+  // ✅ Fonction pour rendre les details sans problème de rendering
+  const renderDetails = (item, isActivity) => {
+    const badges = [];
+
+    if (isActivity) {
+      if (item.pee) {
+        badges.push(
+          <View key="pee" style={[styles.detailBadge, item.pee_incident && { backgroundColor: colors.errorLight }]}>
+            <Text style={styles.detailIcon}>{item.pee_incident ? '⚠️' : '💧'}</Text>
+            <Text style={styles.detailText}>Pipi</Text>
+          </View>
+        );
+      }
+      if (item.poop) {
+        badges.push(
+          <View key="poop" style={[styles.detailBadge, item.poop_incident && { backgroundColor: colors.errorLight }]}>
+            <Text style={styles.detailIcon}>{item.poop_incident ? '⚠️' : '💩'}</Text>
+            <Text style={styles.detailText}>Caca</Text>
+          </View>
+        );
+      }
+      if (item.location) {
+        badges.push(
+          <View key="location" style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
+            <Text style={styles.detailIcon}>📍</Text>
+            <Text style={styles.detailText}>{item.location}</Text>
+          </View>
+        );
+      }
+      if (item.duration_minutes) {
+        badges.push(
+          <View key="duration" style={[styles.detailBadge, { backgroundColor: '#fef3c7' }]}>
+            <Text style={styles.detailIcon}>⏱️</Text>
+            <Text style={styles.detailText}>{item.duration_minutes}m</Text>
+          </View>
+        );
+      }
+    } else {
+      if (item.pee) {
+        badges.push(
+          <View key="pee" style={styles.detailBadge}>
+            <Text style={styles.detailIcon}>💧</Text>
+            <Text style={styles.detailText}>Pipi</Text>
+          </View>
+        );
+      }
+      if (item.poop) {
+        badges.push(
+          <View key="poop" style={styles.detailBadge}>
+            <Text style={styles.detailIcon}>💩</Text>
+            <Text style={styles.detailText}>Caca</Text>
+          </View>
+        );
+      }
+      if (item.treat) {
+        badges.push(
+          <View key="treat" style={[styles.detailBadge, { backgroundColor: colors.primaryLight }]}>
+            <Text style={styles.detailIcon}>🍬</Text>
+            <Text style={styles.detailText}>Friandise</Text>
+          </View>
+        );
+      }
+    }
+
+    return badges.length > 0 ? (
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs }}>
+        {badges}
+      </View>
+    ) : null;
+  };
+
   const filteredWalks = walks.filter((walk) => {
     if (activeTab === 'all') return true;
     if (activeTab === 'incidents') return isIncident(walk);
@@ -292,11 +363,9 @@ export default function WalkHistoryScreen() {
               const { date, time, day } = formatDate(item.datetime);
               const isActivity = item.type === 'activity';
               const incident = !isActivity && isIncident(item);
-              const hasNeeds = isActivity && (item.pee || item.poop);
 
               return (
-                <View
-                  key={`${item.type}-${item.id}`}
+                <View key={`${item.type}-${item.id}`}
                   style={[
                     styles.card,
                     incident ? styles.cardIncident : isActivity ? styles.cardActivity : styles.cardSuccess,
@@ -337,55 +406,7 @@ export default function WalkHistoryScreen() {
                 </View>
 
                 <View style={styles.details}>
-                  {isActivity ? (
-                    <>
-                      {item.pee && (
-                        <View style={[styles.detailBadge, item.pee_incident && { backgroundColor: colors.errorLight }]}>
-                          <Text style={styles.detailIcon}>{item.pee_incident ? '⚠️' : '💧'}</Text>
-                          <Text style={styles.detailText}>Pipi</Text>
-                        </View>
-                      )}
-                      {item.poop && (
-                        <View style={[styles.detailBadge, item.poop_incident && { backgroundColor: colors.errorLight }]}>
-                          <Text style={styles.detailIcon}>{item.poop_incident ? '⚠️' : '💩'}</Text>
-                          <Text style={styles.detailText}>Caca</Text>
-                        </View>
-                      )}
-                      {item.location && (
-                        <View style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
-                          <Text style={styles.detailIcon}>📍</Text>
-                          <Text style={styles.detailText}>{item.location}</Text>
-                        </View>
-                      )}
-                      {item.duration_minutes && (
-                        <View style={[styles.detailBadge, { backgroundColor: '#fef3c7' }]}>
-                          <Text style={styles.detailIcon}>⏱️</Text>
-                          <Text style={styles.detailText}>{item.duration_minutes}m</Text>
-                        </View>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      {item.pee && (
-                        <View style={styles.detailBadge}>
-                          <Text style={styles.detailIcon}>💧</Text>
-                          <Text style={styles.detailText}>Pipi</Text>
-                        </View>
-                      )}
-                      {item.poop && (
-                        <View style={styles.detailBadge}>
-                          <Text style={styles.detailIcon}>💩</Text>
-                          <Text style={styles.detailText}>Caca</Text>
-                        </View>
-                      )}
-                      {item.treat && (
-                        <View style={[styles.detailBadge, { backgroundColor: colors.primaryLight }]}>
-                          <Text style={styles.detailIcon}>🍬</Text>
-                          <Text style={styles.detailText}>Friandise</Text>
-                        </View>
-                      )}
-                    </>
-                  )}
+                  {renderDetails(item, isActivity)}
                 </View>
               </View>
               );

@@ -162,12 +162,12 @@ export default function WalkScreen() {
           </View>
 
           <Text style={screenStyles.screenTitle}>
-            {isIncident ? 'Accident à la maison' : 'Besoin dehors'}
+            {isIncident ? 'Incident' : 'Réussite'}
           </Text>
           <Text style={screenStyles.screenSubtitle}>
             {isIncident
               ? messages.incidentInside
-              : `Qu'a fait ${currentDog?.name} dehors ?`}
+              : `Qu'a fait ${currentDog?.name} ?`}
           </Text>
         </View>
 
@@ -265,9 +265,7 @@ export default function WalkScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💧 Pipi</Text>
-                <Text style={styles.optionHint}>
-                  {isIncident ? 'À l\'intérieur' : 'À l\'extérieur'}
-                </Text>
+                
               </View>
             </View>
           </TouchableOpacity>
@@ -294,9 +292,6 @@ export default function WalkScreen() {
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💩 Caca</Text>
-                <Text style={styles.optionHint}>
-                  {isIncident ? 'À l\'intérieur' : 'À l\'extérieur'}
-                </Text>
               </View>
             </View>
           </TouchableOpacity>
