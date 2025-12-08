@@ -82,6 +82,33 @@ export default function WalkHistoryScreen() {
     );
   };
 
+  // ✏️ Éditer un élément
+  const handleEdit = (item, isActivity = false) => {
+    if (isActivity) {
+      // Les balades vont sur leur propre écran
+      navigation.navigate('EditActivity', { 
+        activity: item,
+        onSave: refreshData,
+      });
+      return;
+    }
+
+    // Pour les outings (incidents vs réussite)
+    const isIncident = (item.pee && item.pee_location === 'inside') || (item.poop && item.poop_location === 'inside');
+    
+    if (isIncident) {
+      navigation.navigate('EditIncident', { 
+        incident: item,
+        onSave: refreshData,
+      });
+    } else {
+      navigation.navigate('EditSuccess', { 
+        success: item,
+        onSave: refreshData,
+      });
+    }
+  };
+
   const formatDate = (iso) => {
     // iso format: "2025-12-05T22:29:00" (LOCAL, pas UTC)
     // On extrait directement sans passer par new Date() qui convertirait en UTC
@@ -293,6 +320,13 @@ export default function WalkHistoryScreen() {
                       </View>
                     </View>
                   </View>
+
+                  <TouchableOpacity
+                    style={styles.editButton}
+                    onPress={() => handleEdit(item, isActivity)}
+                  >
+                    <Text style={styles.editButtonText}>✏️</Text>
+                  </TouchableOpacity>
 
                   <TouchableOpacity
                     style={styles.deleteButton}
@@ -558,5 +592,30 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.primary,
     fontWeight: typography.weights.bold,
+  },
+  deleteButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+    marginLeft: spacing.sm,
+  },
+  deleteButtonText: {
+    fontSize: typography.sizes.lg,
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.7,
+  },
+  editButtonText: {
+    fontSize: typography.sizes.lg,
   },
 });

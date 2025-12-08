@@ -9,6 +9,9 @@ import DogSetupScreen from './components/screens/DogSetupScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import WalkScreen from './components/screens/WalkScreen';
 import WalkHistoryScreen from './components/screens/WalkHistoryScreen'; 
+import EditIncidentScreen from './components/screens/EditIncidentScreen';
+import EditSuccessScreen from './components/screens/EditSuccessScreen';
+import EditActivityScreen from './components/screens/EditActivityScreen';
 import DogProfileScreen from './components/screens/DogProfileScreen';
 import AnalyticsScreen from './components/screens/AnalyticsScreen';
 import AccountScreen from './components/screens/AccountScreen';
@@ -104,6 +107,9 @@ function AppNavigator() {
             <Stack.Screen name="Feeding" component={FeedingScreen} />
             <Stack.Screen name="Activity" component={ActivityScreen} />
             <Stack.Screen name="Account" component={AccountScreen} />
+            <Stack.Screen name="EditIncident" component={EditIncidentScreen} />
+            <Stack.Screen name="EditSuccess" component={EditSuccessScreen} />
+            <Stack.Screen name="EditActivity" component={EditActivityScreen} />
             <Stack.Screen 
               name="NotificationSettings" 
               options={{ headerShown: false }}
