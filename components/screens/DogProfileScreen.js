@@ -8,6 +8,8 @@ import {
   StyleSheet,
   Alert,
   Platform,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
@@ -18,10 +20,12 @@ import { colors, spacing, borderRadius, shadows, typography } from '../../consta
 import { supabase } from '../../config/supabase';
 import { EMOJI } from '../../constants/config';
 import SexToggle from '../SexToggle';
+import { useImageUpload } from '../../hooks/useImageUpload';
 
 export default function DogProfileScreen() {
   const { currentDog, user, setCurrentDog } = useAuth();
   const navigation = useNavigation();
+  const { pickImage, uploadImage } = useImageUpload();
 
   const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState(currentDog?.name || '');
@@ -32,6 +36,8 @@ export default function DogProfileScreen() {
   );
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(currentDog?.photo_url || null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   const getDogAge = (birthDate) => {
     if (!birthDate) return null;
@@ -56,6 +62,7 @@ export default function DogProfileScreen() {
         breed: breed.trim() || null,
         sex: sex,
         birth_date: birthDate ? birthDate.toISOString().split('T')[0] : null,
+        photo_url: photoUrl,
       };
 
       const { data, error } = await supabase
@@ -132,7 +139,37 @@ export default function DogProfileScreen() {
     setBreed(currentDog?.breed || '');
     setSex(currentDog?.sex || 'female');
     setBirthDate(currentDog?.birth_date ? new Date(currentDog.birth_date) : null);
+    setPhotoUrl(currentDog?.photo_url || null);
     setIsEditing(false);
+  };
+
+  const handleChangePhoto = async () => {
+    const uri = await pickImage();
+    if (uri) {
+      setUploadingPhoto(true);
+      try {
+        const url = await uploadImage(uri, currentDog.id);
+        setPhotoUrl(url);
+
+        // Sauvegarde l'URL dans la base de données
+        const { error } = await supabase
+          .from('Dogs')
+          .update({ photo_url: url })
+          .eq('id', currentDog.id);
+
+        if (error) throw error;
+        
+        // Update le contexte pour que HomeScreen se mette à jour
+        setCurrentDog({ ...currentDog, photo_url: url });
+        
+        Alert.alert('✅ Succès', 'Photo mise à jour!');
+      } catch (err) {
+        console.error('Upload failed:', err);
+        Alert.alert('Erreur', 'Impossible de sauvegarder la photo');
+      } finally {
+        setUploadingPhoto(false);
+      }
+    }
   };
 
   if (!currentDog) {
@@ -152,9 +189,30 @@ export default function DogProfileScreen() {
         <Text style={screenStyles.screenTitle}>Profil du chien</Text>
 
         <View style={styles.avatarSection}>
-          <View style={screenStyles.avatar}>
-            <Text style={screenStyles.avatarEmoji}>{EMOJI.dog}</Text>
-          </View>
+          <TouchableOpacity 
+            onPress={handleChangePhoto}
+            disabled={uploadingPhoto}
+            style={styles.avatarContainer}
+          >
+            {uploadingPhoto ? (
+              <View style={[screenStyles.avatar, styles.loadingAvatar]}>
+                <ActivityIndicator size="large" color={colors.primary} />
+              </View>
+            ) : photoUrl ? (
+              <Image 
+                source={{ uri: photoUrl }} 
+                style={[screenStyles.avatar, styles.photoAvatar]}
+              />
+            ) : (
+              <View style={screenStyles.avatar}>
+                <Text style={screenStyles.avatarEmoji}>{EMOJI.dog}</Text>
+              </View>
+            )}
+            <View style={styles.cameraIconContainer}>
+              <Text style={styles.cameraIcon}>📷</Text>
+            </View>
+          </TouchableOpacity>
+          
           {!isEditing && (
             <TouchableOpacity
               style={styles.editButton}
@@ -306,6 +364,36 @@ const styles = StyleSheet.create({
   avatarSection: {
     alignItems: 'center',
     marginBottom: spacing.xxxl,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: spacing.lg,
+  },
+  photoAvatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+  },
+  loadingAvatar: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cameraIconContainer: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.white,
+    ...shadows.small,
+  },
+  cameraIcon: {
+    fontSize: 20,
   },
   editButton: {
     flexDirection: 'row',

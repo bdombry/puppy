@@ -6,7 +6,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Animated, Image } from 'react-native';
 import { homeStyles } from '../styles/homeStyles';
 import { EMOJI, PERIODS } from '../constants/config';
 import { colors } from '../constants/theme';
@@ -35,9 +35,16 @@ export function DogCardWithProgress({
       {/* Dog Info Section */}
       <View style={homeStyles.dogHeaderContainer}>
         <View style={homeStyles.dogHeaderRow}>
-          <View style={homeStyles.dogAvatar}>
-            <Text style={homeStyles.dogAvatarEmoji}>{EMOJI.dog}</Text>
-          </View>
+          {dog.photo_url ? (
+            <Image 
+              source={{ uri: dog.photo_url }} 
+              style={homeStyles.dogAvatar}
+            />
+          ) : (
+            <View style={homeStyles.dogAvatar}>
+              <Text style={homeStyles.dogAvatarEmoji}>{EMOJI.dog}</Text>
+            </View>
+          )}
           <View style={homeStyles.dogInfo}>
             <Text style={homeStyles.dogName}>{dog.name}</Text>
           </View>

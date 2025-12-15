@@ -111,7 +111,7 @@ export const homeStyles = StyleSheet.create({
   dogAvatar: {
     width: 72,
     height: 72,
-    borderRadius: borderRadius.lg,
+    borderRadius: 36,
     backgroundColor: colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -119,6 +119,7 @@ export const homeStyles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
+    overflow: 'hidden',
   },
   dogAvatarEmoji: {
     fontSize: 40,
