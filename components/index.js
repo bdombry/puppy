@@ -9,7 +9,7 @@ export { DogCardWithProgress } from './DogCardWithProgress';
 export { StatsCards } from './charts/StatsCards';
 export { ProgressSection } from './ProgressSection';
 export { ActionButtons } from './ActionButtons';
-export { LastOutingTimer } from './LastOutingTimer';
+export { LastWalkTimer } from './LastWalkTimer';
 export { ActionModal } from './ActionModal';
 export { TrialModal } from './TrialModal';
 

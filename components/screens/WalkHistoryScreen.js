@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../config/supabase';
@@ -371,44 +372,55 @@ export default function WalkHistoryScreen() {
                     incident ? styles.cardIncident : isActivity ? styles.cardActivity : styles.cardSuccess,
                   ]}
                 >
-                <View style={styles.cardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.cardTitleRow}>
-                      <Text style={styles.cardIcon}>
-                        {isActivity ? '🚶' : incident ? '⚠️' : '✅'}
-                      </Text>
-                      <Text style={styles.cardTitle}>
-                        {isActivity ? (item.title ? item.title : 'Balade') : incident ? 'Incident' : 'Réussite'}
-                      </Text>
-                    </View>
-                    <View style={styles.dateRow}>
-                      <Text style={styles.dayText}>{day}</Text>
-                      <Text style={styles.dateText}>{date}</Text>
-                      <View style={styles.timeBadge}>
-                        <Text style={styles.timeText}>{time}</Text>
+                  <View style={styles.cardHeader}>
+                    <View style={{ flex: 1 }}>
+                      <View style={styles.cardTitleRow}>
+                        <Text style={styles.cardIcon}>
+                          {isActivity ? '🚶' : incident ? '⚠️' : '✅'}
+                        </Text>
+                        <Text style={styles.cardTitle}>
+                          {isActivity ? (item.title ? item.title : 'Balade') : incident ? 'Incident' : 'Réussite'}
+                        </Text>
+                      </View>
+                      <View style={styles.dateRow}>
+                        <Text style={styles.dayText}>{day}</Text>
+                        <Text style={styles.dateText}>{date}</Text>
+                        <View style={styles.timeBadge}>
+                          <Text style={styles.timeText}>{time}</Text>
+                        </View>
                       </View>
                     </View>
+
+                    <TouchableOpacity
+                      style={styles.editButton}
+                      onPress={() => handleEdit(item, isActivity)}
+                    >
+                      <Text style={styles.editButtonText}>✏️</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(item, isActivity)}
+                    >
+                      <Text style={styles.deleteButtonText}>🗑️</Text>
+                    </TouchableOpacity>
                   </View>
 
-                  <TouchableOpacity
-                    style={styles.editButton}
-                    onPress={() => handleEdit(item, isActivity)}
-                  >
-                    <Text style={styles.editButtonText}>✏️</Text>
-                  </TouchableOpacity>
+                  {/* Affichage de la photo de balade si présente */}
+                  {isActivity && item.photo_url ? (
+                    <View style={styles.historyPhotoContainer}>
+                      <Image
+                        source={{ uri: item.photo_url }}
+                        style={styles.historyPhoto}
+                        resizeMode="cover"
+                      />
+                    </View>
+                  ) : null}
 
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => handleDelete(item, isActivity)}
-                  >
-                    <Text style={styles.deleteButtonText}>🗑️</Text>
-                  </TouchableOpacity>
+                  <View style={styles.details}>
+                    {renderDetails(item, isActivity)}
+                  </View>
                 </View>
-
-                <View style={styles.details}>
-                  {renderDetails(item, isActivity)}
-                </View>
-              </View>
               );
             })}
             

@@ -19,13 +19,13 @@ import { HistoryButton } from '../buttons/HistoryButton';
 import { AnalyticsButton } from '../buttons/AnalyticsButton';
 import { AccountButton } from '../buttons/AccountButton';
 import { LogoutButton } from '../buttons/LogoutButton';
-import { LastOutingTimer } from '../LastOutingTimer';
-import { LastNeedTimer } from '../LastNeedTimer';
+import { LastWalkTimer } from '../LastWalkTimer';
+import { LastPeeTimer } from '../LastPeeTimer';
+import { LastPoopTimer } from '../LastPoopTimer';
 import { TimersSection } from '../TimersSection';
 import { ActionModal } from '../ActionModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
-import { useLastNeed } from '../../hooks/useLastNeed';
 import { EMOJI } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
 
@@ -41,21 +41,24 @@ export default function HomeScreen() {
   const [streakMode, setStreakMode] = useState('activity');
 
   // Hooks personnalisés
-  const { stats, totalOutings, streakData, lastOuting, loading, refreshData, activities, outings } = useHomeData(
+  const { stats, totalOutings, streakData, lastOuting, lastPee, lastPoop, loading, refreshData, activities, outings } = useHomeData(
     currentDog?.id,
     selectedPeriod
   );
   const timeSince = useTimer(lastOuting);
-  const lastNeedTime = useLastNeed(currentDog?.id);
+  const timeSincePee = useTimer(lastPee);
+  const timeSincePoop = useTimer(lastPoop);
 
   // Recharger les données quand l'écran reçoit le focus
   // MAIS: seulement recharger si le dogId a changé, pas à chaque retour
   useFocusEffect(
     useCallback(() => {
-      // Les timers se rechargent automatiquement en arrière-plan via useHomeData
-      // Ne pas forcer refreshData() ici pour éviter retrigger la progress bar
-      console.log('🔄 HomeScreen focus - timers se mettent à jour en arrière-plan');
-    }, [])
+      // Forcer le refresh des timers après enregistrement d'une balade
+      // Ajouter un petit délai pour laisser le temps à Supabase de synchroniser
+      setTimeout(() => {
+        refreshData();
+      }, 1000);
+    }, [refreshData])
   );
 
   // Animer la barre de progrès
@@ -158,7 +161,8 @@ export default function HomeScreen() {
           )}
 
           <TimersSection lastOuting={timeSince} />
-          <LastNeedTimer lastNeedTime={lastNeedTime} />
+          <LastPeeTimer lastPeeTime={timeSincePee} />
+          <LastPoopTimer lastPoopTime={timeSincePoop} />
         </View>
 
         <View style={homeStyles.content}>

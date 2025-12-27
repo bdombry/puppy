@@ -1,6 +1,6 @@
 /**
  * Composant LastWalkTimer
- * Affiche "Dernière sortie : il y a X temps"
+ * Affiche "Dernière balade : il y a X temps"
  */
 
 import React from 'react';
@@ -39,8 +39,4 @@ const styles = StyleSheet.create({
 
 LastWalkTimer.propTypes = {
   timeSince: PropTypes.string,
-};
-
-LastOutingTimer.defaultProps = {
-  timeSince: null,
 };

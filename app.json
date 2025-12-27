@@ -16,7 +16,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.bendombry.pupytracker",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "PupyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
+        "NSPhotoLibraryUsageDescription": "PupyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades."
       }
     },
     "android": {
@@ -25,7 +27,13 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.bendombry.pupytracker"
+      "package": "com.bendombry.pupytracker",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"

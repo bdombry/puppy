@@ -1,25 +1,33 @@
 /**
- * Composant LastWalkTimer
- * Affiche "Dernière sortie : il y a X temps"
+ * Composant LastPoopTimer
+ * Affiche le dernier caca enregistré
+ * Format: "Dernier caca : il y a 2h 15m 💩"
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Text, StyleSheet } from 'react-native';
-import { EMOJI } from '../constants/config';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
 
-export function LastWalkTimer({ timeSince }) {
-  if (!timeSince) return null;
+export function LastPoopTimer({ lastPoopTime }) {
+  if (!lastPoopTime) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.text}>Dernier caca : aucun enregistrement 💩</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>
-        {EMOJI.timer} Dernière balade : il y a {timeSince}
-      </Text>
+      <Text style={styles.text}>Dernier caca : {lastPoopTime} 💩</Text>
     </View>
   );
 }
+
+LastPoopTimer.propTypes = {
+  lastPoopTime: PropTypes.string,
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -36,11 +44,3 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
 });
-
-LastWalkTimer.propTypes = {
-  timeSince: PropTypes.string,
-};
-
-LastOutingTimer.defaultProps = {
-  timeSince: null,
-};

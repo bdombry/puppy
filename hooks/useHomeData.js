@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { getPeeStats, getTotalOutings } from '../components/services/supabaseService';
 import { getActivityStreak, getCleanStreak } from '../components/services/streakService';
-import { getLastOuting, getLastNeed } from '../components/services/timerService';
+import { getLastOuting, getLastPee, getLastPoop } from '../components/services/timerService';
 import { cacheService, CACHE_KEYS, CACHE_DURATION } from '../components/services/cacheService';
 
 export function useHomeData(dogId, selectedPeriod) {
@@ -23,7 +23,8 @@ export function useHomeData(dogId, selectedPeriod) {
     clean: 0,
   });
   const [lastOuting, setLastOuting] = useState(null);
-  const [lastNeed, setLastNeed] = useState(null);
+  const [lastPee, setLastPee] = useState(null);
+  const [lastPoop, setLastPoop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -48,7 +49,7 @@ export function useHomeData(dogId, selectedPeriod) {
       const cachedStreak = cacheService.get(streakKey);
 
       // Si TOUT est en cache, utiliser le cache (pas de recharge)
-      // NOTE: last_outing et last_need ne sont PAS en cache (timers en temps réel)
+      // NOTE: last_outing, last_pee et last_poop ne sont PAS en cache (timers en temps réel)
       if (cachedStats && cachedTotal && cachedStreak) {
         console.log('📦 Utilisation du cache HomeScreen');
         setStats(cachedStats);
@@ -56,32 +57,33 @@ export function useHomeData(dogId, selectedPeriod) {
         setStreakData(cachedStreak);
         setLoading(false);
         
-        // Charger les timers EN ARRIERE-PLAN (sans bloquer, sans retrigger l'animation)
-        // Utilise setTimeout pour éviter de retrigger l'effet useEffect
-        setTimeout(async () => {
-          try {
-            const [lastOut, lastN] = await Promise.all([
-              getLastOuting(dogId),
-              getLastNeed(dogId),
-            ]);
-            setLastOuting(lastOut);
-            setLastNeed(lastN);
-          } catch (err) {
-            console.error('❌ Erreur chargement timers:', err);
-          }
-        }, 100);
+        // Charger les timers IMMÉDIATEMENT (pas en arrière-plan)
+        // Pour éviter que les composants affichent "aucun enregistrement" au premier rendu
+        try {
+          const [lastOut, lastP, lastPop] = await Promise.all([
+            getLastOuting(dogId),
+            getLastPee(dogId),
+            getLastPoop(dogId),
+          ]);
+          setLastOuting(lastOut);
+          setLastPee(lastP);
+          setLastPoop(lastPop);
+        } catch (err) {
+          console.error('❌ Erreur chargement timers:', err);
+        }
         
         return;
       }
 
       // Charger uniquement les données non-cachées
-      const [peeStats, total, activityStreak, cleanStreak, lastOut, lastN] = await Promise.all([
+      const [peeStats, total, activityStreak, cleanStreak, lastOut, lastP, lastPop] = await Promise.all([
         cachedStats || getPeeStats(dogId, selectedPeriod),
         cachedTotal || getTotalOutings(dogId),
         cachedStreak?.activity ? Promise.resolve(cachedStreak.activity) : getActivityStreak(dogId),
         cachedStreak?.clean ? Promise.resolve(cachedStreak.clean) : getCleanStreak(dogId),
         getLastOuting(dogId),  // TOUJOURS appeler (pas de cache)
-        getLastNeed(dogId),    // TOUJOURS appeler (pas de cache)
+        getLastPee(dogId),     // TOUJOURS appeler (pas de cache)
+        getLastPoop(dogId),    // TOUJOURS appeler (pas de cache)
       ]);
 
       // Mettre à jour le state avec données mise en cache ou nouvelles
@@ -93,7 +95,8 @@ export function useHomeData(dogId, selectedPeriod) {
       setTotalOutings(finalTotal);
       setStreakData(finalStreak);
       setLastOuting(lastOut);   // Toujours les données fraîches
-      setLastNeed(lastN);       // Toujours les données fraîches
+      setLastPee(lastP);        // Toujours les données fraîches
+      setLastPoop(lastPop);     // Toujours les données fraîches
 
       // Cacher les données si nouvelles (MAIS PAS les timers)
       if (!cachedStats) cacheService.set(statsKey, finalStats, CACHE_DURATION.STATIC);
@@ -118,7 +121,8 @@ export function useHomeData(dogId, selectedPeriod) {
     totalOutings,
     streakData,
     lastOuting,
-    lastNeed,
+    lastPee,
+    lastPoop,
     loading,
     error,
     refreshData: loadData,
