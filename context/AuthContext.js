@@ -159,7 +159,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   const setCurrentDogWithPersistence = async (dog) => {
-    logger.log('🔄 Changement de chien vers:', dog?.name, '(ID:', dog?.id, ')');
+    console.log('🔄 Changement de chien vers:', dog?.name, '(ID:', dog?.id, ')');
+    
+    // ✅ Vider le cache du chien précédent pour forcer la recharge des données
+    if (currentDog?.id && currentDog?.id !== dog?.id) {
+      console.log('🗑️ Vidage du cache pour chien:', currentDog.id);
+      // On va laisser le hook se recharger naturellement en fonction du changement de dogId
+      // (pas besoin de vider le cache manuellement ici)
+    }
+    
     setCurrentDog(dog);
     if (dog?.id) {
       await saveLastDogId(dog.id);
@@ -228,6 +236,55 @@ export const AuthProvider = ({ children }) => {
       return data;
     } catch (error) {
       console.error('Erreur saveDog complète:', error);
+      throw error;
+    }
+  };
+
+  const deleteDog = async (dogId) => {
+    try {
+      // Supprimer les outings du chien
+      const { error: outingsError } = await supabase
+        .from('outings')
+        .delete()
+        .eq('dog_id', dogId);
+
+      if (outingsError) {
+        console.error('Erreur suppression outings:', outingsError);
+        throw outingsError;
+      }
+
+      // Supprimer le chien
+      const { error: dogError } = await supabase
+        .from('Dogs')
+        .delete()
+        .eq('id', dogId);
+
+      if (dogError) {
+        console.error('Erreur suppression chien:', dogError);
+        throw dogError;
+      }
+
+      // ✅ Mettre à jour l'état: enlever le chien de la liste
+      const updatedDogs = dogs.filter(dog => dog.id !== dogId);
+      setDogs(updatedDogs);
+
+      // ✅ Si c'est le chien actuel qui est supprimé
+      if (currentDog?.id === dogId) {
+        if (updatedDogs.length > 0) {
+          // Sélectionner le premier chien restant
+          setCurrentDog(updatedDogs[0]);
+          await saveLastDogId(updatedDogs[0].id);
+        } else {
+          // Aucun chien restant
+          setCurrentDog(null);
+          await clearLastDogId();
+        }
+      }
+
+      console.log('✅ Chien supprimé avec succès');
+      return updatedDogs;
+    } catch (error) {
+      console.error('Erreur deleteDog:', error);
       throw error;
     }
   };
@@ -358,6 +415,7 @@ export const AuthProvider = ({ children }) => {
         signInWithEmail,
         signUpWithEmail,
         saveDog,
+        deleteDog,
         signOut,
         updatePassword,
         deleteAccount,

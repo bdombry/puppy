@@ -27,6 +27,7 @@ export function useHomeData(dogId, selectedPeriod) {
   const [lastPoop, setLastPoop] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [previousDogId, setPreviousDogId] = useState(null);
 
   const loadData = useCallback(async () => {
     if (!dogId) {
@@ -49,14 +50,26 @@ export function useHomeData(dogId, selectedPeriod) {
         const totalKey = CACHE_KEYS.HOME_TOTAL_OUTINGS(dogId);
         const streakKey = CACHE_KEYS.HOME_STREAK(dogId);
 
-        // Vérifier le cache d'abord
-        const cachedStats = cacheService.get(statsKey);
-        const cachedTotal = cacheService.get(totalKey);
-        const cachedStreak = cacheService.get(streakKey);
+        // ✅ SI ON CHANGE DE CHIEN, ne pas utiliser le cache
+        const isDogChanged = previousDogId && previousDogId !== dogId;
+        console.log('🐕 Dog ID:', dogId, '| Previous:', previousDogId, '| Changed:', isDogChanged);
+
+        // Vérifier le cache SEULEMENT si on n'a pas changé de chien
+        let cachedStats = null;
+        let cachedTotal = null;
+        let cachedStreak = null;
+        
+        if (!isDogChanged) {
+          cachedStats = cacheService.get(statsKey);
+          cachedTotal = cacheService.get(totalKey);
+          cachedStreak = cacheService.get(streakKey);
+        } else {
+          console.log('🔄 Changement de chien détecté - bypass du cache');
+        }
 
         // Si TOUT est en cache, utiliser le cache (pas de recharge)
         // NOTE: last_outing, last_pee et last_poop ne sont PAS en cache (timers en temps réel)
-        if (cachedStats && cachedTotal && cachedStreak) {
+        if (cachedStats && cachedTotal && cachedStreak && !isDogChanged) {
           console.log('📦 Utilisation du cache HomeScreen');
           setStats(cachedStats);
           setTotalOutings(cachedTotal);
@@ -135,6 +148,13 @@ export function useHomeData(dogId, selectedPeriod) {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // ✅ Mettre à jour previousDogId après chaque chargement pour détecter le changement au prochain appel
+  useEffect(() => {
+    if (dogId) {
+      setPreviousDogId(dogId);
+    }
+  }, [dogId]);
 
   return {
     stats,

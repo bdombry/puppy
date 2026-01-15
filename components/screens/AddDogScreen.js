@@ -7,6 +7,8 @@ import {
   View,
   Text,
   StyleSheet,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
@@ -18,6 +20,7 @@ import SexToggle from '../SexToggle';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
 import { EMOJI } from '../../constants/config';
+import { useImageUpload } from '../../hooks/useImageUpload';
 
 export default function AddDogScreen() {
   const [name, setName] = useState('');
@@ -26,8 +29,11 @@ export default function AddDogScreen() {
   const [birthDate, setBirthDate] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const { user } = useAuth();
+  const { user, dogs, saveDog } = useAuth();
+  const { pickImage, uploadImage } = useImageUpload();
   const navigation = useNavigation();
 
   const handleSave = async () => {
@@ -41,7 +47,7 @@ export default function AddDogScreen() {
       const dogData = {
         name: name.trim(),
         sex,
-        user_id: user.id,
+        photo_url: photoUrl,
       };
 
       // Ajouter breed seulement s'il y a une valeur
@@ -56,18 +62,8 @@ export default function AddDogScreen() {
 
       console.log('🐕 Création du chien:', dogData);
 
-      const { data, error } = await supabase
-        .from('Dogs')
-        .insert([dogData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('❌ Erreur création chien:', error);
-        throw error;
-      }
-
-      console.log('✅ Chien créé avec succès:', data);
+      // ✅ Utiliser la fonction saveDog du contexte pour mettre à jour l'état
+      await saveDog(dogData);
 
       Alert.alert(
         '✅ Succès',
@@ -82,9 +78,28 @@ export default function AddDogScreen() {
 
     } catch (error) {
       console.error('❌ Erreur lors de la création:', error);
-      Alert.alert('Erreur', 'Impossible de créer le profil du chien');
+      Alert.alert('Erreur', error.message || 'Impossible de créer le profil du chien');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleChangePhoto = async () => {
+    const uri = await pickImage();
+    if (uri) {
+      setUploadingPhoto(true);
+      try {
+        // Créer un ID temporaire pour l'upload
+        const tempId = 'temp_' + Date.now();
+        const url = await uploadImage(uri, tempId);
+        setPhotoUrl(url);
+        Alert.alert('✅ Succès', 'Photo sélectionnée!');
+      } catch (err) {
+        console.error('Upload failed:', err);
+        Alert.alert('Erreur', 'Impossible de sauvegarder la photo');
+      } finally {
+        setUploadingPhoto(false);
+      }
     }
   };
 
@@ -105,7 +120,35 @@ export default function AddDogScreen() {
   return (
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
-        <Text style={screenStyles.screenTitle}>Ajouter un chien</Text>
+        <View style={styles.headerContainer}>
+          <Text style={screenStyles.screenTitle}>Ajouter un chien</Text>
+          <Text style={styles.dogsCount}>
+            Vous avez déjà {dogs.length} {dogs.length <= 1 ? 'chien' : 'chiens'}
+          </Text>
+        </View>
+
+        {/* Section photo de profil */}
+        <TouchableOpacity 
+          onPress={handleChangePhoto}
+          disabled={uploadingPhoto}
+          style={styles.photoContainer}
+        >
+          {uploadingPhoto ? (
+            <View style={styles.photoPlaceholder}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : photoUrl ? (
+            <Image 
+              source={{ uri: photoUrl }} 
+              style={styles.photoPreview}
+            />
+          ) : (
+            <View style={styles.photoPlaceholder}>
+              <Text style={styles.photoPlaceholderEmoji}>📷</Text>
+              <Text style={styles.photoPlaceholderText}>Ajouter une photo</Text>
+            </View>
+          )}
+        </TouchableOpacity>
 
         <View style={styles.form}>
           <FormInput
@@ -185,6 +228,47 @@ export default function AddDogScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    marginBottom: spacing.xl,
+  },
+  dogsCount: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    fontStyle: 'italic',
+  },
+  photoContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.xl,
+  },
+  photoPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: colors.background,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoPlaceholderEmoji: {
+    fontSize: 40,
+    marginBottom: spacing.sm,
+  },
+  photoPlaceholderText: {
+    fontSize: typography.sizes.sm,
+    color: colors.textSecondary,
+    textAlign: 'center',
+  },
+  photoPreview: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: colors.primary,
+    ...shadows.small,
+  },
   form: {
     marginBottom: spacing.xl,
   },

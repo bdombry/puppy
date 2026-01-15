@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
   Platform,
   Image,
   ActivityIndicator,
+  Modal,
+  FlatList,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
@@ -23,11 +25,12 @@ import SexToggle from '../SexToggle';
 import { useImageUpload } from '../../hooks/useImageUpload';
 
 export default function DogProfileScreen() {
-  const { currentDog, user, setCurrentDog } = useAuth();
+  const { currentDog, dogs, user, setCurrentDog, deleteDog } = useAuth();
   const navigation = useNavigation();
   const { pickImage, uploadImage } = useImageUpload();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showDogSelector, setShowDogSelector] = useState(false);
   const [name, setName] = useState(currentDog?.name || '');
   const [breed, setBreed] = useState(currentDog?.breed || '');
   const [sex, setSex] = useState(currentDog?.sex || 'female');
@@ -48,6 +51,24 @@ export default function DogProfileScreen() {
     if (months === 1) return '1 mois';
     return `${months} mois`;
   };
+
+  const handleDogSelect = (dog) => {
+    console.log('🐕 Changement vers chien:', dog?.name, dog?.id);
+    setCurrentDog(dog);
+    setShowDogSelector(false);
+  };
+
+  // ✅ Mettre à jour les états locaux quand currentDog change
+  useEffect(() => {
+    if (currentDog) {
+      setName(currentDog?.name || '');
+      setBreed(currentDog?.breed || '');
+      setSex(currentDog?.sex || 'female');
+      setBirthDate(currentDog?.birth_date ? new Date(currentDog.birth_date) : null);
+      setPhotoUrl(currentDog?.photo_url || null);
+      setIsEditing(false);
+    }
+  }, [currentDog?.id]); // Dépendre de l'ID du chien, pas de l'objet entier
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -106,18 +127,19 @@ export default function DogProfileScreen() {
                   onPress: async () => {
                     setLoading(true);
                     try {
-                      await supabase
-                        .from('outings')
-                        .delete()
-                        .eq('dog_id', currentDog.id);
+                      const dogName = currentDog.name;
+                      // ✅ Utiliser la fonction deleteDog du contexte
+                      const remainingDogs = await deleteDog(currentDog.id);
 
-                      const { error } = await supabase
-                        .from('Dogs')
-                        .delete()
-                        .eq('id', currentDog.id);
-
-                      if (error) throw error;
-                      navigation.replace('DogSetup');
+                      Alert.alert('✅ Succès', `${dogName} a été supprimé`);
+                      
+                      if (remainingDogs.length > 0) {
+                        // S'il y a d'autres chiens, aller à l'accueil
+                        navigation.navigate('Home');
+                      } else {
+                        // S'il n'y a plus aucun chien, aller à l'ajout de chien
+                        navigation.replace('AddDog');
+                      }
                     } catch (error) {
                       Alert.alert('Erreur', 'Impossible de supprimer le profil');
                       console.error(error);
@@ -203,7 +225,54 @@ export default function DogProfileScreen() {
             </View>
           </View>
         </TouchableOpacity>
-        <Text style={screenStyles.screenTitle}>Profil du chien</Text>
+        <TouchableOpacity 
+          onPress={() => setShowDogSelector(true)}
+          style={{ flexDirection: 'row', alignItems: 'center' }}
+        >
+          <Text style={screenStyles.screenTitle}>Profil de {currentDog?.name}</Text>
+          <Text style={{ fontSize: 16, marginLeft: spacing.base }}>▼</Text>
+        </TouchableOpacity>
+
+        {/* Modal de sélection de chien */}
+        <Modal
+          visible={showDogSelector}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowDogSelector(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setShowDogSelector(false)}
+          >
+            <TouchableOpacity
+              style={styles.modalSheet}
+              activeOpacity={1}
+            >
+              <Text style={styles.modalTitle}>Sélectionner un chien</Text>
+              <FlatList
+                data={dogs}
+                keyExtractor={(dog) => dog.id?.toString() || 'unknown'}
+                renderItem={({ item: dog }) => (
+                  <TouchableOpacity
+                    style={[
+                      styles.dogListItem,
+                      currentDog?.id === dog.id && styles.dogListItemActive,
+                    ]}
+                    onPress={() => handleDogSelect(dog)}
+                  >
+                    <Text style={styles.dogListItemName}>{dog.name}</Text>
+                    {currentDog?.id === dog.id && (
+                      <Text style={styles.dogListItemCheck}>✓</Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                showsVerticalScrollIndicator={false}
+                scrollEnabled={dogs.length > 5}
+              />
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </Modal>
 
         <View style={styles.avatarSection}>
           <TouchableOpacity 
@@ -497,4 +566,49 @@ const styles = StyleSheet.create({
   addDogButtonSubtitle: {
     color: colors.gray600,
     fontSize: typography.sizes.sm,
-  },});
+  },
+  // Styles pour le modal de sélection de chien
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: spacing.lg,
+    paddingBottom: spacing.xl,
+    maxHeight: '80%',
+  },
+  modalTitle: {
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.bold,
+    marginBottom: spacing.lg,
+    textAlign: 'center',
+    color: colors.text,
+  },
+  dogListItem: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.base,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    backgroundColor: 'transparent',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  dogListItemActive: {
+    backgroundColor: colors.primaryLight,
+  },
+  dogListItemName: {
+    fontSize: typography.sizes.base,
+    fontWeight: typography.weights.medium,
+    color: colors.text,
+  },
+  dogListItemCheck: {
+    fontSize: typography.sizes.lg,
+    color: colors.primary,
+    fontWeight: typography.weights.bold,
+  },
+});
