@@ -66,10 +66,14 @@ export function ProgressSection({
               style={[
                 homeStyles.progressFill,
                 {
-                  width: progressAnim.interpolate({
-                    inputRange: [0, 100],
-                    outputRange: ['0%', '100%'],
-                  }),
+                  width: '100%',
+                  transform: [{
+                    scaleX: progressAnim.interpolate({
+                      inputRange: [0, 100],
+                      outputRange: [0, 1],
+                    }),
+                  }],
+                  transformOrigin: 'left center',
                 },
               ]}
             />

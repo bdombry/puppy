@@ -27,7 +27,7 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
         }
         Animated.spring(panY, {
           toValue: 0,
-          useNativeDriver: false,
+          useNativeDriver: true,
         }).start();
       },
     })
@@ -53,23 +53,23 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
             <Text style={homeStyles.modalSubtitle}>Choisis le type d'événement</Text>
 
             <TouchableOpacity
-              style={[homeStyles.modalOptionButton, homeStyles.modalOptionIncident]}
-              onPress={onIncidentPress}
+              style={[homeStyles.modalOptionButton, homeStyles.modalOptionFeeding]}
+              onPress={onFeedingPress}
               activeOpacity={0.8}
             >
             <View style={homeStyles.modalOptionRow}>
               <View
                 style={[
                   homeStyles.modalOptionIconContainer,
-                  homeStyles.modalOptionIconIncident,
+                  homeStyles.modalOptionIconFeeding,
                 ]}
               >
-                <Text style={homeStyles.modalOptionIcon}>{EMOJI.incident}</Text>
+                <Text style={homeStyles.modalOptionIcon}>🍽️</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Incident</Text>
+                <Text style={homeStyles.modalOptionTitle}>Alimentation</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Pas au bon endroit
+                  Recevoir des rappels
                 </Text>
               </View>
             </View>
@@ -99,23 +99,23 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[homeStyles.modalOptionButton, homeStyles.modalOptionFeeding]}
-              onPress={onFeedingPress}
+              style={[homeStyles.modalOptionButton, homeStyles.modalOptionIncident]}
+              onPress={onIncidentPress}
               activeOpacity={0.8}
             >
             <View style={homeStyles.modalOptionRow}>
               <View
                 style={[
                   homeStyles.modalOptionIconContainer,
-                  homeStyles.modalOptionIconFeeding,
+                  homeStyles.modalOptionIconIncident,
                 ]}
               >
-                <Text style={homeStyles.modalOptionIcon}>🍽️</Text>
+                <Text style={homeStyles.modalOptionIcon}>{EMOJI.incident}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Alimentation</Text>
+                <Text style={homeStyles.modalOptionTitle}>Incident</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Recevoir des rappels
+                  Pas au bon endroit
                 </Text>
               </View>
             </View>

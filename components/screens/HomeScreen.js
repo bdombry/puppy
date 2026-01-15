@@ -6,6 +6,8 @@ import {
   Animated,
   RefreshControl,
   TouchableOpacity,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
@@ -30,11 +32,12 @@ import { EMOJI } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
 
 export default function HomeScreen() {
-  const { currentDog, signOut } = useAuth();
+  const { currentDog, dogs, setCurrentDog, signOut } = useAuth();
   const navigation = useNavigation();
 
   // State local
   const [showActionModal, setShowActionModal] = useState(false);
+  const [showDogSelector, setShowDogSelector] = useState(false);
   const [progressAnim] = useState(new Animated.Value(0));
   const [refreshing, setRefreshing] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('1w');
@@ -64,12 +67,12 @@ export default function HomeScreen() {
   // Animer la barre de progrès
   useEffect(() => {
     Animated.spring(progressAnim, {
-      toValue: stats.percentage,
-      useNativeDriver: false,
+      toValue: stats?.percentage || 0,
+      useNativeDriver: true,
       tension: 40,
       friction: 8,
     }).start();
-  }, [stats.percentage, progressAnim]);
+  }, [stats?.percentage, progressAnim]);
 
   // Gestionnaires d'événements
   const handlePeriodChange = (period) => {
@@ -90,21 +93,26 @@ export default function HomeScreen() {
   };
 
   const getStreakDisplay = () => {
-    switch (streakMode) {
-      case 'activity':
-        return {
-          value: streakData.activity,
-          label: streakData.activity <= 1 ? 'Jour actif' : 'Jours actifs',
-          icon: EMOJI.fire,
-        };
-      case 'clean':
-        return {
-          value: streakData.clean,
-          label: streakData.clean <= 1 ? 'Jour sans incident' : 'Jours sans incident',
-          icon: EMOJI.sparkle,
-        };
-      default:
-        return { value: 0, label: 'Streak', icon: EMOJI.fire };
+    try {
+      switch (streakMode) {
+        case 'activity':
+          return {
+            value: streakData?.activity || 0,
+            label: (streakData?.activity || 0) <= 1 ? 'Jour actif' : 'Jours actifs',
+            icon: EMOJI.fire,
+          };
+        case 'clean':
+          return {
+            value: streakData?.clean || 0,
+            label: (streakData?.clean || 0) <= 1 ? 'Jour sans incident' : 'Jours sans incident',
+            icon: EMOJI.sparkle,
+          };
+        default:
+          return { value: 0, label: 'Streak', icon: EMOJI.fire };
+      }
+    } catch (error) {
+      console.error('Erreur getStreakDisplay:', error);
+      return { value: 0, label: 'Streak', icon: EMOJI.fire };
     }
   };
 
@@ -112,6 +120,20 @@ export default function HomeScreen() {
 
   const handleActionModalClose = () => {
     setShowActionModal(false);
+  };
+
+  const handleDogSelectorOpen = () => {
+    setShowDogSelector(true);
+  };
+
+  const handleDogSelectorClose = () => {
+    setShowDogSelector(false);
+  };
+
+  const handleDogSelect = (dog) => {
+    console.log('🐕 Changement vers chien:', dog?.name, dog?.id);
+    setCurrentDog(dog);
+    setShowDogSelector(false);
   };
 
   const handleRecordWalk = () => {
@@ -146,7 +168,10 @@ export default function HomeScreen() {
         {/* HEADER */}
         <View style={homeStyles.header}>
           <View style={homeStyles.headerRow}>
-            <Text style={homeStyles.headerTitle}>Bonjour {EMOJI.wave}</Text>
+            <TouchableOpacity onPress={handleDogSelectorOpen} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={homeStyles.headerTitle}>{currentDog?.name || 'Sélectionner un chien'}</Text>
+              <Text style={{ fontSize: 16, marginLeft: 5 }}>▼</Text>
+            </TouchableOpacity>
             <TouchableOpacity
               style={homeStyles.headerAccountButtonRight}
               onPress={() => navigation.navigate('Account')}
@@ -160,9 +185,9 @@ export default function HomeScreen() {
             </Text>
           )}
 
-          <TimersSection lastOuting={timeSince} />
-          <LastPeeTimer lastPeeTime={timeSincePee} />
-          <LastPoopTimer lastPoopTime={timeSincePoop} />
+          <TimersSection lastOuting={timeSince || null} />
+          <LastPeeTimer lastPeeTime={timeSincePee || null} />
+          <LastPoopTimer lastPoopTime={timeSincePoop || null} />
         </View>
 
         <View style={homeStyles.content}>
@@ -171,7 +196,7 @@ export default function HomeScreen() {
             <DogCardWithProgress
               dog={currentDog}
               onSettingsPress={() => navigation.navigate('DogProfile')}
-              stats={stats}
+              stats={stats || { outside: 0, inside: 0, total: 0, percentage: 0 }}
               loading={loading}
               selectedPeriod={selectedPeriod}
               onPeriodChange={handlePeriodChange}
@@ -184,10 +209,10 @@ export default function HomeScreen() {
           
           {/* STATS CARDS */}
           <StatsCards
-            totalOutings={totalOutings}
-            streakValue={streakDisplay.value}
-            streakLabel={streakDisplay.label}
-            streakIcon={streakDisplay.icon}
+            totalOutings={totalOutings || 0}
+            streakValue={streakDisplay.value || 0}
+            streakLabel={streakDisplay.label || 'Streak'}
+            streakIcon={streakDisplay.icon || '🔥'}
             onStreakPress={handleStreakClick}
           />
 
@@ -206,6 +231,57 @@ export default function HomeScreen() {
         onActivityPress={handleRecordActivity}
         onFeedingPress={handleRecordFeeding}
       />
+
+      {/* MODAL SÉLECTEUR DE CHIEN */}
+      <Modal
+        visible={showDogSelector}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleDogSelectorClose}
+      >
+        <TouchableOpacity
+          style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'flex-end',
+          }}
+          activeOpacity={1}
+          onPress={handleDogSelectorClose}
+        >
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'white',
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              padding: 20,
+              paddingBottom: 40,
+            }}
+            activeOpacity={1}
+          >
+            <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' }}>
+              Sélectionner un chien
+            </Text>
+            <FlatList
+              data={dogs}
+              keyExtractor={(item) => item.id?.toString() || 'unknown'}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={{
+                    padding: 15,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#eee',
+                    backgroundColor: currentDog?.id === item.id ? '#f0f8ff' : 'transparent',
+                  }}
+                  onPress={() => handleDogSelect(item)}
+                >
+                  <Text style={{ fontSize: 16 }}>{item.name || 'Chien sans nom'}</Text>
+                </TouchableOpacity>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }

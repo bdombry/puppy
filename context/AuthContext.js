@@ -1,12 +1,46 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../config/supabase';
 
 const AuthContext = createContext();
+
+// Clés pour AsyncStorage
+const LAST_DOG_KEY = '@last_selected_dog';
+
+// Fonctions utilitaires pour AsyncStorage
+const saveLastDogId = async (dogId) => {
+  try {
+    console.log('💾 Sauvegarde dernier chien ID:', dogId, '(type:', typeof dogId, ')');
+    await AsyncStorage.setItem(LAST_DOG_KEY, dogId.toString());
+  } catch (error) {
+    console.error('Erreur sauvegarde dernier chien:', error);
+  }
+};
+
+const getLastDogId = async () => {
+  try {
+    const dogId = await AsyncStorage.getItem(LAST_DOG_KEY);
+    console.log('📖 Récupération dernier chien ID depuis storage:', dogId);
+    return dogId; // Retourner tel quel, peut être string ou null
+  } catch (error) {
+    console.error('Erreur récupération dernier chien:', error);
+    return null;
+  }
+};
+
+const clearLastDogId = async () => {
+  try {
+    await AsyncStorage.removeItem(LAST_DOG_KEY);
+  } catch (error) {
+    console.error('Erreur suppression dernier chien:', error);
+  }
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentDog, setCurrentDog] = useState(null);
+  const [dogs, setDogs] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // ✅ CORRIGER la race condition: utiliser un flag pour initialiser une fois
@@ -15,10 +49,15 @@ export const AuthProvider = ({ children }) => {
 
     const initAuth = async () => {
       try {
-        // Étape 1: Vérifier la session SEULE (pas de listener)
-        const { data: { session } } = await supabase.auth.getSession();
+        // ✅ Étape 1: Vérifier la session avec timeout
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session check timeout')), 10000)
+        );
         
-        if (!isMounted) return; // Vérifier si le composant est encore monté
+        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
+        
+        if (!isMounted) return;
 
         if (session?.user) {
           setUser(session.user);
@@ -30,6 +69,7 @@ export const AuthProvider = ({ children }) => {
       } catch (error) {
         console.error('❌ Erreur AuthProvider init:', error);
         if (isMounted) {
+          // En cas d'erreur, on considère qu'il n'y a pas de session
           setUser(null);
           setCurrentDog(null);
         }
@@ -71,14 +111,58 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserDog = async (userId) => {
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('Dogs')
         .select('*')
         .eq('user_id', userId)
-        .single();
-      setCurrentDog(data || null);
+        .order('created_at', { ascending: false }); // Plus récent en premier
+        
+      if (error) {
+        console.error('Erreur chargement chiens:', error);
+        setDogs([]);
+        setCurrentDog(null);
+        return;
+      }
+      
+      setDogs(data || []);
+      
+      console.log('🐕 Chiens chargés:', data?.map(d => ({id: d.id, name: d.name})));
+      
+      // Récupérer le dernier chien sélectionné depuis AsyncStorage
+      const lastDogId = await getLastDogId();
+      let selectedDog = null;
+      
+      if (lastDogId && data) {
+        // Chercher le chien avec cet ID (comparaison flexible string/number)
+        selectedDog = data.find(dog => dog.id == lastDogId);
+        console.log('🔍 Chien trouvé avec ID', lastDogId, '(type:', typeof lastDogId, ') chien ID type:', typeof selectedDog?.id, ':', selectedDog);
+      }
+      
+      // Si pas trouvé ou pas de dernier chien, prendre le premier (plus récent)
+      if (!selectedDog && data && data.length > 0) {
+        selectedDog = data[0];
+        console.log('⚠️ Aucun chien sauvegardé trouvé, utilisation du premier:', selectedDog.name);
+      }
+      
+      console.log('✅ Chien actuel défini:', selectedDog?.name);
+      setCurrentDog(selectedDog);
+      
+      // Sauvegarder le chien actuel pour les futures sessions
+      if (selectedDog?.id) {
+        await saveLastDogId(selectedDog.id);
+      }
     } catch (error) {
+      console.error('Erreur loadUserDog:', error);
+      setDogs([]);
       setCurrentDog(null);
+    }
+  };
+
+  const setCurrentDogWithPersistence = async (dog) => {
+    logger.log('🔄 Changement de chien vers:', dog?.name, '(ID:', dog?.id, ')');
+    setCurrentDog(dog);
+    if (dog?.id) {
+      await saveLastDogId(dog.id);
     }
   };
 
@@ -139,6 +223,8 @@ export const AuthProvider = ({ children }) => {
       }
 
       setCurrentDog(data);
+      // Ajouter le nouveau chien à la liste
+      setDogs(prevDogs => [data, ...prevDogs]);
       return data;
     } catch (error) {
       console.error('Erreur saveDog complète:', error);
@@ -150,6 +236,8 @@ export const AuthProvider = ({ children }) => {
     await supabase.auth.signOut();
     setUser(null);
     setCurrentDog(null);
+    setDogs([]);
+    await clearLastDogId();
   };
 
   const updatePassword = async (currentPassword, newPassword) => {
@@ -240,7 +328,9 @@ export const AuthProvider = ({ children }) => {
 
       // 5. Nettoyer l'état local APRÈS les suppressions
       setCurrentDog(null);
+      setDogs([]);
       setUser(null);
+      await clearLastDogId();
 
       // 6. Se déconnecter
       await supabase.auth.signOut();
@@ -263,7 +353,8 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         currentDog,
-        setCurrentDog,
+        dogs,
+        setCurrentDog: setCurrentDogWithPersistence,
         signInWithEmail,
         signUpWithEmail,
         saveDog,

@@ -406,17 +406,6 @@ export default function WalkHistoryScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  {/* Affichage de la photo de balade si présente */}
-                  {isActivity && item.photo_url ? (
-                    <View style={styles.historyPhotoContainer}>
-                      <Image
-                        source={{ uri: item.photo_url }}
-                        style={styles.historyPhoto}
-                        resizeMode="cover"
-                      />
-                    </View>
-                  ) : null}
-
                   <View style={styles.details}>
                     {renderDetails(item, isActivity)}
                   </View>

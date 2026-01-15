@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -6,6 +7,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
 import DogSetupScreen from './components/screens/DogSetupScreen';
+import AddDogScreen from './components/screens/AddDogScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import WalkScreen from './components/screens/WalkScreen';
 import WalkHistoryScreen from './components/screens/WalkHistoryScreen'; 
@@ -79,7 +81,12 @@ function AppNavigator() {
   }, [currentDog]);
 
   if (loading) {
-    return <SplashScreen onFinish={() => {}} />;
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+        <Text style={{ fontSize: 18, marginBottom: 20 }}>🐕 Chargement...</Text>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
   }
 
   const isAuthenticated = user;
@@ -103,6 +110,7 @@ function AppNavigator() {
         ) : (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="AddDog" component={AddDogScreen} />
             <Stack.Screen name="Walk" component={WalkScreen} />
             <Stack.Screen name="Feeding" component={FeedingScreen} />
             <Stack.Screen name="Activity" component={ActivityScreen} />

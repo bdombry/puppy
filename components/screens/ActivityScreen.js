@@ -9,7 +9,6 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-  Image,
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../context/AuthContext';
@@ -23,12 +22,10 @@ import { validateActivityData, formatValidationErrors } from '../services/valida
 import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
 import { insertWithRetry } from '../services/retryService';
 import { cacheService } from '../services/cacheService';
-import { useImageUpload } from '../../hooks/useImageUpload';
 
 export default function ActivityScreen() {
   const navigation = useNavigation();
   const { currentDog, user } = useAuth();
-  const { pickImage, takePhoto, uploadWalkPhoto } = useImageUpload();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -45,44 +42,6 @@ export default function ActivityScreen() {
   const [treat, setTreat] = useState(false);
   const [dogAskedForWalk, setDogAskedForWalk] = useState(false); // Le chien a demandé
   const [loading, setLoading] = useState(false);
-  
-  // États pour la photo
-  const [photoUri, setPhotoUri] = useState(null);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
-
-  // Handlers pour la sélection de photo
-  const handleTakePhoto = async () => {
-    try {
-      const uri = await takePhoto({ aspect: [4, 3], quality: 0.7 });
-      if (uri) {
-        setPhotoUri(uri);
-      }
-    } catch (error) {
-      console.error('📷 handleTakePhoto: Erreur:', error);
-    }
-  };
-
-  const handlePickImage = async () => {
-    try {
-      const uri = await pickImage({ aspect: [4, 3], quality: 0.7 });
-      if (uri) {
-        setPhotoUri(uri);
-      }
-    } catch (error) {
-      console.error('📷 handlePickImage: Erreur:', error);
-    }
-  };
-
-  const handleRemovePhoto = () => {
-    Alert.alert(
-      '🗑️ Supprimer la photo',
-      'Voulez-vous supprimer cette photo ?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => setPhotoUri(null) },
-      ]
-    );
-  };
 
   const handleDateChange = (event, selectedDate) => {
     if (Platform.OS === 'android') {
@@ -117,22 +76,6 @@ export default function ActivityScreen() {
       const pad = (n) => String(n).padStart(2, '0');
       const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
-      // 📷 Upload de la photo si présente
-      let photoUrl = null;
-      if (photoUri) {
-        setUploadingPhoto(true);
-        try {
-          photoUrl = await uploadWalkPhoto(photoUri, currentDog.id);
-          console.log('📷 Photo uploadée:', photoUrl);
-        } catch (uploadErr) {
-          console.error('❌ Erreur upload photo:', uploadErr);
-          // On continue sans la photo si l'upload échoue
-          Alert.alert('⚠️ Attention', 'La photo n\'a pas pu être uploadée, mais la balade sera enregistrée.');
-        } finally {
-          setUploadingPhoto(false);
-        }
-      }
-
       const activityData = {
         dog_id: currentDog.id,
         user_id: user?.id,
@@ -147,7 +90,6 @@ export default function ActivityScreen() {
         poop_incident: poop && poopIncident ? true : false,
         treat,
         dog_asked_for_walk: dogAskedForWalk,
-        photo_url: photoUrl, // 📷 Ajout de l'URL de la photo
       };
 
       // ✅ VALIDATION des données
@@ -526,56 +468,6 @@ export default function ActivityScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Photo de la balade */}
-          <View style={screenStyles.formGroup}>
-            <Text style={screenStyles.label}>📷 Photo de la balade (optionnel)</Text>
-            
-            {photoUri ? (
-              // Affichage de la photo sélectionnée
-              <View style={styles.photoPreviewContainer}>
-                <Image source={{ uri: photoUri }} style={styles.photoPreview} />
-                <View style={styles.photoActions}>
-                  <TouchableOpacity
-                    style={styles.photoActionButton}
-                    onPress={handlePickImage}
-                    disabled={loading}
-                  >
-                    <Text style={styles.photoActionText}>🔄 Changer</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.photoActionButton, styles.photoActionButtonDelete]}
-                    onPress={handleRemovePhoto}
-                    disabled={loading}
-                  >
-                    <Text style={styles.photoActionTextDelete}>🗑️ Supprimer</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              // Deux boutons pour ajouter une photo
-              <View style={styles.photoButtonsRow}>
-                <TouchableOpacity
-                  style={styles.photoButton}
-                  onPress={handleTakePhoto}
-                  disabled={loading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.photoButtonIcon}>📷</Text>
-                  <Text style={styles.photoButtonText}>Caméra</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.photoButton}
-                  onPress={handlePickImage}
-                  disabled={loading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.photoButtonIcon}>🖼️</Text>
-                  <Text style={styles.photoButtonText}>Galerie</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
         </View>
 
         {loading ? (
@@ -946,98 +838,5 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semibold,
     color: colors.text,
     marginBottom: spacing.sm,
-  },
-  // 📷 Styles pour la section photo
-  photoButtonsRow: {
-    flexDirection: 'row',
-    gap: spacing.md,
-  },
-  photoButton: {
-    flex: 1,
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    padding: spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.small,
-  },
-  photoButtonIcon: {
-    fontSize: 32,
-    marginBottom: spacing.sm,
-  },
-  photoButtonText: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-  },
-  addPhotoCard: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    borderStyle: 'dashed',
-    padding: spacing.xl,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadows.small,
-  },
-  addPhotoIcon: {
-    fontSize: 48,
-    marginBottom: spacing.sm,
-  },
-  addPhotoText: {
-    fontSize: typography.sizes.lg,
-    fontWeight: typography.weights.bold,
-    color: colors.primary,
-    marginBottom: spacing.xs,
-  },
-  addPhotoSubtext: {
-    fontSize: typography.sizes.sm,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  photoPreviewContainer: {
-    backgroundColor: colors.white,
-    borderRadius: borderRadius.lg,
-    borderWidth: 2,
-    borderColor: colors.success,
-    overflow: 'hidden',
-    ...shadows.medium,
-  },
-  photoPreview: {
-    width: '100%',
-    height: 200,
-    resizeMode: 'cover',
-  },
-  photoActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: spacing.md,
-    backgroundColor: colors.gray50,
-    borderTopWidth: 1,
-    borderTopColor: colors.gray200,
-  },
-  photoActionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.primaryLight,
-  },
-  photoActionButtonDelete: {
-    backgroundColor: colors.errorLight,
-  },
-  photoActionText: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-    color: colors.primary,
-  },
-  photoActionTextDelete: {
-    fontSize: typography.sizes.base,
-    fontWeight: typography.weights.semibold,
-    color: colors.error,
   },
 });

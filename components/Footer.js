@@ -27,7 +27,7 @@ export const Footer = ({ state, descriptors, navigation }) => {
   React.useEffect(() => {
     Animated.spring(scaleAnim, {
       toValue: isHomeSelected ? 1.15 : 1,
-      useNativeDriver: false,
+      useNativeDriver: true,
       speed: 10,
     }).start();
   }, [isHomeSelected]);
@@ -38,7 +38,7 @@ export const Footer = ({ state, descriptors, navigation }) => {
       const isCurrent = currentRoute?.name === route.name;
       Animated.spring(otherScaleAnims[route.name], {
         toValue: isCurrent ? 1 : 0,
-        useNativeDriver: false,
+        useNativeDriver: true,
         speed: 10,
       }).start();
     });

@@ -121,10 +121,14 @@ export function DogCardWithProgress({
                 style={[
                   homeStyles.progressBar,
                   {
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 100],
-                      outputRange: ['0%', '100%'],
-                    }),
+                    width: '100%',
+                    transform: [{
+                      scaleX: progressAnim.interpolate({
+                        inputRange: [0, 100],
+                        outputRange: [0, 1],
+                      }),
+                    }],
+                    transformOrigin: 'left center',
                   },
                 ]}
               />

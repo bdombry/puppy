@@ -186,6 +186,23 @@ export default function DogProfileScreen() {
   return (
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
+
+        {/* Bouton pour ajouter un autre chien */}
+        <TouchableOpacity
+          style={styles.addDogButton}
+          onPress={() => navigation.navigate('AddDog')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.addDogButtonContent}>
+            <View style={styles.addDogButtonIcon}>
+              <Text style={styles.addDogButtonIconText}>+</Text>
+            </View>
+            <View style={styles.addDogButtonTextContainer}>
+              <Text style={styles.addDogButtonTitle}>Ajouter un chien</Text>
+              <Text style={styles.addDogButtonSubtitle}>Gérer plusieurs compagnons</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
         <Text style={screenStyles.screenTitle}>Profil du chien</Text>
 
         <View style={styles.avatarSection}>
@@ -440,5 +457,44 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.warning,
     fontWeight: typography.weights.bold,
+  },  addDogButton: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.xl,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginBottom: spacing.xl,
+    borderWidth: 2,
+    borderColor: colors.gray200,
+    borderStyle: 'dashed',
   },
-});
+  addDogButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addDogButtonIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.lg,
+  },
+  addDogButtonIconText: {
+    fontSize: typography.sizes.xl,
+    fontWeight: typography.weights.bold,
+    color: colors.gray600,
+  },
+  addDogButtonTextContainer: {
+    flex: 1,
+  },
+  addDogButtonTitle: {
+    color: colors.text,
+    fontSize: typography.sizes.lg,
+    fontWeight: typography.weights.medium,
+    marginBottom: 2,
+  },
+  addDogButtonSubtitle: {
+    color: colors.gray600,
+    fontSize: typography.sizes.sm,
+  },});

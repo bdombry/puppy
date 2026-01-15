@@ -31,21 +31,27 @@ export function useWalkHistory(dogId) {
    * Charge les données depuis Supabase
    */
   const fetchFromDB = useCallback(async () => {
-    const [walksRes, activitiesRes] = await Promise.all([
-      supabase
-        .from('outings')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', dogId)
-        .order('datetime', { ascending: false }),
-      supabase
-        .from('activities')
-        .select('*', { count: 'exact' })
-        .eq('dog_id', dogId)
-        .order('datetime', { ascending: false }),
-    ]);
+    // ⏱️ Timeout pour éviter le blocage
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('WalkHistory DB timeout')), 8000)
+    );
 
-    if (walksRes.error) throw walksRes.error;
-    if (activitiesRes.error) throw activitiesRes.error;
+    const dbPromise = async () => {
+      const [walksRes, activitiesRes] = await Promise.all([
+        supabase
+          .from('outings')
+          .select('*', { count: 'exact' })
+          .eq('dog_id', dogId)
+          .order('datetime', { ascending: false }),
+        supabase
+          .from('activities')
+          .select('*', { count: 'exact' })
+          .eq('dog_id', dogId)
+          .order('datetime', { ascending: false }),
+      ]);
+
+      if (walksRes.error) throw walksRes.error;
+      if (activitiesRes.error) throw activitiesRes.error;
 
     const allWalks = walksRes.data || [];
     const allActivities = activitiesRes.data || [];
@@ -120,6 +126,10 @@ export function useWalkHistory(dogId) {
     };
 
     return { allWalks, allActivities, stats };
+    };
+
+    // ⏱️ Exécuter avec timeout
+    return await Promise.race([dbPromise(), timeoutPromise]);
   }, [dogId]);
 
   /**
@@ -183,6 +193,13 @@ export function useWalkHistory(dogId) {
       } catch (err) {
         console.error('❌ Erreur WalkHistory:', err);
         setError(err.message);
+        
+        // En cas de timeout, définir des valeurs par défaut
+        if (err.message.includes('timeout')) {
+          setWalks([]);
+          setActivities([]);
+          setTotalStats({ successCount: 0, incidentCount: 0, activitiesCount: 0 });
+        }
       } finally {
         setLoading(false);
         isLoadingRef.current = false;
