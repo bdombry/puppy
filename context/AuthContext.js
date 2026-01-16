@@ -111,36 +111,68 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserDog = async (userId) => {
     try {
-      const { data, error } = await supabase
+      // 1️⃣ Chiens que l'utilisateur possède
+      const { data: ownedDogs, error: ownedError } = await supabase
         .from('Dogs')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false }); // Plus récent en premier
+        .order('created_at', { ascending: false });
         
-      if (error) {
-        console.error('Erreur chargement chiens:', error);
+      if (ownedError) {
+        console.error('Erreur chargement chiens possédés:', ownedError);
         setDogs([]);
         setCurrentDog(null);
         return;
       }
       
-      setDogs(data || []);
+      // 2️⃣ Chiens partagés avec l'utilisateur (via dog_collaborators)
+      const { data: sharedDogIds, error: collaboratorError } = await supabase
+        .from('dog_collaborators')
+        .select('dog_id')
+        .eq('user_id', userId)
+        .eq('status', 'accepted');
       
-      console.log('🐕 Chiens chargés:', data?.map(d => ({id: d.id, name: d.name})));
+      if (collaboratorError) {
+        console.error('Erreur chargement chiens collaborateurs:', collaboratorError);
+      }
+      
+      // 3️⃣ Récupérer les détails des chiens partagés
+      let sharedDogs = [];
+      if (sharedDogIds && sharedDogIds.length > 0) {
+        const dogIds = sharedDogIds.map(d => d.dog_id);
+        const { data: shared, error: sharedError } = await supabase
+          .from('Dogs')
+          .select('*')
+          .in('id', dogIds)
+          .order('created_at', { ascending: false });
+        
+        if (sharedError) {
+          console.error('Erreur chargement détails chiens partagés:', sharedError);
+        } else {
+          sharedDogs = shared || [];
+        }
+      }
+      
+      // 4️⃣ Fusionner les listes (chiens possédés + chiens partagés)
+      const allDogs = [...(ownedDogs || []), ...sharedDogs];
+      
+      setDogs(allDogs);
+      
+      console.log('🐕 Chiens chargés (possédés + partagés):', allDogs?.map(d => ({id: d.id, name: d.name})));
       
       // Récupérer le dernier chien sélectionné depuis AsyncStorage
       const lastDogId = await getLastDogId();
       let selectedDog = null;
       
-      if (lastDogId && data) {
+      if (lastDogId && allDogs) {
         // Chercher le chien avec cet ID (comparaison flexible string/number)
-        selectedDog = data.find(dog => dog.id == lastDogId);
+        selectedDog = allDogs.find(dog => dog.id == lastDogId);
         console.log('🔍 Chien trouvé avec ID', lastDogId, '(type:', typeof lastDogId, ') chien ID type:', typeof selectedDog?.id, ':', selectedDog);
       }
       
       // Si pas trouvé ou pas de dernier chien, prendre le premier (plus récent)
-      if (!selectedDog && data && data.length > 0) {
-        selectedDog = data[0];
+      if (!selectedDog && allDogs && allDogs.length > 0) {
+        selectedDog = allDogs[0];
         console.log('⚠️ Aucun chien sauvegardé trouvé, utilisation du premier:', selectedDog.name);
       }
       
