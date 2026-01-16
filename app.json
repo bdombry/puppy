@@ -15,6 +15,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bendombry.pupytracker",
+      "scheme": "pupytracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "PupyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
@@ -28,6 +29,7 @@
       },
       "edgeToEdgeEnabled": true,
       "package": "com.bendombry.pupytracker",
+      "scheme": "pupytracker",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

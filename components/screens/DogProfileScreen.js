@@ -23,6 +23,7 @@ import { supabase } from '../../config/supabase';
 import { EMOJI } from '../../constants/config';
 import SexToggle from '../SexToggle';
 import { useImageUpload } from '../../hooks/useImageUpload';
+import ShareDogButton from '../ShareDogButton';
 
 export default function DogProfileScreen() {
   const { currentDog, dogs, user, setCurrentDog, deleteDog } = useAuth();
@@ -434,12 +435,21 @@ export default function DogProfileScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          <TouchableOpacity
-            style={[screenStyles.button, screenStyles.buttonDanger]}
-            onPress={handleDelete}
-          >
-            <Text style={screenStyles.buttonDangerText}> Supprimer le profil</Text>
-          </TouchableOpacity>
+          <>
+            {/* Bouton simple pour partager le chien */}
+            <ShareDogButton 
+              dogId={currentDog?.id}
+              userId={user?.id}
+              dogName={currentDog?.name}
+            />
+
+            <TouchableOpacity
+              style={[screenStyles.button, screenStyles.buttonDanger]}
+              onPress={handleDelete}
+            >
+              <Text style={screenStyles.buttonDangerText}> Supprimer le profil</Text>
+            </TouchableOpacity>
+          </>
         )}
       </ScrollView>
     </View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -21,11 +21,26 @@ import MapScreen from './components/screens/MapScreen';
 import { NotificationSettingsScreen } from './components/screens/NotificationSettingsScreen';
 import FeedingScreen from './components/screens/FeedingScreen';
 import ActivityScreen from './components/screens/ActivityScreen';
+import AcceptInvitationScreen from './components/screens/AcceptInvitationScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+
+// Deep linking configuration
+const prefix = 'pupytracker://';
+const linking = {
+  prefixes: [prefix, 'https://pupytracker.app/'],
+  config: {
+    screens: {
+      AcceptInvitation: 'invite/:token',
+      MainTabs: '',
+      Auth: 'auth',
+      DogSetup: 'setup',
+    },
+  },
+};
 
 // Navigation avec Tab (Accueil + 4 écrans autour)
 function MainTabNavigator() {
@@ -93,16 +108,23 @@ function AppNavigator() {
   const hasCurrentDog = currentDog && currentDog.id;
 
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking} fallback={<ActivityIndicator size="large" />}>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
       >
         {!isAuthenticated ? (
-          <Stack.Screen 
-            name="Auth" 
-            component={AuthScreen}
-            options={{ animationEnabled: false }}
-          />
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen 
+              name="Auth" 
+              component={AuthScreen}
+              options={{ animationEnabled: false }}
+            />
+            <Stack.Screen 
+              name="AcceptInvitation" 
+              component={AcceptInvitationScreen}
+              options={{ animationEnabled: true }}
+            />
+          </Stack.Group>
         ) : !hasCurrentDog ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="DogSetup" component={DogSetupScreen} />
@@ -118,6 +140,11 @@ function AppNavigator() {
             <Stack.Screen name="EditIncident" component={EditIncidentScreen} />
             <Stack.Screen name="EditSuccess" component={EditSuccessScreen} />
             <Stack.Screen name="EditActivity" component={EditActivityScreen} />
+            <Stack.Screen 
+              name="AcceptInvitation" 
+              component={AcceptInvitationScreen}
+              options={{ animationEnabled: true }}
+            />
             <Stack.Screen 
               name="NotificationSettings" 
               options={{ headerShown: false }}
