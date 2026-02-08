@@ -1,149 +1,96 @@
 import React, { useState } from 'react';
-import {
-  ScrollView,
-  Alert,
-  Platform,
-  TouchableOpacity,
-  View,
-  Text,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import PropTypes from 'prop-types';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
-import { onboardingStyles } from '../../styles/onboardingStyles';
-import OnboardingHeader from '../OnboardingHeader';
+import { View, ScrollView, Text, TouchableOpacity, Platform, KeyboardAvoidingView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, spacing, typography, borderRadius } from '../../constants/theme';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
+import { OnboardingNavigation } from '../OnboardingNavigation';
 import FormInput from '../FormInput';
-import AuthButton from '../AuthButton';
-import BackButton from '../BackButton';
-import SexToggle from '../SexToggle';
-import { EMOJI } from '../../constants/config';
 
-export default function DogSetupScreen() {
-  const [name, setName] = useState('');
-  const [breed, setBreed] = useState('');
-  const [sex, setSex] = useState('female');
-  const [birthDate, setBirthDate] = useState(null);
-  const [showPicker, setShowPicker] = useState(false);
-  const [loading, setLoading] = useState(false);
+const DogSetupScreen = ({ navigation, route }) => {
+  const [dogName, setDogName] = useState('');
+  const [dogData, setDogData] = useState(route?.params?.dogData || {});
 
-  const { saveDog, signOut } = useAuth();
-  const navigation = useNavigation();
-
-  const handleSave = async () => {
-    if (!name) {
-      Alert.alert('Erreur', 'Le nom du chiot est obligatoire');
-      return;
+  const handleNext = () => {
+    if (dogName.trim()) {
+      navigation.navigate('DogRaceScreen', {
+        dogData: {
+          ...dogData,
+          name: dogName,
+        }
+      });
     }
-
-    setLoading(true);
-    try {
-      const dogData = {
-        name,
-        sex,
-      };
-
-      // Ajouter breed seulement s'il y a une valeur
-      if (breed && breed.trim()) {
-        dogData.breed = breed.trim();
-      }
-
-      // Ajouter birth_date seulement s'il y a une valeur
-      if (birthDate) {
-        dogData.birth_date = birthDate.toISOString().split('T')[0];
-      }
-
-      await saveDog(dogData);
-      // No need to navigate - App.js will re-render when currentDog updates
-    } catch (error) {
-      console.error('Erreur saveDog:', error);
-      Alert.alert(
-        'Erreur',
-        error?.message || "Impossible d'enregistrer le chiot. Veuillez réessayer."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBack = async () => {
-    await signOut();
   };
 
   return (
-    <ScrollView
-      style={onboardingStyles.container}
-      contentContainerStyle={onboardingStyles.scrollContent}
-      scrollEnabled={false}
-    >
-      <BackButton onPress={handleBack} />
-
-      <OnboardingHeader
-        icon={EMOJI.dog}
-        title="Parlez-nous de votre chiot"
-        subtitle="Ces informations nous aideront à suivre sa croissance"
-      />
-
-      <View style={onboardingStyles.form}>
-        <FormInput
-          label="Nom du chiot *"
-          placeholder="Ex: Max"
-          value={name}
-          onChangeText={setName}
-        />
-
-        <FormInput
-          label="Race (optionnel)"
-          placeholder="Ex: Golden Retriever"
-          value={breed}
-          onChangeText={setBreed}
-        />
-
-        <View style={onboardingStyles.formGroup}>
-          <Text style={onboardingStyles.label}>Sexe *</Text>
-          <SexToggle
-            value={sex}
-            onValueChange={setSex}
-            disabled={loading}
-          />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
+      >
+        {/* Progress Bar - Top Fixed */}
+        <View style={{ paddingHorizontal: spacing.base, marginTop: spacing.base, marginBottom: spacing.md }}>
+          <OnboardingProgressBar current={7} total={10} />
         </View>
 
-        <View style={onboardingStyles.formGroup}>
-          <Text style={onboardingStyles.label}>Date de naissance (optionnel)</Text>
-          <TouchableOpacity
-            style={onboardingStyles.dateInput}
-            onPress={() => setShowPicker(true)}
+        {/* Navigation Buttons */}
+        <OnboardingNavigation 
+          current={7}
+          total={10}
+          onPrev={() => navigation.goBack()} 
+          onNext={handleNext}
+          disablePrev={false}
+          disableNext={!dogName.trim()}
+        />
+
+        {/* Scrollable Content */}
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl }}
+          scrollEventThrottle={16}
+        >
+          {/* Mascotte */}
+          <View style={{ alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.lg }}>
+            <Text style={{ fontSize: 80 }}>🐕</Text>
+          </View>
+
+          {/* Headline */}
+          <Text
+            style={{
+              fontSize: typography.sizes.xxxl,
+              fontWeight: '700',
+              color: colors.pupyTextPrimary,
+              textAlign: 'center',
+              marginBottom: spacing.md,
+              lineHeight: 36,
+            }}
           >
-            <Text style={onboardingStyles.dateText}>
-              {birthDate ? birthDate.toLocaleDateString('fr-FR') : 'Sélectionnez la date'}
-            </Text>
-          </TouchableOpacity>
+            Comment s'appelle votre chien ?
+          </Text>
 
-          {showPicker && (
-            <DateTimePicker
-              value={birthDate || new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              maximumDate={new Date()}
-              onChange={(event, selectedDate) => {
-                setShowPicker(Platform.OS === 'ios');
-                if (selectedDate) setBirthDate(selectedDate);
-              }}
+          <Text
+            style={{
+              fontSize: typography.sizes.base,
+              color: colors.pupyTextSecondary,
+              textAlign: 'center',
+              marginBottom: spacing.lg,
+              lineHeight: 20,
+            }}
+          >
+            Commençons par le plus important
+          </Text>
+
+          {/* Input */}
+          <View style={{ marginTop: spacing.lg }}>
+            <FormInput
+              label="Nom du chien *"
+              placeholder="Ex: Max"
+              value={dogName}
+              onChangeText={setDogName}
             />
-          )}
-        </View>
-      </View>
-
-      <AuthButton
-        type="primary"
-        label={`C'est parti ! ${EMOJI.party}`}
-        onPress={handleSave}
-        loading={loading}
-      />
-    </ScrollView>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
-
-DogSetupScreen.propTypes = {
-  navigation: PropTypes.object,
 };
+
+export default DogSetupScreen;

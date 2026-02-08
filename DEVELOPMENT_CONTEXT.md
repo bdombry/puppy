@@ -99,6 +99,32 @@ Tables principales :
 - Optimiser les performances (memo, useCallback)
 - Tester sur device réel pour les fonctionnalités GPS/notifications
 
+### 🔄 Onboarding et AsyncStorage
+**Important pour le développement:**
+- L'onboarding est stocké dans AsyncStorage avec la clé `onboardingCompleted`
+- En développement, il est actuellement **auto-reset** à chaque launch (voir App.js ligne ~116)
+- Cette ligne doit être **commentée avant la production** sinon les users seront bloqués dans la boucle onboarding
+- Pour controler manuellement: décommenter/commenter `await AsyncStorage.removeItem('onboardingCompleted');` dans App.js
+
+### 🧅 Flux Onboarding (15 écrans)
+1. **Écran 1** (1/15): Intro avec features
+2. **Écran 2Auth** (2/15): Auth (Apple/Google/Email) → Crée le compte utilisateur
+3. **Écran 2** (3/15): Collecte prénom
+4. **Écran 3** (4/15): Collecte age range
+5. **Écran 4** (5/15): Collecte gender
+6. **Écran 5** (6/15): Collecte breeding situation
+7. **Écran 6** (7/15): Choix chien (enregistrer nouveau vs code accès)
+8. **Écran 7** (8/15): Photo chien (optional)
+9. **Écran 8** (9/15): Nom chien
+10. **Écran 9** (10/15): Race + Sex
+11. **Écran 10** (11/15): Birth date
+12. **Écran 11** (12/15): Notification time range
+13. **Écran 12** (13/15): Loading screen (auto-advance)
+14. **Écran 13** (14/15): Social proof avec testimonials
+15. **Écran 14** (15/15): Paywall avec free trial 3j (mandatory)
+
+**Données accumulées via route.params.userProfile** et sauvegardées à l'écran 14 dans Supabase.
+
 ## Dépendances Clés
 - Supabase pour backend as a service
 - Expo pour le développement cross-platform

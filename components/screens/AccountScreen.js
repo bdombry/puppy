@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
@@ -23,6 +24,36 @@ export default function AccountScreen() {
 
   const handleNotificationSettings = () => {
     navigation.navigate('NotificationSettings');
+  };
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Se déconnecter',
+      'Es-tu sûr de vouloir te déconnecter?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Oui, se déconnecter',
+          onPress: async () => {
+            setLoading(true);
+            try {
+              const { error } = await supabase.auth.signOut();
+              if (error) throw error;
+              
+              // Réinitialiser l'onboarding
+              await AsyncStorage.setItem('onboardingCompleted', 'false');
+              await AsyncStorage.setItem('show_paywall_on_login', 'false');
+              
+              navigation.replace('Auth');
+            } catch (error) {
+              Alert.alert('Erreur', 'Impossible de se déconnecter');
+              setLoading(false);
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   };
 
   const handleDeletePress = () => {
@@ -64,6 +95,10 @@ export default function AccountScreen() {
       // Vider le cache
       await AsyncStorage.clear();
       
+      // Réinitialiser onboarding et paywall
+      await AsyncStorage.setItem('onboardingCompleted', 'false');
+      await AsyncStorage.setItem('show_paywall_on_login', 'false');
+      
       Alert.alert('✅ Compte supprimé', 'Ton compte a été supprimé avec succès');
       navigation.replace('Auth');
     } catch (error) {
@@ -104,8 +139,21 @@ export default function AccountScreen() {
 
         <View style={[screenStyles.section, styles.sectionDanger]}>
           <Text style={screenStyles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
+          
           <TouchableOpacity
             style={[screenStyles.button, screenStyles.buttonDanger]}
+            onPress={handleLogout}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color={colors.white} size="small" />
+            ) : (
+              <Text style={screenStyles.buttonDangerText}>Se déconnecter</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[screenStyles.button, screenStyles.buttonDanger, { marginTop: spacing.md }]}
             onPress={handleDeletePress}
             disabled={loading}
           >

@@ -1,27 +1,18 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import PropTypes from 'prop-types';
-import { useAuth } from '../../context/AuthContext';
-import { onboardingStyles } from '../../styles/onboardingStyles';
-import OnboardingHeader from '../OnboardingHeader';
-import FormInput from '../FormInput';
-import AuthButton from '../AuthButton';
-import BackButton from '../BackButton';
-import { EMOJI } from '../../constants/config';
+import { View, ScrollView, Text, TouchableOpacity, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, spacing, typography, borderRadius } from '../../constants/theme';
+import { supabase } from '../../config/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function AuthScreen({ navigation }) {
-  const [mode, setMode] = useState('welcome');
+const AuthScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail, signUpWithEmail } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleEmailAuth = async () => {
+  // Handle Email Login
+  const handleEmailLogin = async () => {
     if (!email || !password) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
       return;
@@ -29,150 +20,263 @@ export default function AuthScreen({ navigation }) {
 
     setLoading(true);
     try {
-      if (mode === 'signin') {
-        await signInWithEmail(email, password);
-      } else {
-        await signUpWithEmail(email, password);
-      }
-    } catch (error) {
-      let message = 'Une erreur est survenue. Veuillez réessayer.';
-      
-      if (error.message.includes('Invalid login credentials')) {
-        message = "Email ou mot de passe incorrect";
-      }
-      if (error.message.includes('User already registered')) {
-        message = "Cet email est déjà utilisé";
-      }
-      if (error.message.includes('Password should be')) {
-        message = "Le mot de passe est trop faible";
-      }
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      Alert.alert('Erreur', message);
+      if (error) {
+        let message = error.message;
+        
+        // Messages d'erreur plus clairs
+        if (error.message.includes('Invalid login credentials')) {
+          message = 'Email ou mot de passe incorrect';
+        } else if (error.message.includes('Email not confirmed')) {
+          message = 'Veuillez confirmer votre email avant de vous connecter';
+        } else if (error.message.includes('User not found')) {
+          message = 'Cet email n\'existe pas';
+        }
+        
+        Alert.alert('Erreur de connexion', message);
+      } else {
+        // Connexion réussie
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        // Marquer que le paywall doit être affiché
+        await AsyncStorage.setItem('show_paywall_on_login', 'true');
+        
+        // Forcer un refresh du contexte d'authentification
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log('✅ Connecté avec:', session.user.email);
+          // L'AuthContext va détecter le changement automatiquement
+        }
+      }
+    } catch (err) {
+      Alert.alert('Erreur', err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  if (mode === 'signin' || mode === 'signup') {
-    return (
-      <ScrollView
-        style={onboardingStyles.container}
-        contentContainerStyle={onboardingStyles.scrollContent}
-        scrollEnabled={false}
+  // Handle Forgot Password
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Erreur', 'Veuillez entrer votre email');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://pupytracker.app/reset-password',
+      });
+
+      if (error) {
+        Alert.alert('Erreur', error.message);
+      } else {
+        Alert.alert(
+          'Email envoyé ✓',
+          'Vérifiez votre boîte mail. Vous recevrez un lien pour réinitialiser votre mot de passe.'
+        );
+      }
+    } catch (err) {
+      Alert.alert('Erreur', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={{ flex: 1 }}
       >
-        <BackButton onPress={() => setMode('welcome')} />
-        
-        <OnboardingHeader
-          title={mode === 'signin' ? 'Connexion' : 'Créer un compte'}
-          subtitle={mode === 'signin' ? 'Connectez-vous à votre compte' : 'Créez un nouveau compte'}
-        />
-        
-        <View style={onboardingStyles.form}>
-          <FormInput
-            label="Email"
-            placeholder="votre@email.com"
+        {/* Back Button - masqué car on est sur l'écran principal d'auth */}
+        {/* <View style={{ paddingHorizontal: spacing.base, paddingVertical: spacing.md }}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={{ fontSize: typography.sizes.xl, color: colors.primary }}>← Retour</Text>
+          </TouchableOpacity>
+        </View> */}
+
+        {/* Scrollable Content */}
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.base, paddingBottom: spacing.xxxl }}
+          scrollEventThrottle={16}
+        >
+          {/* Mascotte */}
+          <View style={{ alignItems: 'center', marginTop: spacing.lg, marginBottom: spacing.xl }}>
+            <Text style={{ fontSize: 100 }}>🔐</Text>
+          </View>
+
+          {/* Headline */}
+          <Text
+            style={{
+              fontSize: typography.sizes.xxxl,
+              fontWeight: '700',
+              color: colors.pupyTextPrimary,
+              textAlign: 'center',
+              marginBottom: spacing.md,
+              lineHeight: 36,
+            }}
+          >
+            Se connecter
+          </Text>
+
+          <Text
+            style={{
+              fontSize: typography.sizes.base,
+              color: colors.pupyTextSecondary,
+              textAlign: 'center',
+              marginBottom: spacing.xxl,
+              lineHeight: 20,
+            }}
+          >
+            Retrouvez votre compte PupyTracker
+          </Text>
+
+          {/* Email Input */}
+          <TextInput
+            placeholder="Votre email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            editable={!loading}
+            style={{
+              borderWidth: 1,
+              borderColor: colors.pupyAccent,
+              borderRadius: borderRadius.lg,
+              paddingHorizontal: spacing.base,
+              paddingVertical: spacing.md,
+              marginBottom: spacing.md,
+              fontSize: typography.sizes.base,
+              color: colors.pupyTextPrimary,
+            }}
+            placeholderTextColor={colors.pupyTextSecondary}
           />
-          
-          <FormInput
-            label="Mot de passe"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={true}
-          />
-        </View>
-        
-        <View style={onboardingStyles.buttonContainer}>
-          <AuthButton
-            type="primary"
-            label={mode === 'signin' ? 'Se connecter' : 'Créer mon compte'}
-            onPress={handleEmailAuth}
-            loading={loading}
-          />
-          
-          <AuthButton
-            type="outline"
-            label={mode === 'signin' ? "Créer un compte" : 'Se connecter'}
-            onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
-          />
-        </View>
-      </ScrollView>
-    );
-  }
 
-  return (
-    <ScrollView
-      style={onboardingStyles.container}
-      contentContainerStyle={onboardingStyles.scrollContent}
-      scrollEnabled={false}
-    >
-      <OnboardingHeader
-        icon={EMOJI.dog}
-        title="Bienvenue sur PupyTrack"
-        subtitle="Suivez la propreté de votre chiot et célébrez ses progrès jour après jour"
-      />
+          {/* Password Input */}
+          <View style={{ position: 'relative', marginBottom: spacing.xl }}>
+            <TextInput
+              placeholder="Mot de passe"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              editable={!loading}
+              style={{
+                borderWidth: 1,
+                borderColor: colors.pupyAccent,
+                borderRadius: borderRadius.lg,
+                paddingHorizontal: spacing.base,
+                paddingVertical: spacing.md,
+                paddingRight: spacing.xxxl,
+                fontSize: typography.sizes.base,
+                color: colors.pupyTextPrimary,
+              }}
+              placeholderTextColor={colors.pupyTextSecondary}
+            />
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: spacing.md,
+                top: '50%',
+                transform: [{ translateY: -12 }],
+              }}
+            >
+              <Text style={{ fontSize: 20 }}>
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-      <View style={onboardingStyles.features}>
-        <View style={onboardingStyles.feature}>
-          <Text style={onboardingStyles.featureIcon}>✓</Text>
-          <Text style={onboardingStyles.featureText}>Notez chaque sortie</Text>
-        </View>
-        <View style={onboardingStyles.feature}>
-          <Text style={onboardingStyles.featureIcon}>✓</Text>
-          <Text style={onboardingStyles.featureText}>Suivez les progrès</Text>
-        </View>
-        <View style={onboardingStyles.feature}>
-          <Text style={onboardingStyles.featureIcon}>✓</Text>
-          <Text style={onboardingStyles.featureText}>Célébrez les victoires</Text>
-        </View>
-      </View>
+          {/* Forgot Password Link */}
+          <TouchableOpacity 
+            onPress={handleForgotPassword}
+            disabled={loading}
+            style={{ marginBottom: spacing.xl, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                fontSize: typography.sizes.sm,
+                color: colors.primary,
+                fontWeight: '600',
+                textDecorationLine: 'underline',
+              }}
+            >
+              Mot de passe oublié?
+            </Text>
+          </TouchableOpacity>
 
-      <View style={onboardingStyles.buttonContainer}>
-        <AuthButton
-          type="secondary"
-          label="Continuer avec Apple"
-          icon={EMOJI.apple}
-          onPress={() =>
-            Alert.alert(
-              'Apple Sign In',
-              'Disponible dans la version buildée de l\'app'
-            )
-          }
-        />
-        
-        <AuthButton
-          type="secondary"
-          label="Continuer avec Google"
-          icon={EMOJI.google}
-          onPress={() =>
-            Alert.alert(
-              'Google Sign In',
-              'Disponible dans la version buildée de l\'app'
-            )
-          }
-        />
-        
-        <AuthButton
-          type="outline"
-          label="Continuer avec Email"
-          icon={EMOJI.email}
-          onPress={() => setMode('signup')}
-        />
-      </View>
+          {/* Sign Up Link */}
+          <TouchableOpacity 
+            onPress={async () => {
+              // Réinitialiser l'onboarding
+              await AsyncStorage.setItem('onboardingCompleted', 'false');
+              console.log('✨ Onboarding réinitialisé - AppNavigator devrait se mettre à jour');
+              // AppState listener dans App.js va détecter le changement
+              // et AppNavigator va se re-render pour montrer Onboarding1
+            }}
+            style={{ marginBottom: spacing.xl, alignItems: 'center' }}
+          >
+            <Text
+              style={{
+                fontSize: typography.sizes.sm,
+                color: colors.primary,
+                fontWeight: '600',
+                textDecorationLine: 'underline',
+              }}
+            >
+              ✨ Créer un compte
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
 
-      <AuthButton
-        type="link"
-        label="Déjà un compte ? Se connecter"
-        onPress={() => setMode('signin')}
-      />
-    </ScrollView>
+        {/* Fixed Bottom Section */}
+        <View style={{ paddingHorizontal: spacing.base, paddingBottom: spacing.base }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: loading ? colors.pupyAccent : colors.primary,
+              paddingVertical: spacing.base,
+              paddingHorizontal: spacing.base,
+              borderRadius: borderRadius.xl,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+            }}
+            onPress={handleEmailLogin}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <ActivityIndicator color={colors.white} size="small" style={{ marginRight: spacing.sm }} />
+                <Text
+                  style={{
+                    fontSize: typography.sizes.lg,
+                    fontWeight: '600',
+                    color: colors.white,
+                  }}
+                >
+                  Connexion...
+                </Text>
+              </>
+            ) : (
+              <Text
+                style={{
+                  fontSize: typography.sizes.lg,
+                  fontWeight: '600',
+                  color: colors.white,
+                }}
+              >
+                ✓ Se connecter
+              </Text>
+            )}
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
-}
-
-AuthScreen.propTypes = {
-  navigation: PropTypes.object.isRequired,
 };
+
+export default AuthScreen;

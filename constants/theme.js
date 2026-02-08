@@ -5,11 +5,11 @@
 
 // ===== COULEURS =====
 export const colors = {
-  // Primaire (Indigo)
-  primary: '#6366f1',
-  primaryLight: '#eef2ff',
-  primaryLighter: '#c7d2fe',
-  primaryDark: '#4f46e5',
+  // Primaire (PupyTracker - Blue)
+  primary: '#3B82F6',
+  primaryLight: '#EFF6FF',
+  primaryLighter: '#DBEAFE',
+  primaryDark: '#1D4ED8',
 
   // Succès (Vert)
   success: '#10b981',
@@ -45,7 +45,7 @@ export const colors = {
   purpleDark: '#7c3aed',
 
   // Neutre
-  white: '#ffffff',
+  white: '#F4F1EC',
   black: '#000000',
   gray50: '#f9fafb',
   gray100: '#f3f4f6',
@@ -59,12 +59,19 @@ export const colors = {
   gray800: '#1f2937',
   gray900: '#111827',
 
+  // PupyTracker Custom
+  pupyBackground: '#F4F1EC',
+  pupyAccent: '#A8C7D8',
+  pupyPremium: '#D6B26E',
+  pupyTextPrimary: '#2E2E2E',
+  pupyTextSecondary: '#7A7A7A',
+
   // Alias
-  text: '#111827',
-  textSecondary: '#6b7280',
+  text: '#2E2E2E',
+  textSecondary: '#7A7A7A',
   textTertiary: '#9ca3af',
   border: '#f3f4f6',
-  background: '#f9fafb',
+  background: '#F4F1EC',
   card: '#ffffff',
 };
 

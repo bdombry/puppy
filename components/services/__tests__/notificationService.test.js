@@ -153,7 +153,7 @@ describe('isInExcludedRange - Sans plages', () => {
 // ============================================
 
 describe('getNextValidTime', () => {
-  test('doit retourner la même heure si elle n\'est pas exclue', () => {
+  test("doit retourner la même heure si elle n'est pas exclue", () => {
     const date = new Date('2025-12-02T15:00:00');
     const ranges = [{ start: '08:00', end: '12:00' }];
     const result = getNextValidTime(date, ranges);
