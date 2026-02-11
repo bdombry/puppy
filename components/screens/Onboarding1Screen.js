@@ -144,7 +144,7 @@ const Onboarding1Screen = ({ navigation }) => {
           left: 0,
           right: 0,
           height: '55%',
-          backgroundColor: '#007AFF',
+          backgroundColor: colors.primary,
           zIndex: 50,
         }}
       />
@@ -157,6 +157,7 @@ const Onboarding1Screen = ({ navigation }) => {
           left: 0,
           right: 0,
           height: 100,
+
           zIndex: 51,
         }}
       >

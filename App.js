@@ -32,6 +32,10 @@ import Onboarding2Screen from './components/screens/Onboarding2Screen';
 import Onboarding3Screen from './components/screens/Onboarding3Screen';
 import Onboarding4Screen from './components/screens/Onboarding4Screen';
 import Onboarding5Screen from './components/screens/Onboarding5Screen';
+import Onboarding7Screen from './components/screens/Onboarding7Screen';
+import Onboarding8Screen from './components/screens/Onboarding8Screen';
+import Onboarding9Screen from './components/screens/Onboarding9Screen';
+import Onboarding6Screen from './components/screens/Onboarding6Screen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -209,6 +213,22 @@ function AppNavigator() {
             <Stack.Screen 
               name="Onboarding5" 
               component={Onboarding5Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding6" 
+              component={Onboarding6Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding7" 
+              component={Onboarding7Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding8" 
+              component={Onboarding8Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding9" 
+              component={Onboarding9Screen}
             />
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
             <Stack.Screen 
