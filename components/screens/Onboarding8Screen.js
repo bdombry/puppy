@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Video } from 'expo-av';
 import PropTypes from 'prop-types';
 import { colors, spacing } from '../../constants/theme';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding8Screen = ({ navigation, route }) => {
   const [showButton, setShowButton] = useState(false);
@@ -23,6 +25,10 @@ const Onboarding8Screen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <BackButton onPress={() => navigation.goBack()} />
+        <OnboardingProgressBar percent={96} />
+      </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between', paddingVertical: spacing.lg }}>
         {/* Contenu principal */}
         <View style={{ justifyContent: 'center', alignItems: 'center' }}>

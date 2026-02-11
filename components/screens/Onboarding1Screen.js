@@ -218,10 +218,8 @@ const Onboarding1Screen = ({ navigation }) => {
 
       {/* Contenu principal - au-dessus */}
       <View style={{ flex: 1, zIndex: 100, justifyContent: 'space-between' }}>
-        {/* Header */}
-        <View style={{ paddingHorizontal: spacing.base, marginTop: spacing.base, marginBottom: spacing.md }}>
-          <OnboardingProgressBar current={1} total={7} />
-        </View>
+        {/* Header (no progress bar on first screen) */}
+        <View style={{ paddingHorizontal: spacing.base, marginTop: spacing.base, marginBottom: spacing.md }} />
 
         {/* Centre du contenu */}
         <View
@@ -380,7 +378,7 @@ const Onboarding1Screen = ({ navigation }) => {
             }}
           >
             <TouchableOpacity
-              onPress={() => navigation.navigate('Onboarding2')}
+              onPress={() => navigation.navigate('Onboarding1_5')}
               style={{
                 paddingVertical: spacing.md,
                 paddingHorizontal: spacing.xl,

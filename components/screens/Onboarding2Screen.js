@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography } from '../../constants/theme';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
+import BackButton from '../BackButton';
 
 const Onboarding2Screen = ({ navigation }) => {
   const [selectedProblems, setSelectedProblems] = useState([]);
@@ -27,19 +28,10 @@ const Onboarding2Screen = ({ navigation }) => {
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
       <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.base, marginBottom: spacing.md }}>
+        <BackButton onPress={() => navigation.navigate('Onboarding1')} />
         <View style={{ borderRadius: spacing.md, overflow: 'hidden' }}>
-          <OnboardingProgressBar current={2} total={7} />
+          <OnboardingProgressBar percent={30} />
         </View>
-        <TouchableOpacity
-          onPress={() => navigation.navigate('Onboarding1')}
-          style={{
-            paddingVertical: spacing.sm,
-            paddingHorizontal: spacing.sm,
-            marginTop: spacing.xs,
-          }}
-        >
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#007AFF' }}>← Retour</Text>
-        </TouchableOpacity>
       </View>
 
       {/* Contenu */}

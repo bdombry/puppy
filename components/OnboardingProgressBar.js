@@ -2,8 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { colors, spacing } from '../constants/theme';
 
-export const OnboardingProgressBar = ({ current, total }) => {
-  const progress = (current / total) * 100;
+export const OnboardingProgressBar = ({ current, total, percent }) => {
+  const progress = typeof percent === 'number' ? percent : (current / total) * 100;
 
   return (
     <View
@@ -21,7 +21,7 @@ export const OnboardingProgressBar = ({ current, total }) => {
       <View
         style={{
           height: '100%',
-          width: `${progress}%`,
+          width: `${Math.max(0, Math.min(100, progress))}%`,
           backgroundColor: '#F2A43B',
           borderRadius: 3,
         }}

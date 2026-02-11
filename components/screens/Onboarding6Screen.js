@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../constants/theme';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Onboarding7Screen = ({ navigation }) => {
@@ -31,8 +33,8 @@ const Onboarding7Screen = ({ navigation }) => {
       
       // Naviguer vers Onboarding7 (barre de progression)
       setTimeout(() => {
-        navigation.navigate('Onboarding7', {
-          app_source: selected,
+        navigation.navigate('Onboarding6Name', {
+          userData: { app_source: selected },
         });
       }, 300);
     } catch (error) {
@@ -43,7 +45,11 @@ const Onboarding7Screen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <BackButton onPress={() => navigation.goBack()} />
+        <OnboardingProgressBar percent={72} />
+      </View>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }}>
         {/* Titre */}
         <Text style={{
@@ -88,8 +94,8 @@ const Onboarding7Screen = ({ navigation }) => {
                 paddingVertical: spacing.lg,
                 borderRadius: 12,
                 borderWidth: 2,
-                borderColor: selected === source.id ? colors.primary : '#e0e0e0',
-                backgroundColor: selected === source.id ? '#f0f4ff' : '#fff',
+                borderColor: selected === source.id ? colors.primary : colors.gray200,
+                backgroundColor: selected === source.id ? '#f0f4ff' : colors.gray100,
               }}
             >
               <Text style={{ fontSize: 32, marginRight: spacing.md }}>

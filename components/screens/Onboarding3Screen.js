@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { spacing } from '../../constants/theme';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding3Screen = ({ navigation, route }) => {
   const [dogName, setDogName] = useState('');
@@ -44,12 +46,10 @@ const Onboarding3Screen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       {/* Header */}
-      <TouchableOpacity
-        onPress={() => navigation.navigate('Onboarding2')}
-        style={{ marginBottom: spacing.lg, paddingHorizontal: spacing.lg, paddingTop: spacing.lg }}
-      >
-        <Text style={{ fontSize: 18, fontWeight: '600', color: '#007AFF' }}>← Retour</Text>
-      </TouchableOpacity>
+      <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, marginBottom: spacing.md }}>
+        <BackButton onPress={() => navigation.navigate('Onboarding2')} />
+        <OnboardingProgressBar percent={60} />
+      </View>
 
       <ScrollView
         contentContainerStyle={{

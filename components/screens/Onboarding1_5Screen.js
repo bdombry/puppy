@@ -6,45 +6,24 @@ import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
-const Onboarding9Screen = ({ navigation, route }) => {
+const Onboarding1_5Screen = ({ navigation, route }) => {
   const dogData = route?.params?.dogData || {};
 
   const handleContinue = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainTabs' }],
-    });
+    navigation.navigate('Onboarding2');
   };
 
-  const benefits = [
-    {
-      emoji: '🎯',
-      title: 'Moins d\'accidents',
-      desc: 'Au quotidien',
-      color: '#FF6B9D',
-      bgLight: '#FFE5F0',
-    },
-    {
-      emoji: '💡',
-      title: 'Plus de clarté',
-      desc: 'Sur ce qui fonctionne',
-      color: '#4A90E2',
-      bgLight: '#EBF4FF',
-    },
-    {
-      emoji: '📈',
-      title: 'Progrès visibles',
-      desc: 'Semaine après semaine',
-      color: '#7ED321',
-      bgLight: '#F0FFDB',
-    },
+  const problems = [
+    { emoji: '🔄', title: 'Les accidents continuent', desc: 'Sans structure, les progrès stagnent' },
+    { emoji: '⏱️', title: 'La progression ralentit', desc: 'Votre chiot apprend plus lentement' },
+    { emoji: '😰', title: 'La frustration augmente', desc: 'Vous doutez de votre méthode' },
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
-        <OnboardingProgressBar percent={100} />
+        <OnboardingProgressBar current={2} total={13} />
       </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between' }}>
         {/* Contenu */}
@@ -58,32 +37,49 @@ const Onboarding9Screen = ({ navigation, route }) => {
             lineHeight: 35,
             textAlign: 'center',
           }}>
-            Une bonne structure change vraiment tout.
+            Le problème n'est pas votre chiot.
           </Text>
 
           {/* Sous-titre */}
           <Text style={{
             fontSize: 14,
             color: colors.textPrimary,
+            marginBottom: spacing.lg,
             lineHeight: 20,
             fontWeight: '500',
             textAlign: 'center',
           }}>
-            Avec une méthode adaptée à son âge et sa personnalité, votre chiot progresse rapidement.
+            Les chiots n'apprennent pas tous seuls.
           </Text>
 
           <View style={{ flex: 1, justifyContent: 'center', paddingVertical: spacing.lg }}>
-            {/* Cartes bénéfices */}
-            {benefits.map((item, idx) => (
+            {/* Subtitle-style label */}
+            <Text style={{
+              fontSize: 16,
+              fontWeight: '600',
+              color: colors.textPrimary,
+              marginBottom: spacing.lg,
+              textTransform: 'none',
+              letterSpacing: 0,
+              lineHeight: 22,
+              textAlign: 'center',
+            }}>
+              Sans approche claire
+            </Text>
+
+            {/* Cartes problèmes */}
+            {problems.map((item, idx) => (
               <View
                 key={idx}
                 style={{
-                    backgroundColor: item.bgLight,
-                    borderRadius: 12,
-                    padding: spacing.md,
-                    marginBottom: spacing.xl,
-                  borderLeftWidth: 4,
-                  borderLeftColor: item.color,
+                  flexDirection: 'row',
+                backgroundColor: colors.gray100,
+                  borderRadius: 12,
+                  padding: spacing.md,
+                  marginBottom: spacing.xl,
+                  alignItems: 'flex-start',
+                borderWidth: 1,
+                borderColor: colors.gray200,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
                   shadowOpacity: 0.05,
@@ -91,30 +87,28 @@ const Onboarding9Screen = ({ navigation, route }) => {
                   elevation: 1,
                 }}
               >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
-                    <Text style={{ fontSize: 24, marginRight: spacing.xs }}>
-                    {item.emoji}
-                  </Text>
+                <Text style={{ fontSize: 24, marginRight: spacing.xs, marginTop: 2 }}>
+                  {item.emoji}
+                </Text>
+                <View style={{ flex: 1 }}>
                   <Text style={{
                     fontSize: 15,
                     fontWeight: '700',
                     color: colors.textPrimary,
-                    flex: 1,
+                    marginBottom: 4,
                   }}>
                     {item.title}
                   </Text>
+                  <Text style={{
+                    fontSize: 14,
+                    color: colors.textSecondary,
+                    lineHeight: 20,
+                  }}>
+                    {item.desc}
+                  </Text>
                 </View>
-                <Text style={{
-                  fontSize: 14,
-                  color: colors.textSecondary,
-                  lineHeight: 22,
-                  marginLeft: 40,
-                }}>
-                  {item.desc}
-                </Text>
               </View>
             ))}
-
           </View>
         </View>
 
@@ -142,7 +136,7 @@ const Onboarding9Screen = ({ navigation, route }) => {
               fontSize: 15,
               letterSpacing: 0.2,
             }}>
-              Commencer maintenant
+              Découvrir la solution →
             </Text>
           </TouchableOpacity>
 
@@ -150,8 +144,9 @@ const Onboarding9Screen = ({ navigation, route }) => {
             fontSize: 11,
             color: colors.textSecondary,
             textAlign: 'center',
+            fontStyle: 'italic',
           }}>
-            Gratuit · Aucune carte bancaire requise
+            Nous avons la solution pour votre chiot
           </Text>
         </View>
       </View>
@@ -159,9 +154,9 @@ const Onboarding9Screen = ({ navigation, route }) => {
   );
 };
 
-Onboarding9Screen.propTypes = {
+Onboarding1_5Screen.propTypes = {
   navigation: PropTypes.object.isRequired,
   route: PropTypes.object,
 };
 
-export default Onboarding9Screen;
+export default Onboarding1_5Screen;

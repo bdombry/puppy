@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { spacing } from '../../constants/theme';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const DOG_BREEDS = [
   'Labrador', 'Golden Retriever', 'Berger Allemand', 'Beagle', 'Bulldog',
@@ -37,11 +39,11 @@ const Onboarding4Screen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <BackButton onPress={() => navigation.goBack()} />
+        <OnboardingProgressBar percent={64} />
+      </View>
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }}>
-        {/* Header */}
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#007AFF' }}>← Retour</Text>
-        </TouchableOpacity>
 
         {/* Titre */}
         <Text style={{ fontSize: 34, fontWeight: '700', color: '#000', marginBottom: spacing.xs, letterSpacing: -0.5 }}>

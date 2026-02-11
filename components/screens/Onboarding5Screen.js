@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { spacing } from '../../constants/theme';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding5Screen = ({ navigation, route }) => {
   const [date, setDate] = useState(new Date(2023, 0, 1));
@@ -26,11 +28,11 @@ const Onboarding5Screen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <BackButton onPress={() => navigation.goBack()} />
+        <OnboardingProgressBar percent={68} />
+      </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }}>
-        {/* Header */}
-        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: 18, fontWeight: '600', color: '#007AFF' }}>← Retour</Text>
-        </TouchableOpacity>
 
         {/* Titre */}
         <Text style={{ fontSize: 34, fontWeight: '700', color: '#000', marginBottom: spacing.xs, letterSpacing: -0.5 }}>

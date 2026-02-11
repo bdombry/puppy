@@ -28,6 +28,7 @@ import ActivityScreen from './components/screens/ActivityScreen';
 import AcceptInvitationScreen from './components/screens/AcceptInvitationScreen';
 import AccessCodeScreen from './components/screens/AccessCodeScreen';
 import Onboarding1Screen from './components/screens/Onboarding1Screen';
+import Onboarding1_5Screen from './components/screens/Onboarding1_5Screen';
 import Onboarding2Screen from './components/screens/Onboarding2Screen';
 import Onboarding3Screen from './components/screens/Onboarding3Screen';
 import Onboarding4Screen from './components/screens/Onboarding4Screen';
@@ -36,6 +37,10 @@ import Onboarding7Screen from './components/screens/Onboarding7Screen';
 import Onboarding8Screen from './components/screens/Onboarding8Screen';
 import Onboarding9Screen from './components/screens/Onboarding9Screen';
 import Onboarding6Screen from './components/screens/Onboarding6Screen';
+import Onboarding6NameScreen from './components/screens/Onboarding6NameScreen';
+import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScreen';
+import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
+import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -199,6 +204,10 @@ function AppNavigator() {
               component={Onboarding1Screen}
             />
             <Stack.Screen 
+              name="Onboarding1_5" 
+              component={Onboarding1_5Screen}
+            />
+            <Stack.Screen 
               name="Onboarding2" 
               component={Onboarding2Screen}
             />
@@ -218,6 +227,10 @@ function AppNavigator() {
               name="Onboarding6" 
               component={Onboarding6Screen}
             />
+            <Stack.Screen name="Onboarding6Name" component={Onboarding6NameScreen} />
+            <Stack.Screen name="Onboarding6Gender" component={Onboarding6GenderScreen} />
+            <Stack.Screen name="Onboarding6Age" component={Onboarding6AgeScreen} />
+            <Stack.Screen name="Onboarding6Situation" component={Onboarding6SituationScreen} />
             <Stack.Screen 
               name="Onboarding7" 
               component={Onboarding7Screen}

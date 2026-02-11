@@ -4,6 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing } from '../../constants/theme';
 import { useAuth } from '../../context/AuthContext';
+import BackButton from '../BackButton';
+import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding7Screen = ({ navigation, route }) => {
   const [progress, setProgress] = useState(0);
@@ -111,6 +113,10 @@ const Onboarding7Screen = ({ navigation, route }) => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
+      <View style={{ paddingHorizontal: spacing.lg }}>
+        <BackButton onPress={() => navigation.goBack()} />
+        <OnboardingProgressBar percent={92} />
+      </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between', paddingVertical: spacing.lg }}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
           <Text style={{
