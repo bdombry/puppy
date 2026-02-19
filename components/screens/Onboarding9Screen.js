@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PropTypes from 'prop-types';
 import { colors, spacing } from '../../constants/theme';
@@ -9,11 +9,15 @@ import { OnboardingProgressBar } from '../OnboardingProgressBar';
 const Onboarding9Screen = ({ navigation, route }) => {
   const dogData = route?.params?.dogData || {};
 
-  const handleContinue = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainTabs' }],
-    });
+  const handleContinue = async () => {
+    try {
+      console.log('🚀 Navigating to SuperwallPaywall...');
+      // Superwall will mark onboarding as complete on dismiss
+      navigation.navigate('SuperwallPaywall');
+    } catch (error) {
+      console.error('❌ Error in handleContinue:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue');
+    }
   };
 
   const benefits = [
@@ -78,10 +82,10 @@ const Onboarding9Screen = ({ navigation, route }) => {
               <View
                 key={idx}
                 style={{
-                    backgroundColor: item.bgLight,
-                    borderRadius: 12,
-                    padding: spacing.md,
-                    marginBottom: spacing.xl,
+                  backgroundColor: item.bgLight,
+                  borderRadius: 12,
+                  padding: spacing.md,
+                  marginBottom: spacing.xl,
                   borderLeftWidth: 4,
                   borderLeftColor: item.color,
                   shadowColor: '#000',
@@ -91,8 +95,8 @@ const Onboarding9Screen = ({ navigation, route }) => {
                   elevation: 1,
                 }}
               >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
-                    <Text style={{ fontSize: 24, marginRight: spacing.xs }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
+                  <Text style={{ fontSize: 24, marginRight: spacing.xs }}>
                     {item.emoji}
                   </Text>
                   <Text style={{
@@ -114,7 +118,6 @@ const Onboarding9Screen = ({ navigation, route }) => {
                 </Text>
               </View>
             ))}
-
           </View>
         </View>
 

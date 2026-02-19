@@ -52,6 +52,9 @@
     },
     "updates": {
       "url": "https://u.expo.dev/c85a1484-9e01-422c-b2d3-11ebb4059322"
-    }
+    },
+    "plugins": [
+      "expo-build-properties"
+    ]
   }
 }

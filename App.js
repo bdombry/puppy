@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SuperwallProvider } from 'expo-superwall';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
@@ -41,6 +42,7 @@ import Onboarding6NameScreen from './components/screens/Onboarding6NameScreen';
 import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScreen';
 import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
 import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
+import SuperwallPaywallScreen from './components/screens/SuperwallPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -112,8 +114,8 @@ function AppNavigator() {
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        // ⚠️ DEV: Reset l'onboarding à chaque launch pour tester
-        await AsyncStorage.removeItem('onboardingCompleted');
+        // ⚠️ DEV: Commented out pour tester le paywall Superwall
+        // await AsyncStorage.removeItem('onboardingCompleted');
         
         const completed = await AsyncStorage.getItem('onboardingCompleted');
         setOnboardingCompleted(completed === 'true');
@@ -243,6 +245,10 @@ function AppNavigator() {
               name="Onboarding9" 
               component={Onboarding9Screen}
             />
+            <Stack.Screen 
+              name="SuperwallPaywall" 
+              component={SuperwallPaywallScreen}
+            />
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
             <Stack.Screen 
               name="Auth" 
@@ -333,8 +339,10 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <SuperwallProvider apiKeys={{ ios: 'pk_KuLG0rrkNuJgiXypXTa87', android: 'pk_KuLG0rrkNuJgiXypXTa87' }}>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </SuperwallProvider>
   );
 }
