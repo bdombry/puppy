@@ -3,6 +3,7 @@ import { View, Text, ActivityIndicator, Linking } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { SuperwallProvider } from 'expo-superwall';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
@@ -22,6 +23,25 @@ import { NotificationSettingsScreen } from './components/screens/NotificationSet
 import FeedingScreen from './components/screens/FeedingScreen';
 import ActivityScreen from './components/screens/ActivityScreen';
 import AcceptInvitationScreen from './components/screens/AcceptInvitationScreen';
+<<<<<<< HEAD
+=======
+import AccessCodeScreen from './components/screens/AccessCodeScreen';
+import Onboarding1Screen from './components/screens/Onboarding1Screen';
+import Onboarding1_5Screen from './components/screens/Onboarding1_5Screen';
+import Onboarding2Screen from './components/screens/Onboarding2Screen';
+import Onboarding3Screen from './components/screens/Onboarding3Screen';
+import Onboarding4Screen from './components/screens/Onboarding4Screen';
+import Onboarding5Screen from './components/screens/Onboarding5Screen';
+import Onboarding7Screen from './components/screens/Onboarding7Screen';
+import Onboarding8Screen from './components/screens/Onboarding8Screen';
+import Onboarding9Screen from './components/screens/Onboarding9Screen';
+import Onboarding6Screen from './components/screens/Onboarding6Screen';
+import Onboarding6NameScreen from './components/screens/Onboarding6NameScreen';
+import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScreen';
+import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
+import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
+import SuperwallPaywallScreen from './components/screens/SuperwallPaywallScreen';
+>>>>>>> 823c0f1 (implementation superwall)
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -84,6 +104,74 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog } = useAuth();
+<<<<<<< HEAD
+=======
+  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [paywallDismissed, setPaywallDismissed] = useState(false);
+
+  // Vérifier si l'onboarding a été complété
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        // ⚠️ DEV: Commented out pour tester le paywall Superwall
+        // await AsyncStorage.removeItem('onboardingCompleted');
+        
+        const completed = await AsyncStorage.getItem('onboardingCompleted');
+        setOnboardingCompleted(completed === 'true');
+      } catch (error) {
+        console.error('Erreur lors de la vérification du onboarding:', error);
+      } finally {
+        setCheckingOnboarding(false);
+      }
+    };
+
+    checkOnboarding();
+  }, []);
+
+  // ✅ Écouter les changements d'onboarding en temps réel
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (state) => {
+      if (state === 'active') {
+        // App revient au focus - re-vérifier le flag
+        try {
+          const completed = await AsyncStorage.getItem('onboardingCompleted');
+          setOnboardingCompleted(completed === 'true');
+          console.log('🔄 Onboarding flag re-vérifié:', completed === 'true');
+        } catch (error) {
+          console.error('Erreur vérification onboarding:', error);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
+
+  // Afficher le paywall seulement après une reconnexion manuelle
+  useEffect(() => {
+    const checkPaywall = async () => {
+      if (user && onboardingCompleted) {
+        const shouldShowPaywall = await AsyncStorage.getItem('show_paywall_on_login');
+        if (shouldShowPaywall === 'true') {
+          setShowPaywall(true);
+          setPaywallDismissed(false);
+        } else {
+          setShowPaywall(false);
+        }
+      } else {
+        setShowPaywall(false);
+        setPaywallDismissed(false);
+        // Reset le flag si pas authentifié
+        AsyncStorage.setItem('show_paywall_on_login', 'false');
+      }
+    };
+
+    checkPaywall();
+  }, [user, onboardingCompleted]);
+>>>>>>> 823c0f1 (implementation superwall)
 
   // Initialiser les notifications quand on a un chien
   useEffect(() => {
@@ -112,7 +200,72 @@ function AppNavigator() {
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
       >
+<<<<<<< HEAD
         {!isAuthenticated ? (
+=======
+        {/* 1. ONBOARDING - Nouveau compte, pas encore de profil */}
+        {!onboardingCompleted ? (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen 
+              name="Onboarding1" 
+              component={Onboarding1Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding1_5" 
+              component={Onboarding1_5Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding2" 
+              component={Onboarding2Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding3" 
+              component={Onboarding3Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding4" 
+              component={Onboarding4Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding5" 
+              component={Onboarding5Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding6" 
+              component={Onboarding6Screen}
+            />
+            <Stack.Screen name="Onboarding6Name" component={Onboarding6NameScreen} />
+            <Stack.Screen name="Onboarding6Gender" component={Onboarding6GenderScreen} />
+            <Stack.Screen name="Onboarding6Age" component={Onboarding6AgeScreen} />
+            <Stack.Screen name="Onboarding6Situation" component={Onboarding6SituationScreen} />
+            <Stack.Screen 
+              name="Onboarding7" 
+              component={Onboarding7Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding8" 
+              component={Onboarding8Screen}
+            />
+            <Stack.Screen 
+              name="Onboarding9" 
+              component={Onboarding9Screen}
+            />
+            <Stack.Screen 
+              name="SuperwallPaywall" 
+              component={SuperwallPaywallScreen}
+            />
+            <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
+            <Stack.Screen 
+              name="Auth" 
+              component={AuthScreen}
+              options={{ animationEnabled: false }}
+            />
+          </Stack.Group>
+        ) : null}
+
+        {/* 2. AUTH SCREEN - Onboarding complété, mais pas de compte créé ou pas connecté */}
+        {onboardingCompleted && !isAuthenticated ? (
+>>>>>>> 823c0f1 (implementation superwall)
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen 
               name="Auth" 
@@ -165,8 +318,10 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppNavigator />
-    </AuthProvider>
+    <SuperwallProvider apiKeys={{ ios: 'pk_KuLG0rrkNuJgiXypXTa87', android: 'pk_KuLG0rrkNuJgiXypXTa87' }}>
+      <AuthProvider>
+        <AppNavigator />
+      </AuthProvider>
+    </SuperwallProvider>
   );
 }
