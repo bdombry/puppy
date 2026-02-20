@@ -11,9 +11,9 @@ const Onboarding9Screen = ({ navigation, route }) => {
 
   const handleContinue = async () => {
     try {
-      console.log('🚀 Navigating to SuperwallPaywall...');
-      // Superwall will mark onboarding as complete on dismiss
-      navigation.navigate('SuperwallPaywall');
+      console.log('🚀 Navigating to CreateAccount...');
+      // Go to account creation before paywall
+      navigation.navigate('CreateAccount');
     } catch (error) {
       console.error('❌ Error in handleContinue:', error);
       Alert.alert('Erreur', 'Une erreur est survenue');

@@ -6,6 +6,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { SuperwallProvider } from 'expo-superwall';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { parseDeepLink, handleDeepLink } from './services/deeplinkService';
+import { initializeRevenueCat } from './services/revenueCatService';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
 import DogSetupScreen from './components/screens/DogSetupScreen';
@@ -42,6 +44,7 @@ import Onboarding6NameScreen from './components/screens/Onboarding6NameScreen';
 import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScreen';
 import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
 import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
+import CreateAccountScreen from './components/screens/CreateAccountScreen';
 import SuperwallPaywallScreen from './components/screens/SuperwallPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
@@ -59,6 +62,8 @@ const linking = {
       MainTabs: '',
       Auth: 'auth',
       DogSetup: 'setup',
+      SuperwallPaywall: 'paywall',
+      CreateAccount: 'create-account',
     },
   },
 };
@@ -109,6 +114,36 @@ function AppNavigator() {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
+  const navigationRef = useRef();
+
+  // Gérer les deeplinks
+  useEffect(() => {
+    const handleDeepLinkURL = ({ url }) => {
+      if (!url) return;
+      
+      console.log('🔗 Deep link reçu:', url);
+      
+      // Parser et gérer le deeplink
+      const deeplink = parseDeepLink(url);
+      if (deeplink) {
+        handleDeepLink(navigationRef, deeplink);
+      }
+    };
+
+    // Écouter les deeplinks quand l'app est actif
+    const subscription = Linking.addEventListener('url', handleDeepLinkURL);
+
+    // Vérifier les deeplinks au démarrage
+    Linking.getInitialURL().then((url) => {
+      if (url != null) {
+        handleDeepLinkURL({ url });
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   // Vérifier si l'onboarding a été complété
   useEffect(() => {
@@ -127,6 +162,23 @@ function AppNavigator() {
     };
 
     checkOnboarding();
+  }, []);
+
+  // 💳 Initialiser RevenueCat
+  useEffect(() => {
+    const initRevenueCat = async () => {
+      try {
+        console.log('💳 Initializing RevenueCat...');
+        const success = await initializeRevenueCat();
+        if (success) {
+          console.log('✅ RevenueCat initialized');
+        }
+      } catch (error) {
+        console.error('❌ Error initializing RevenueCat:', error);
+      }
+    };
+
+    initRevenueCat();
   }, []);
 
   // ✅ Écouter les changements d'onboarding en temps réel
@@ -194,7 +246,7 @@ function AppNavigator() {
   const hasCurrentDog = currentDog && currentDog.id;
 
   return (
-    <NavigationContainer linking={linking} fallback={<ActivityIndicator size="large" />}>
+    <NavigationContainer ref={navigationRef} linking={linking} fallback={<ActivityIndicator size="large" />}>
       <Stack.Navigator
         screenOptions={{ headerShown: false }}
       >
@@ -246,8 +298,8 @@ function AppNavigator() {
               component={Onboarding9Screen}
             />
             <Stack.Screen 
-              name="SuperwallPaywall" 
-              component={SuperwallPaywallScreen}
+              name="CreateAccount" 
+              component={CreateAccountScreen}
             />
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
             <Stack.Screen 
@@ -332,6 +384,15 @@ function AppNavigator() {
             </Stack.Screen>
           </Stack.Group>
         ) : null}
+
+        {/* 6. MODAL GLOBAL - Paywall accessible depuis n'importe quel état via deeplink */}
+        <Stack.Group screenOptions={{ presentation: 'modal' }}>
+          <Stack.Screen 
+            name="SuperwallPaywall" 
+            component={SuperwallPaywallScreen}
+            options={{ headerShown: false, animationEnabled: true }}
+          />
+        </Stack.Group>
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -339,7 +400,7 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <SuperwallProvider apiKeys={{ ios: 'pk_KuLG0rrkNuJgiXypXTa87', android: 'pk_KuLG0rrkNuJgiXypXTa87' }}>
+    <SuperwallProvider apiKeys={{ ios: 'pk_16005ee4001c7c7e7e13d7e722a0d10e01645f91a143affc', android: 'pk_16005ee4001c7c7e7e13d7e722a0d10e01645f91a143affc' }}>
       <AuthProvider>
         <AppNavigator />
       </AuthProvider>

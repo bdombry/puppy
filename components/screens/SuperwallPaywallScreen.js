@@ -6,6 +6,17 @@ import { usePlacement } from 'expo-superwall';
 import { useAuth } from '../../context/AuthContext';
 import { colors, spacing } from '../../constants/theme';
 
+/**
+ * SuperwallPaywallScreen
+ * 
+ * Écran du paywall Superwall.
+ * Accessible via:
+ * - deeplink: pupytracker://paywall
+ * - Navigation normale dans le flow onboarding
+ * 
+ * Affiche le placement Superwall avec les options d'abonnement.
+ * Après fermeture, navigue vers l'écran approprié selon l'état auth/dog.
+ */
 const SuperwallPaywallScreen = ({ navigation }) => {
   const { user, currentDog } = useAuth();
 
@@ -35,14 +46,22 @@ const SuperwallPaywallScreen = ({ navigation }) => {
     console.log('📍 navigateNext called');
     
     try {
-      // Marquer l'onboarding comme complété maintenant que le paywall est terminated
+      // Si ouvert via deeplink et pas authenticated, fermer simplement le paywall
+      if (!user) {
+        console.log('→ No user, going back (deeplink case)');
+        navigation.goBack();
+        return;
+      }
+
+      // Marquer l'onboarding comme complété maintenant que le paywall est terminé
       console.log('📝 Marking onboarding as completed (after paywall)');
       await AsyncStorage.setItem('onboardingCompleted', 'true');
       
       // Petit délai
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Logique de navigation après paywall
+      // Après paywall, aller directement à Home (DogSetup n'est plus nécessaire)
+      // Le chien sera créé avec les infos de l'onboarding
       if (user && currentDog) {
         // Connecté + a un chien → Main App
         console.log('→ Going to MainTabs (user + dog)');
@@ -51,11 +70,11 @@ const SuperwallPaywallScreen = ({ navigation }) => {
           routes: [{ name: 'MainTabs' }],
         });
       } else if (user && !currentDog) {
-        // Connecté + pas de chien → Dog Setup
-        console.log('→ Going to DogSetup (user + no dog)');
+        // Connecté + pas de chien → Créer depuis l'onboarding
+        console.log('→ Going to MainTabs (user + no dog yet, will create from onboarding data)');
         navigation.reset({
           index: 0,
-          routes: [{ name: 'DogSetup' }],
+          routes: [{ name: 'MainTabs' }],
         });
       } else {
         // Pas connecté → Auth
