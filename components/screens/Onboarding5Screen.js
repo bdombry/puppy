@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { spacing } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
@@ -27,7 +27,7 @@ const Onboarding5Screen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar percent={68} />

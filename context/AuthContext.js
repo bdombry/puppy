@@ -448,6 +448,7 @@ export const AuthProvider = ({ children }) => {
         signUpWithEmail,
         saveDog,
         deleteDog,
+        refreshDogs: () => user ? loadUserDog(user.id) : Promise.resolve(),
         signOut,
         updatePassword,
         deleteAccount,

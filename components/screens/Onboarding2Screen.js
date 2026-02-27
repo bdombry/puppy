@@ -25,7 +25,7 @@ const Onboarding2Screen = ({ navigation }) => {
   const canProceed = selectedProblems.length > 0;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       {/* Header */}
       <View style={{ paddingHorizontal: spacing.base, paddingTop: spacing.base, marginBottom: spacing.md }}>
         <BackButton onPress={() => navigation.navigate('Onboarding1')} />

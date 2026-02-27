@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Animated, Alert, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { colors, spacing } from '../../constants/theme';
-import { useAuth } from '../../context/AuthContext';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
@@ -14,8 +12,8 @@ const Onboarding7Screen = ({ navigation, route }) => {
   const [isCompleting, setIsCompleting] = useState(false);
   const [showButton, setShowButton] = useState(false);
   const dogData = route?.params?.dogData || {};
+  const userData = route?.params?.userData || {};
   const appSource = route?.params?.app_source;
-  const { saveDog } = useAuth();
   
   const animationStartedRef = useRef(false);
 
@@ -88,13 +86,12 @@ const Onboarding7Screen = ({ navigation, route }) => {
     const completionSequence = async () => {
       setIsCompleting(true);
       try {
-        if (dogData.name && dogData.breed && dogData.birthDate) {
-          await saveDog(dogData);
-        }
+        // Le chien sera sauvé dans CreateAccountScreen après l'authentification
+        // Ici on fait juste l'animation de progression
         setShowButton(true);
       } catch (error) {
-        console.error('Erreur lors de la sauvegarde:', error);
-        Alert.alert('Erreur', 'Impossible de finir la configuration. Veuillez réessayer.');
+        console.error('Erreur lors de la préparation:', error);
+        Alert.alert('Erreur', 'Une erreur est survenue. Veuillez réessayer.');
         setIsCompleting(false);
       }
     };
@@ -108,7 +105,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
   });
 
   const handleContinue = () => {
-    navigation.navigate('Onboarding8', { dogData });
+    navigation.navigate('Onboarding8', { dogData, userData });
   };
 
   return (

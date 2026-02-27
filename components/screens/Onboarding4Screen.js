@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { spacing } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
@@ -38,7 +38,7 @@ const Onboarding4Screen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar percent={64} />

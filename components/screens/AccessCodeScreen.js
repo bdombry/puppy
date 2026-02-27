@@ -22,7 +22,7 @@ const AccessCodeScreen = ({ navigation, route }) => {
     try {
       // Chercher le chien avec ce code d'accès
       const { data: dogs, error: dogsError } = await supabase
-        .from('dogs')
+        .from('Dogs')
         .select('*')
         .eq('access_code', code.toUpperCase())
         .single();

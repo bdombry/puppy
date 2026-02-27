@@ -8,6 +8,7 @@ import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding6SituationScreen = ({ navigation, route }) => {
   const initial = route?.params?.userData || {};
+  const dogData = route?.params?.dogData || {};
   const [selected, setSelected] = useState(initial.situation || null);
 
   const options = [
@@ -20,11 +21,11 @@ const Onboarding6SituationScreen = ({ navigation, route }) => {
   const submit = () => {
     if (!selected) return;
     const userData = { ...initial, situation: selected };
-    navigation.navigate('Onboarding7', { userData });
+    navigation.navigate('Onboarding7', { userData, dogData });
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar percent={88} />

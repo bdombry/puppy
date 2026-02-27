@@ -7,9 +7,10 @@ import Purchases, {
   PurchasesOffering,
   PurchasesPackage,
 } from 'react-native-purchases';
+import ENV from '../config/env';
 
-// Ton API Key RevenueCat
-const REVENUE_CAT_API_KEY = 'test_UqVNHoytCOjGaizaylLHzoAGomE';
+// API Key RevenueCat depuis config/env.js
+const REVENUE_CAT_API_KEY = ENV.REVENUE_CAT_API_KEY;
 
 // Entitlements disponibles
 export const ENTITLEMENTS = {
@@ -17,26 +18,29 @@ export const ENTITLEMENTS = {
 };
 
 /**
- * Initialise RevenueCat avec ta clé API
- * Appelle cette fonction au démarrage de l'app
+ * Initialise RevenueCat
+ * IMPORTANT: Appelle cette fonction au démarrage de l'app
  */
 export const initializeRevenueCat = async () => {
   try {
     console.log('💳 Initializing RevenueCat...');
     
-    // Configure Purchases
+    // Configure Purchases (RevenueCat SDK)
     await Purchases.configure({
       apiKey: REVENUE_CAT_API_KEY,
     });
     
-    console.log('✅ RevenueCat initialized successfully');
+    console.log('✅ RevenueCat configured');
     
-    // Optionnel: sync avec tes serveurs
+    // Sync purchases
     await Purchases.syncPurchases();
+    console.log('✅ Purchases synced');
     
+    console.log('✅ RevenueCat initialized successfully');
     return true;
   } catch (error) {
     console.error('❌ Error initializing RevenueCat:', error);
+    console.error('  Details:', error.message);
     return false;
   }
 };

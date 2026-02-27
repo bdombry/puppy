@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Video } from 'expo-av';
+import * as Notifications from 'expo-notifications';
 import PropTypes from 'prop-types';
 import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
@@ -10,6 +11,7 @@ import { OnboardingProgressBar } from '../OnboardingProgressBar';
 const Onboarding8Screen = ({ navigation, route }) => {
   const [showButton, setShowButton] = useState(false);
   const dogData = route?.params?.dogData || {};
+  const userData = route?.params?.userData || {};
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -19,8 +21,39 @@ const Onboarding8Screen = ({ navigation, route }) => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleContinue = () => {
-    navigation.navigate('Onboarding9', { dogData });
+  const handleContinue = async () => {
+    try {
+      // Récupérer les noms
+      const personName = userData?.name || 'Ami du chiot';
+      const dogName = dogData?.name || 'ton chiot';
+      
+      // Message personnalisé avec infos de la personne et du chien
+      const title = `Salut ${personName}! 👋`;
+      const body = `Quand est-ce que ${dogName} a fait ses besoins pour la dernière fois?`;
+
+      // Envoyer la notification immédiatement
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: true,
+          priority: 'high',
+          badge: 1,
+        },
+        trigger: null, // Immédiat
+      });
+
+      console.log('✅ Notification envoyée:', title, body);
+      
+      // Naviguer après un petit délai
+      setTimeout(() => {
+        navigation.navigate('Onboarding9', { dogData, userData });
+      }, 300);
+    } catch (error) {
+      console.error('❌ Erreur notification:', error);
+      // Continuer quand même si la notif échoue
+      navigation.navigate('Onboarding9', { dogData, userData });
+    }
   };
 
   return (

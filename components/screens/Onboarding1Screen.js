@@ -135,7 +135,7 @@ const Onboarding1Screen = ({ navigation }) => {
   });
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       {/* Background bleu courbe - moitié basse avec vague douce */}
       <View
         style={{

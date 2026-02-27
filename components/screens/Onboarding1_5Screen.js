@@ -20,7 +20,7 @@ const Onboarding1_5Screen = ({ navigation, route }) => {
   ];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar current={2} total={13} />

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { spacing } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
@@ -44,19 +44,25 @@ const Onboarding3Screen = ({ navigation, route }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       {/* Header */}
       <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, marginBottom: spacing.md }}>
         <BackButton onPress={() => navigation.navigate('Onboarding2')} />
         <OnboardingProgressBar percent={60} />
       </View>
 
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: spacing.lg,
           paddingVertical: spacing.lg,
         }}
+        keyboardShouldPersistTaps="handled"
       >
         {/* Titre */}
         <Text
@@ -163,6 +169,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
           </View>
         </View>
       </ScrollView>
+      </KeyboardAvoidingView>
 
       {/* Bouton */}
       <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>

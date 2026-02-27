@@ -8,15 +8,16 @@ import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding6NameScreen = ({ navigation, route }) => {
   const initial = route?.params?.userData || {};
+  const dogData = route?.params?.dogData || {};
   const [name, setName] = useState(initial.name || '');
 
   const handleContinue = () => {
     const userData = { ...initial, name };
-    navigation.navigate('Onboarding6Gender', { userData });
+    navigation.navigate('Onboarding6Gender', { userData, dogData });
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar percent={76} />
@@ -45,7 +46,7 @@ const Onboarding6NameScreen = ({ navigation, route }) => {
             Donne-nous ton prénom pour personnaliser l'expérience.
           </Text>
 
-          <View style={{ flex: 1, justifyContent: 'center', paddingVertical: spacing.lg }}>
+          <View style={{ paddingTop: spacing.lg }}>
             <View style={{ backgroundColor: colors.gray100, borderRadius: 12, padding: spacing.md, borderWidth: 1, borderColor: colors.gray200 }}>
               <TextInput
                 value={name}

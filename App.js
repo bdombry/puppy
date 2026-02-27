@@ -4,10 +4,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SuperwallProvider } from 'expo-superwall';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { parseDeepLink, handleDeepLink } from './services/deeplinkService';
 import { initializeRevenueCat } from './services/revenueCatService';
+import ENV from './config/env';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
 import DogSetupScreen from './components/screens/DogSetupScreen';
@@ -45,7 +45,7 @@ import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScree
 import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
 import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
 import CreateAccountScreen from './components/screens/CreateAccountScreen';
-import SuperwallPaywallScreen from './components/screens/SuperwallPaywallScreen';
+import RevenueCatPaywallScreen from './components/screens/RevenueCatPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
 
@@ -62,7 +62,7 @@ const linking = {
       MainTabs: '',
       Auth: 'auth',
       DogSetup: 'setup',
-      SuperwallPaywall: 'paywall',
+      RevenueCatPaywall: 'paywall',
       CreateAccount: 'create-account',
     },
   },
@@ -114,6 +114,7 @@ function AppNavigator() {
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
+  const [revenueCatReady, setRevenueCatReady] = useState(false);
   const navigationRef = useRef();
 
   // Gérer les deeplinks
@@ -149,7 +150,7 @@ function AppNavigator() {
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        // ⚠️ DEV: Commented out pour tester le paywall Superwall
+        // ⚠️ DEV: Flag pour tester le flow d'onboarding
         // await AsyncStorage.removeItem('onboardingCompleted');
         
         const completed = await AsyncStorage.getItem('onboardingCompleted');
@@ -172,9 +173,15 @@ function AppNavigator() {
         const success = await initializeRevenueCat();
         if (success) {
           console.log('✅ RevenueCat initialized');
+          setRevenueCatReady(true);
+        } else {
+          console.warn('⚠️ RevenueCat initialization failed, still marking as ready');
+          setRevenueCatReady(true);
         }
       } catch (error) {
         console.error('❌ Error initializing RevenueCat:', error);
+        // Even on error, mark as ready to avoid infinite wait
+        setRevenueCatReady(true);
       }
     };
 
@@ -251,7 +258,7 @@ function AppNavigator() {
         screenOptions={{ headerShown: false }}
       >
         {/* 1. ONBOARDING - Nouveau compte, pas encore de profil */}
-        {!onboardingCompleted ? (
+        {!onboardingCompleted && !isAuthenticated ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen 
               name="Onboarding1" 
@@ -326,14 +333,15 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 3. PAYWALL - Authentifié mais pas de chien + paywall non dismissé */}
-        {isAuthenticated && !hasCurrentDog && showPaywall && !paywallDismissed ? (
+        {/* 3. PAYWALL REVENUECAT - Authentifié avec chien + paywall à afficher */}
+        {isAuthenticated && hasCurrentDog && showPaywall && !paywallDismissed ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen 
-              name="Onboarding6" 
+              name="RevenueCatPaywall" 
               component={(props) => (
-                <Onboarding6Screen 
-                  {...props}
+                <RevenueCatPaywallScreen 
+                  {...props} 
+                  revenueCatReady={revenueCatReady}
                   onPaywallDismissed={() => {
                     setPaywallDismissed(true);
                     AsyncStorage.setItem('show_paywall_on_login', 'false');
@@ -341,16 +349,6 @@ function AppNavigator() {
                 />
               )}
             />
-          </Stack.Group>
-        ) : null}
-
-        {/* 4. DOG SETUP - Authentifié, pas de chien, paywall accepté */}
-        {isAuthenticated && !hasCurrentDog && (!showPaywall || paywallDismissed) ? (
-          <Stack.Group screenOptions={{ animationEnabled: false }}>
-            <Stack.Screen name="DogSetup" component={DogSetupScreen} />
-            <Stack.Screen name="DogRaceScreen" component={DogRaceScreen} />
-            <Stack.Screen name="DogBirthdateScreen" component={DogBirthdateScreen} />
-            <Stack.Screen name="DogPhotoScreen" component={DogPhotoScreen} />
           </Stack.Group>
         ) : null}
 
@@ -388,8 +386,10 @@ function AppNavigator() {
         {/* 6. MODAL GLOBAL - Paywall accessible depuis n'importe quel état via deeplink */}
         <Stack.Group screenOptions={{ presentation: 'modal' }}>
           <Stack.Screen 
-            name="SuperwallPaywall" 
-            component={SuperwallPaywallScreen}
+            name="RevenueCatPaywallModal" 
+            component={(props) => (
+              <RevenueCatPaywallScreen {...props} revenueCatReady={revenueCatReady} />
+            )}
             options={{ headerShown: false, animationEnabled: true }}
           />
         </Stack.Group>
@@ -400,10 +400,8 @@ function AppNavigator() {
 
 export default function App() {
   return (
-    <SuperwallProvider apiKeys={{ ios: 'pk_16005ee4001c7c7e7e13d7e722a0d10e01645f91a143affc', android: 'pk_16005ee4001c7c7e7e13d7e722a0d10e01645f91a143affc' }}>
-      <AuthProvider>
-        <AppNavigator />
-      </AuthProvider>
-    </SuperwallProvider>
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
   );
 }

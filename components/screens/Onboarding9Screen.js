@@ -8,12 +8,15 @@ import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding9Screen = ({ navigation, route }) => {
   const dogData = route?.params?.dogData || {};
+  const userData = route?.params?.userData || {};
 
   const handleContinue = async () => {
     try {
       console.log('🚀 Navigating to CreateAccount...');
-      // Go to account creation before paywall
-      navigation.navigate('CreateAccount');
+      console.log('   dogData:', dogData);
+      console.log('   userData:', userData);
+      // Go to account creation before paywall, passing the dog info
+      navigation.navigate('CreateAccount', { dogData, userData });
     } catch (error) {
       console.error('❌ Error in handleContinue:', error);
       Alert.alert('Erreur', 'Une erreur est survenue');

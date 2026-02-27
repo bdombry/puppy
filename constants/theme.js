@@ -60,7 +60,7 @@ export const colors = {
   gray900: '#111827',
 
   // PupyTracker Custom
-  pupyBackground: '#F4F1EC',
+  pupyBackground: '#ffffff',
   pupyAccent: '#A8C7D8',
   pupyPremium: '#D6B26E',
   pupyTextPrimary: '#2E2E2E',
@@ -72,7 +72,7 @@ export const colors = {
   textTertiary: '#9ca3af',
   border: '#f3f4f6',
   background: '#F4F1EC',
-  card: '#ffffff',
+  card: '#F4F1EC',
 };
 
 // ===== TYPOGRAPHIES =====

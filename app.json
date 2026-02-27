@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "pupy-track",
-    "slug": "snack-8d5a7e98-da91-4ab9-999c-68351051b8ae",
-    "version": "1.0.0",
+    "name": "PupyTracker",
+    "slug": "PupyTracker",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.bendombry.pupytracker",
+      "bundleIdentifier": "com.dombry.PupyTracker",
       "scheme": "pupytracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -28,7 +28,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.bendombry.pupytracker",
+      "package": "com.dombry.PupyTracker",
       "scheme": "pupytracker",
       "permissions": [
         "CAMERA",
@@ -43,18 +43,17 @@
     "description": "insight update",
     "extra": {
       "eas": {
-        "projectId": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+        "projectId": "f7b436e8-a612-45a9-8925-8843f12c4100"
       }
     },
-    "owner": "bendombry",
+    "owner": "bdombry",
     "runtimeVersion": {
       "policy": "sdkVersion"
     },
-    "updates": {
-      "url": "https://u.expo.dev/c85a1484-9e01-422c-b2d3-11ebb4059322"
-    },
+    "updates": {},
     "plugins": [
-      "expo-build-properties"
+      "expo-build-properties",
+      "expo-font"
     ]
   }
 }

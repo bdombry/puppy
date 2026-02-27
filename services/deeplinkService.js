@@ -53,7 +53,7 @@ export const handleDeepLink = (navigationRef, deeplink) => {
 
   switch (routeName) {
     case 'paywall':
-      navigationRef.current.navigate('SuperwallPaywall');
+      navigationRef.current.navigate('RevenueCatPaywall');
       break;
     case 'invite':
       navigationRef.current.navigate('AcceptInvitation', { token: params.token });

@@ -6,9 +6,10 @@ import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const Onboarding7Screen = ({ navigation }) => {
+const Onboarding7Screen = ({ navigation, route }) => {
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(false);
+  const dogData = route?.params?.dogData || {};
 
   const sources = [
     { id: 'app_store', label: 'App Store', icon: '🍎' },
@@ -35,6 +36,7 @@ const Onboarding7Screen = ({ navigation }) => {
       setTimeout(() => {
         navigation.navigate('Onboarding6Name', {
           userData: { app_source: selected },
+          dogData,
         });
       }, 300);
     } catch (error) {
@@ -45,7 +47,7 @@ const Onboarding7Screen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.card }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
         <BackButton onPress={() => navigation.goBack()} />
         <OnboardingProgressBar percent={72} />

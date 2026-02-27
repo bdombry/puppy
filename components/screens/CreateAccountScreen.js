@@ -3,9 +3,10 @@ import { View, ScrollView, Text, TouchableOpacity, TextInput, Alert, ActivityInd
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography, borderRadius } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppleSignInButton from '../buttons/AppleSignInButton';
-import GoogleSignInButton from '../buttons/GoogleSignInButton';
+// import GoogleSignInButton from '../buttons/GoogleSignInButton'; // TODO: Réactiver plus tard
 
 /**
  * CreateAccountScreen
@@ -18,7 +19,10 @@ import GoogleSignInButton from '../buttons/GoogleSignInButton';
  * 
  * Après création, navigue vers le paywall.
  */
-const CreateAccountScreen = ({ navigation }) => {
+const CreateAccountScreen = ({ navigation, route }) => {
+  const dogData = route?.params?.dogData || {};
+  const userData = route?.params?.userData || {};
+  const { refreshDogs } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -26,6 +30,95 @@ const CreateAccountScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [useEmailSignup, setUseEmailSignup] = useState(false);
+
+  // Sauvegarde les infos de l'utilisateur dans la table profiles
+  const saveUserInfo = async (userId) => {
+    try {
+      console.log('💾 saveUserInfo called with userId:', userId);
+      console.log('   userData:', userData);
+
+      const firstName = userData?.name || '';
+      const ageRange = userData?.ageRange || null;
+      const gender = userData?.gender || null;
+      const situation = userData?.situation || null;
+
+      const { error } = await supabase
+        .from('profiles')
+        .insert([
+          {
+            id: userId,
+            first_name: firstName,
+            age_range: ageRange,
+            gender: gender,
+            family_situation: situation,
+          },
+        ])
+        .select();
+
+      if (error) {
+        console.error('❌ Could not save user info:', error);
+        console.error('   Error details:', error.message, error.code);
+        // Ne pas bloquer la création du compte si ça échoue
+        return false;
+      } else {
+        console.log('✅ User info saved to profiles table');
+        return true;
+      }
+    } catch (err) {
+      console.error('❌ Error saving user info:', err);
+      // Ne pas bloquer la création du compte si ça échoue
+      return false;
+    }
+  };
+
+  // Sauvegarde les infos du chien après création du compte
+  const saveDogInfo = async (userId) => {
+    try {
+      console.log('💾 saveDogInfo called with userId:', userId);
+      console.log('   dogData:', dogData);
+      console.log('   userData:', userData);
+
+      // Créer un dog avec les données disponibles ou des valeurs par défaut
+      const dogName = dogData?.name || 'Mon chiot';
+      const breed = dogData?.breed || '';
+      const birthDate = dogData?.birthDate || null;
+      const sex = dogData?.sex || 'unknown';
+      const situation = userData?.situation || dogData?.situation || '';
+      const photoUrl = dogData?.photo_url || null;
+
+      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex, situation });
+
+      const { data, error } = await supabase
+        .from('Dogs')
+        .insert([
+          {
+            id: `${userId}-${Date.now()}`, // Génère un ID unique
+            user_id: userId,
+            name: dogName,
+            breed: breed,
+            birthdate: birthDate,
+            sex: sex,
+            photo_url: photoUrl,
+            situation: situation,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select(); // Récupère les données créées
+
+      if (error) {
+        console.error('❌ Could not save dog info:', error);
+        console.error('   Error details:', error.message, error.code);
+        // Ne pas bloquer la création du compte si ça échoue
+        return false;
+      } else {
+        console.log('✅ Dog info saved successfully:', data);
+        return true;
+      }
+    } catch (err) {
+      console.error('❌ Error saving dog info:', err);
+      return false;
+    }
+  };
 
   // Handle Email Signup
   const handleEmailSignup = async () => {
@@ -46,6 +139,7 @@ const CreateAccountScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
+      console.log('🚀 Starting email signup...');
       const { error, data } = await supabase.auth.signUp({
         email,
         password,
@@ -60,16 +154,51 @@ const CreateAccountScreen = ({ navigation }) => {
           message = error.message;
         }
         
+        console.error('❌ Signup error:', message);
         Alert.alert('Erreur de création', message);
       } else {
-        console.log('✅ Compte créé avec:', email);
+        const userId = data?.user?.id;
+        console.log('✅ User created with ID:', userId);
+        
+        if (!userId) {
+          Alert.alert('Erreur', 'Impossible de créer le compte');
+          setLoading(false);
+          return;
+        }
+        
+        // Sauvegarder les infos de l'utilisateur
+        console.log('👤 Saving user info...');
+        await saveUserInfo(userId);
+        
+        // Sauvegarder les infos du chien - CRUCIAL
+        console.log('🐕 Saving dog info...');
+        const dogCreated = await saveDogInfo(userId);
+        
+        if (!dogCreated) {
+          console.warn('⚠️ Dog creation may have failed, but continuing...');
+        }
+        
+        // Attendre que les données soient persistées et synchro
+        console.log('⏳ Waiting for data sync...');
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Forcer le rechargement du chien dans le context
+        console.log('🔄 Refreshing dogs...');
+        if (refreshDogs) {
+          await refreshDogs();
+          console.log('✅ Dogs refreshed');
+        }
+        
         // Marquer que le paywall doit être affiché
+        console.log('📋 Setting paywall flag...');
         await AsyncStorage.setItem('show_paywall_on_login', 'true');
         
-        // Aller au paywall
-        navigation.replace('SuperwallPaywall');
+        // L'app va se re-render et montrer le paywall automatiquement
+        console.log('✅ Email signup complete - App will navigate to paywall');
+        setLoading(false);
       }
     } catch (err) {
+      console.error('❌ Email signup exception:', err);
       Alert.alert('Erreur', err.message);
     } finally {
       setLoading(false);
@@ -148,10 +277,12 @@ const CreateAccountScreen = ({ navigation }) => {
             <>
               {Platform.OS === 'ios' && (
                 <AppleSignInButton 
+                  dogData={dogData}
+                  userData={userData}
+                  refreshDogs={refreshDogs}
                   onSuccess={() => {
                     console.log('✅ Apple Sign In successful');
                     AsyncStorage.setItem('show_paywall_on_login', 'true');
-                    // Navigation gérée par AppleSignInButton
                   }}
                   onError={(err) => {
                     Alert.alert('Erreur Apple', err.message);
@@ -159,16 +290,19 @@ const CreateAccountScreen = ({ navigation }) => {
                 />
               )}
 
-              <GoogleSignInButton 
+              {/* TODO: Google Sign In - À activer plus tard */}
+              {/* <GoogleSignInButton
+                dogData={dogData}
+                userData={userData}
+                refreshDogs={refreshDogs}
                 onSuccess={() => {
                   console.log('✅ Google Sign In successful');
                   AsyncStorage.setItem('show_paywall_on_login', 'true');
-                  // Navigation gérée par GoogleSignInButton
                 }}
                 onError={(err) => {
                   Alert.alert('Erreur Google', err.message);
                 }}
-              />
+              /> */}
 
               {/* Divider */}
               <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: spacing.lg }}>
