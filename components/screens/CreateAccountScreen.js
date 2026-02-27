@@ -83,31 +83,33 @@ const CreateAccountScreen = ({ navigation, route }) => {
       const breed = dogData?.breed || '';
       const birthDate = dogData?.birthDate || null;
       const sex = dogData?.sex || 'unknown';
-      const situation = userData?.situation || dogData?.situation || '';
       const photoUrl = dogData?.photo_url || null;
 
-      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex, situation });
+      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex });
 
       const { data, error } = await supabase
         .from('Dogs')
         .insert([
           {
-            id: `${userId}-${Date.now()}`, // Génère un ID unique
+            // Laisser la BD générer l'ID (c'est un bigint auto-increment)
             user_id: userId,
             name: dogName,
             breed: breed,
-            birthdate: birthDate,
+            birth_date: birthDate, // ✅ Correct: birth_date (pas birthdate)
             sex: sex,
             photo_url: photoUrl,
-            situation: situation,
-            created_at: new Date().toISOString(),
+            // created_at se met à jour automatiquement avec NOW()
           },
         ])
         .select(); // Récupère les données créées
 
       if (error) {
         console.error('❌ Could not save dog info:', error);
-        console.error('   Error details:', error.message, error.code);
+        console.error('   Error code:', error.code);
+        console.error('   Error message:', error.message);
+        console.error('   Error status:', error.status);
+        console.error('   Error hint:', error.hint);
+        console.error('   Full error object:', JSON.stringify(error, null, 2));
         // Ne pas bloquer la création du compte si ça échoue
         return false;
       } else {
