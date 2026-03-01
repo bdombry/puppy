@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Purchases from 'react-native-purchases';
 import { useAuth } from '../../context/AuthContext';
 import { colors, spacing } from '../../constants/theme';
-import { ENTITLEMENTS, hasEntitlement } from '../../services/revenueCatService';
+import { 
+  ENTITLEMENTS, 
+  hasEntitlement,
+  presentPaywall,
+} from '../../services/revenueCatService';
 
 /**
  * RevenueCatPaywallScreen
@@ -78,7 +81,7 @@ const RevenueCatPaywallScreen = ({ navigation, revenueCatReady = false }) => {
   };
 
   useEffect(() => {
-    const presentPaywall = async () => {
+    const displayPaywall = async () => {
       try {
         // Attendre que RevenueCat soit prêt
         if (!revenueCatReady) {
@@ -87,80 +90,80 @@ const RevenueCatPaywallScreen = ({ navigation, revenueCatReady = false }) => {
         }
 
         setLoading(true);
-        console.log('🎯 Presenting RevenueCat paywall...');
+        console.log('🎯 Presenting RevenueCat paywall with RevenueCatUI...');
 
-        // Vérifier que Purchases est bien initialisé
-        if (!Purchases) {
-          console.error('❌ Purchases not initialized!');
-          navigateNext();
-          return;
-        }
-
-        // Récupérer les offerings
-        console.log('📦 Fetching offerings...');
-        const offerings = await Purchases.getOfferings();
-        
-        console.log('📦 Offerings retrieved:', {
-          current: offerings.current?.identifier,
-          all: offerings.all?.map(o => o.identifier)
+        // 🎬 Appeler le nouveau service avec listeners
+        const paywallResponse = await presentPaywall({
+          offering: null, // Utilise l'offering par défaut
+          
+          // Listeners pour suivre le cycle de vie du paywall
+          onPurchaseStarted: () => {
+            console.log('💳 Purchase flow started');
+          },
+          
+          onPurchaseCompleted: (customerInfo) => {
+            console.log('✅ Purchase completed!', {
+              entitlements: Object.keys(customerInfo.entitlements.active || {}),
+            });
+          },
+          
+          onPurchaseError: (error) => {
+            console.error('❌ Purchase error during flow:', error);
+          },
+          
+          onPurchaseCancelled: () => {
+            console.log('👋 User cancelled purchase');
+          },
+          
+          onRestoreStarted: () => {
+            console.log('🔄 Restore purchases started');
+          },
+          
+          onRestoreCompleted: (customerInfo) => {
+            console.log('✅ Restore completed!', {
+              entitlements: Object.keys(customerInfo.entitlements.active || {}),
+            });
+          },
+          
+          onRestoreError: (error) => {
+            console.error('❌ Restore error:', error);
+          },
+          
+          onDismiss: () => {
+            console.log('🚪 Paywall dismissed');
+          },
         });
 
-        if (!offerings.current) {
-          console.error('❌ No current offering available!');
-          console.error('   Available offerings:', offerings.all?.map(o => ({ id: o.identifier, packages: o.packages.length })));
-          Alert.alert(
-            'Erreur Offre',
-            'Aucune offre disponible. Vérifiez votre configuration RevenueCat.',
-            [{ text: 'Continuer', onPress: navigateNext }]
-          );
-          setLoading(false);
-          return;
-        }
+        console.log('📊 Paywall response:', {
+          success: paywallResponse.success,
+          result: paywallResponse.result,
+          message: paywallResponse.message,
+        });
 
-        console.log(
-          '📦 Current offering:',
-          offerings.current.identifier,
-          'with packages:',
-          offerings.current.packages.map(p => p.identifier)
-        );
-
-        // 🎬 Présenter le paywall
-        console.log('📱 Calling Purchases.presentPaywall()...');
-        await Purchases.presentPaywall(offerings.current);
-
-        console.log('✅ Paywall was presented successfully');
-
-        // Vérifier si l'utilisateur a acheté après fermeture
+        // Vérifier si l'utilisateur a acheté après la fermeture
         const hasPro = await hasEntitlement(ENTITLEMENTS.PRO);
         console.log('🔑 Post-paywall entitlement check:', hasPro ? '✅ Pro' : '❌ Free');
 
         setLoading(false);
+        
+        // Naviguer après fermeture du paywall
         navigateNext();
       } catch (error) {
-        console.error('❌ Error presenting paywall:', error);
+        console.error('❌ Unexpected error in paywall flow:', error);
         console.error('  Error message:', error.message);
-        console.error('  Error code:', error.code);
         console.error('  Stack:', error.stack);
 
-        // Si c'est juste une fermeture normale (pas une erreur critique)
-        if (error.message?.includes('User cancelled') || error.code === 'ERR_PURCHASER_CANCELLED') {
-          console.log('👋 User cancelled paywall');
-          setLoading(false);
-          navigateNext();
-          return;
-        }
-
-        // Erreur réelle
         setLoading(false);
+        
         Alert.alert(
           '❌ Erreur Paywall',
-          `${error.message || 'Une erreur est survenue'}\n\nCode: ${error.code || 'UNKNOWN'}`,
+          `${error.message || 'Une erreur est survenue'}\n\nVeuillez réessayer.`,
           [{ text: 'Continuer', onPress: navigateNext }]
         );
       }
     };
 
-    presentPaywall();
+    displayPaywall();
 
     return () => {
       // Cleanup

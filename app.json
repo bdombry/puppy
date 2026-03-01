@@ -1,59 +1,66 @@
 {
-  "expo": {
-    "name": "PupyTracker",
-    "slug": "PupyTracker",
-    "version": "1.0.1",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.dombry.PupyTracker",
-      "scheme": "pupytracker",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "PupyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
-        "NSPhotoLibraryUsageDescription": "PupyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades."
-      }
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.dombry.PupyTracker",
-      "scheme": "pupytracker",
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "description": "insight update",
-    "extra": {
-      "eas": {
-        "projectId": "f7b436e8-a612-45a9-8925-8843f12c4100"
-      }
-    },
-    "owner": "bdombry",
-    "runtimeVersion": {
-      "policy": "sdkVersion"
-    },
-    "updates": {},
-    "plugins": [
-      "expo-build-properties",
-      "expo-font"
-    ]
-  }
+    "expo":  {
+                 "name":  "PupyTracker",
+                 "slug":  "PupyTracker",
+                 "version":  "1.0.1",
+                 "orientation":  "portrait",
+                 "icon":  "./assets/icon.png",
+                 "userInterfaceStyle":  "light",
+                 "newArchEnabled":  true,
+                 "splash":  {
+                                "image":  "./assets/splash-icon.png",
+                                "resizeMode":  "contain",
+                                "backgroundColor":  "#ffffff"
+                            },
+                 "ios":  {
+                             "supportsTablet":  true,
+                             "bundleIdentifier":  "com.dombry.PupyTracker",
+                             "scheme":  "pupytracker",
+                             "infoPlist":  {
+                                               "ITSAppUsesNonExemptEncryption":  false,
+                                               "NSCameraUsageDescription":  "PupyTracker a besoin d\u0027accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
+                                               "NSPhotoLibraryUsageDescription":  "PupyTracker a besoin d\u0027accéder à votre galerie pour ajouter des photos à vos balades."
+                                           }
+                         },
+                 "android":  {
+                                 "adaptiveIcon":  {
+                                                      "foregroundImage":  "./assets/adaptive-icon.png",
+                                                      "backgroundColor":  "#ffffff"
+                                                  },
+                                 "edgeToEdgeEnabled":  true,
+                                 "package":  "com.dombry.PupyTracker",
+                                 "scheme":  "pupytracker",
+                                 "permissions":  [
+                                                     "CAMERA",
+                                                     "READ_EXTERNAL_STORAGE",
+                                                     "WRITE_EXTERNAL_STORAGE",
+                                                     "READ_MEDIA_IMAGES"
+                                                 ]
+                             },
+                 "web":  {
+                             "favicon":  "./assets/favicon.png"
+                         },
+                 "description":  "insight update",
+                 "extra":  {
+                               "eas":  {
+                                           "projectId":  "f7b436e8-a612-45a9-8925-8843f12c4100"
+                                       },
+                               "SUPABASE_URL":  "https://nbcbujuxoyifqjyrjaci.supabase.co",
+                               "SUPABASE_ANON_KEY":  "@SUPABASE_ANON_KEY",
+                               "REVENUE_CAT_API_KEY":  "@REVENUE_CAT_API_KEY",
+                               "EXPO_PROJECT_ID":  "c85a1484-9e01-422c-b2d3-11ebb4059322"
+                           },
+                 "owner":  "bdombry",
+                 "runtimeVersion":  {
+                                        "policy":  "sdkVersion"
+                                    },
+                 "updates":  {
+
+                             },
+                 "plugins":  [
+                                 "expo-build-properties",
+                                 "expo-font"
+                             ]
+             }
 }
+

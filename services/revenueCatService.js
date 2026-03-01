@@ -7,6 +7,7 @@ import Purchases, {
   PurchasesOffering,
   PurchasesPackage,
 } from 'react-native-purchases';
+import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import ENV from '../config/env';
 
 // API Key RevenueCat depuis config/env.js
@@ -210,5 +211,227 @@ export const showCustomerCenter = async () => {
     console.log('✅ Customer Center closed');
   } catch (error) {
     console.error('❌ Error opening Customer Center:', error);
+  }
+};
+
+/**
+ * ========== NEW METHODS FOR REVENUECATUI (v9.10+) ==========
+ */
+
+/**
+ * Présente le paywall RevenueCatUI avec gestion complète des résultats
+ * Suit la documentation officielle: https://rev.cat/react-native-paywalls
+ * 
+ * @param {Object} options - Configuration optionnelle
+ * @param {PurchasesOffering} options.offering - Offering spécifique (optionnel)
+ * @param {Function} options.onPurchaseStarted - Callback quand l'achat commence
+ * @param {Function} options.onPurchaseCompleted - Callback quand l'achat est complété
+ * @param {Function} options.onPurchaseError - Callback en cas d'erreur
+ * @param {Function} options.onPurchaseCancelled - Callback si utilisateur annule
+ * @param {Function} options.onRestoreStarted - Callback quand restore commence
+ * @param {Function} options.onRestoreCompleted - Callback quand restore est complété
+ * @param {Function} options.onRestoreError - Callback si restore échoue
+ * @param {Function} options.onDismiss - Callback quand le paywall se ferme
+ * @returns {Promise<Object>} - { success: boolean, result: PAYWALL_RESULT, paywallResult }
+ */
+export const presentPaywall = async (options = {}) => {
+  try {
+    console.log('🎬 presentPaywall() called with listeners');
+    
+    const offeringToUse = options.offering || null;
+
+    // Préparer les listeners
+    const listeners = {
+      onPurchaseStarted: options.onPurchaseStarted || (() => {
+        console.log('💳 Purchase started...');
+      }),
+      onPurchaseCompleted: options.onPurchaseCompleted || ((customerInfo) => {
+        console.log('✅ Purchase completed!', customerInfo);
+      }),
+      onPurchaseError: options.onPurchaseError || ((error) => {
+        console.error('❌ Purchase error:', error);
+      }),
+      onPurchaseCancelled: options.onPurchaseCancelled || (() => {
+        console.log('👋 Purchase cancelled by user');
+      }),
+      onRestoreStarted: options.onRestoreStarted || (() => {
+        console.log('🔄 Restore purchases started...');
+      }),
+      onRestoreCompleted: options.onRestoreCompleted || ((customerInfo) => {
+        console.log('✅ Restore completed!', customerInfo);
+      }),
+      onRestoreError: options.onRestoreError || ((error) => {
+        console.error('❌ Restore error:', error);
+      }),
+      onDismiss: options.onDismiss || (() => {
+        console.log('🚪 Paywall dismissed');
+      }),
+    };
+
+    // Présenter le paywall avec listeners
+    console.log('📱 Calling RevenueCatUI.presentPaywall()...');
+    const paywallResult = await RevenueCatUI.presentPaywall({
+      offering: offeringToUse,
+      ...listeners,
+    });
+
+    console.log('🎯 Paywall result:', paywallResult);
+
+    // Analyser le résultat
+    let success = false;
+    let message = '';
+
+    switch (paywallResult) {
+      case PAYWALL_RESULT.PURCHASED:
+        success = true;
+        message = 'Achat réussi! 🎉';
+        console.log('✅ PAYWALL_RESULT.PURCHASED');
+        break;
+
+      case PAYWALL_RESULT.RESTORED:
+        success = true;
+        message = 'Achat restauré avec succès! 🎉';
+        console.log('✅ PAYWALL_RESULT.RESTORED');
+        break;
+
+      case PAYWALL_RESULT.CANCELLED:
+        success = false;
+        message = 'Paywall annulé par l\'utilisateur';
+        console.log('⚠️ PAYWALL_RESULT.CANCELLED');
+        break;
+
+      case PAYWALL_RESULT.NOT_PRESENTED:
+        success = false;
+        message = 'Le paywall n\'a pas pu être affiché';
+        console.warn('⚠️ PAYWALL_RESULT.NOT_PRESENTED');
+        break;
+
+      case PAYWALL_RESULT.ERROR:
+        success = false;
+        message = 'Une erreur est survenue lors de la présentation du paywall';
+        console.error('❌ PAYWALL_RESULT.ERROR');
+        break;
+
+      default:
+        success = false;
+        message = 'Statut du paywall inconnu';
+        console.warn('⚠️ Unknown PAYWALL_RESULT:', paywallResult);
+    }
+
+    return {
+      success,
+      result: paywallResult,
+      message,
+      paywallResult,
+    };
+  } catch (error) {
+    console.error('❌ Error presenting paywall:', error);
+    return {
+      success: false,
+      result: 'ERROR',
+      message: error.message,
+      error,
+    };
+  }
+};
+
+/**
+ * Présente le paywall UNIQUEMENT si l'utilisateur n'a pas l'entitlement requis
+ * Idéal pour les paywalls au sein de l'app
+ * 
+ * @param {string} entitlementId - ID de l'entitlement requis (ex: "PupyTracker Pro")
+ * @param {Object} options - Configuration optionnelle (listeners, offering)
+ * @returns {Promise<Object>} - { success: boolean, hadEntitlement: boolean, result }
+ */
+export const presentPaywallIfNeeded = async (entitlementId, options = {}) => {
+  try {
+    console.log(`🎯 presentPaywallIfNeeded() - checking "${entitlementId}"`);
+
+    // D'abord, vérifier si l'utilisateur a déjà l'entitlement
+    const hasAccess = await hasEntitlement(entitlementId);
+    
+    if (hasAccess) {
+      console.log(`✅ User already has "${entitlementId}" - no paywall needed`);
+      return {
+        success: true,
+        hadEntitlement: true,
+        result: 'ALREADY_ENTITLED',
+        message: `User already has access to ${entitlementId}`,
+      };
+    }
+
+    console.log(`❌ User doesn't have "${entitlementId}" - presenting paywall`);
+
+    // Préparer les listeners
+    const listeners = {
+      onPurchaseStarted: options.onPurchaseStarted || (() => {
+        console.log('💳 Purchase started...');
+      }),
+      onPurchaseCompleted: options.onPurchaseCompleted || ((customerInfo) => {
+        console.log('✅ Purchase completed!');
+      }),
+      onPurchaseError: options.onPurchaseError || ((error) => {
+        console.error('❌ Purchase error:', error);
+      }),
+      onDismiss: options.onDismiss || (() => {
+        console.log('🚪 Paywall dismissed');
+      }),
+    };
+
+    // Présenter le paywall
+    console.log('📱 Calling RevenueCatUI.presentPaywallIfNeeded()...');
+    const paywallResult = await RevenueCatUI.presentPaywallIfNeeded({
+      requiredEntitlementIdentifier: entitlementId,
+      offering: options.offering || null,
+      ...listeners,
+    });
+
+    console.log('🎯 Paywall result:', paywallResult);
+
+    // Analyser le résultat
+    let success = false;
+    let message = '';
+
+    switch (paywallResult) {
+      case PAYWALL_RESULT.PURCHASED:
+      case PAYWALL_RESULT.RESTORED:
+        success = true;
+        message = 'Achat réussi! 🎉';
+        console.log('✅ Purchase successful');
+        break;
+
+      case PAYWALL_RESULT.CANCELLED:
+      case PAYWALL_RESULT.NOT_PRESENTED:
+        success = false;
+        message = 'Paywall annulé ou non affiché';
+        console.log('⚠️ Paywall not completed');
+        break;
+
+      case PAYWALL_RESULT.ERROR:
+        success = false;
+        message = 'Une erreur est survenue';
+        console.error('❌ Paywall error');
+        break;
+
+      default:
+        success = false;
+        message = 'Statut inconnu';
+    }
+
+    return {
+      success,
+      hadEntitlement: false,
+      result: paywallResult,
+      message,
+    };
+  } catch (error) {
+    console.error('❌ Error in presentPaywallIfNeeded:', error);
+    return {
+      success: false,
+      hadEntitlement: false,
+      result: 'ERROR',
+      message: error.message,
+      error,
+    };
   }
 };

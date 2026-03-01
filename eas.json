@@ -6,10 +6,22 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+      }
     },
     "preview": {
-      "distribution": "internal"
+      "distribution": "internal",
+      "env": {
+        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+      }
     },
     "production": {
       "ios": {
@@ -17,7 +29,13 @@
       },
       "android": {},
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+      }
     }
   },
   "submit": {
