@@ -18,6 +18,8 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
       const ageRange = userData?.ageRange || null;
       const gender = userData?.gender || null;
       const situation = userData?.situation || null;
+      const problems = userData?.problems || [];
+      const appSource = userData?.app_source || null;
 
       const { error } = await supabase
         .from('profiles')
@@ -28,6 +30,8 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
             age_range: ageRange,
             gender: gender,
             family_situation: situation,
+            user_problems: JSON.stringify(problems),
+            app_source: appSource,
           },
         ])
         .select();
@@ -69,15 +73,15 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
         .from('Dogs')
         .insert([
           {
-            id: `${userId}-${Date.now()}`, // Génère un ID unique
+            // Laisser la BD générer l'ID (UUID auto-généré)
             user_id: userId,
             name: dogName,
             breed: breed,
-            birthdate: birthDate,
+            birth_date: birthDate,
             sex: sex,
             photo_url: photoUrl,
             situation: situation,
-            created_at: new Date().toISOString(),
+            // created_at se met à jour automatiquement avec NOW()
           },
         ])
         .select();
@@ -144,20 +148,19 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
           console.log('🐕 Saving dog info...');
           await saveDogInfo(userId);
 
-          // Mettre à jour le profil avec le full name si disponible
-          if (credential.fullName) {
-            const fullName = [credential.fullName.givenName, credential.fullName.familyName]
-              .filter(Boolean)
-              .join(' ');
+          // Mettre à jour le profil avec le prénom Apple si disponible
+          // (et si first_name n'a pas été rempli pendant l'onboarding)
+          if (credential.fullName?.givenName) {
+            const { error: nameError } = await supabase
+              .from('profiles')
+              .update({ first_name: credential.fullName.givenName })
+              .eq('id', userId)
+              .is('first_name', null); // Ne pas écraser si déjà rempli
 
-            if (fullName) {
-              await supabase
-                .from('profiles')
-                .update({ full_name: fullName })
-                .eq('id', userId)
-                .catch((err) => console.warn('⚠️ Could not update profile:', err));
-
-              console.log('✅ Profile updated with name:', fullName);
+            if (nameError) {
+              console.warn('⚠️ Could not update profile first_name:', nameError);
+            } else {
+              console.log('✅ Profile updated with Apple first_name:', credential.fullName.givenName);
             }
           }
 

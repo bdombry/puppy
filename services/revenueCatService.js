@@ -1,16 +1,14 @@
 /**
  * RevenueCat Service
- * Gère les abonnements, entitlements, et customer info
+ * Gère les abonnements, entitlements, et customer info.
+ * Configure RevenueCat avec le Supabase user ID comme appUserID.
  */
 
-import Purchases, {
-  PurchasesOffering,
-  PurchasesPackage,
-} from 'react-native-purchases';
+import Purchases from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import ENV from '../config/env';
+import { supabase } from '../config/supabase';
 
-// API Key RevenueCat depuis config/env.js
 const REVENUE_CAT_API_KEY = ENV.REVENUE_CAT_API_KEY;
 
 // Entitlements disponibles
@@ -18,420 +16,298 @@ export const ENTITLEMENTS = {
   PRO: 'PupyTracker Pro',
 };
 
+// Re-export pour usage externe
+export { PAYWALL_RESULT };
+
+// ─────────────────────────────────────────────────
+// 1. Initialisation avec appUserID Supabase
+// ─────────────────────────────────────────────────
+
 /**
- * Initialise RevenueCat
- * IMPORTANT: Appelle cette fonction au démarrage de l'app
+ * Initialise RevenueCat avec le Supabase user ID.
+ * @param {string|null} userId - Supabase user.id (UUID)
  */
-export const initializeRevenueCat = async () => {
+export const initializeRevenueCat = async (userId = null) => {
   try {
     console.log('💳 Initializing RevenueCat...');
-    
-    // Configure Purchases (RevenueCat SDK)
-    await Purchases.configure({
-      apiKey: REVENUE_CAT_API_KEY,
-    });
-    
-    console.log('✅ RevenueCat configured');
-    
-    // Sync purchases
-    await Purchases.syncPurchases();
-    console.log('✅ Purchases synced');
-    
-    console.log('✅ RevenueCat initialized successfully');
+
+    if (userId) {
+      await Purchases.configure({
+        apiKey: REVENUE_CAT_API_KEY,
+        appUserID: userId,
+      });
+      console.log('✅ RevenueCat configured with appUserID:', userId);
+    } else {
+      await Purchases.configure({
+        apiKey: REVENUE_CAT_API_KEY,
+      });
+      console.log('✅ RevenueCat configured (anonymous)');
+    }
+
     return true;
   } catch (error) {
-    console.error('❌ Error initializing RevenueCat:', error);
-    console.error('  Details:', error.message);
+    console.error('❌ Error initializing RevenueCat:', error.message);
     return false;
   }
 };
 
 /**
- * Récupère les offerings (produits d'abonnement)
- * @returns {Promise<PurchasesOffering>}
+ * Identifie (login) un utilisateur après connexion Supabase.
+ * Fusionne l'historique anonyme si existant.
+ * @param {string} userId - Supabase user.id
  */
-export const getOfferings = async () => {
+export const loginRevenueCat = async (userId) => {
   try {
-    console.log('📦 Fetching offerings...');
-    
-    const offerings = await Purchases.getOfferings();
-    
-    if (offerings.current != null) {
-      console.log('✅ Current offering available:', offerings.current.identifier);
-      return offerings.current;
-    } else {
-      console.warn('⚠️ No current offering available');
-      return null;
-    }
+    console.log('🔑 RevenueCat logIn:', userId);
+    const { customerInfo } = await Purchases.logIn(userId);
+    console.log('✅ RevenueCat logIn success');
+    return customerInfo;
   } catch (error) {
-    console.error('❌ Error fetching offerings:', error);
+    console.error('❌ RevenueCat logIn error:', error.message);
     return null;
   }
 };
 
 /**
- * Récupère les informations du client (abonnement actif, entitlements, etc.)
- * @returns {Promise<Object>}
+ * Déconnecte l'utilisateur de RevenueCat (retour anonyme).
+ */
+export const logoutRevenueCat = async () => {
+  try {
+    console.log('🚪 RevenueCat logOut');
+    const customerInfo = await Purchases.logOut();
+    console.log('✅ RevenueCat logOut success');
+    return customerInfo;
+  } catch (error) {
+    console.error('❌ RevenueCat logOut error:', error.message);
+    return null;
+  }
+};
+
+// ─────────────────────────────────────────────────
+// 2. Customer info & premium check
+// ─────────────────────────────────────────────────
+
+/**
+ * Récupère les infos customer RevenueCat.
  */
 export const getCustomerInfo = async () => {
   try {
-    console.log('👤 Fetching customer info...');
-    
-    const customerInfo = await Purchases.getCustomerInfo();
-    
-    console.log('✅ Customer info retrieved:', {
-      originalAppUserId: customerInfo.originalAppUserId,
-      isAnonymous: customerInfo.isAnonymous,
-      entitlements: Object.keys(customerInfo.entitlements.active),
-    });
-    
-    return customerInfo;
+    return await Purchases.getCustomerInfo();
   } catch (error) {
-    console.error('❌ Error fetching customer info:', error);
+    console.error('❌ Error fetching customer info:', error.message);
     return null;
   }
 };
 
 /**
- * Vérifie si l'utilisateur a un entitlement spécifique
- * @param {string} entitlementId - ID de l'entitlement (ex: "PupyTracker Pro")
- * @returns {Promise<boolean>}
+ * Vérifie si l'utilisateur est premium.
+ * @returns {{ isPremium: boolean, expiresAt: Date|null, entitlement: Object|null }}
  */
-export const hasEntitlement = async (entitlementId) => {
+export const checkPremiumStatus = async () => {
   try {
-    const customerInfo = await getCustomerInfo();
-    
+    const customerInfo = await Purchases.getCustomerInfo();
+
     if (!customerInfo) {
-      console.warn('⚠️ No customer info available');
-      return false;
+      return { isPremium: false, expiresAt: null, entitlement: null };
     }
-    
-    const hasAccess = customerInfo.entitlements.active[entitlementId] != null;
-    
-    console.log(`🔑 Entitlement "${entitlementId}" check:`, hasAccess ? '✅ Active' : '❌ Inactive');
-    
-    return hasAccess;
+
+    const entitlement = customerInfo.entitlements.active[ENTITLEMENTS.PRO];
+    const isPremium = entitlement != null;
+    const expiresAt = entitlement?.expirationDate
+      ? new Date(entitlement.expirationDate)
+      : null;
+
+    console.log(
+      `🔑 Premium: ${isPremium ? '✅' : '❌'}`,
+      expiresAt ? `expires ${expiresAt.toISOString()}` : ''
+    );
+
+    return { isPremium, expiresAt, entitlement };
   } catch (error) {
-    console.error('❌ Error checking entitlement:', error);
-    return false;
+    console.error('❌ Error checking premium:', error.message);
+    return { isPremium: false, expiresAt: null, entitlement: null };
   }
 };
 
+// ─────────────────────────────────────────────────
+// 3. Offerings
+// ─────────────────────────────────────────────────
+
 /**
- * Achete un package spécifique
- * @param {PurchasesPackage} selectedPackage - Package à acheter
- * @returns {Promise<boolean>} - true si achat réussi
+ * @returns {Promise<Object|null>} current offering
+ */
+export const getOfferings = async () => {
+  try {
+    const offerings = await Purchases.getOfferings();
+    if (offerings.current != null) {
+      return offerings.current;
+    }
+    console.warn('⚠️ No current offering available');
+    return null;
+  } catch (error) {
+    console.error('❌ Error fetching offerings:', error.message);
+    return null;
+  }
+};
+
+// ─────────────────────────────────────────────────
+// 4. Purchase & Restore
+// ─────────────────────────────────────────────────
+
+/**
+ * Achète un package.
+ * @param {Object} selectedPackage
+ * @returns {{ success: boolean, customerInfo: Object|null }}
  */
 export const purchasePackage = async (selectedPackage) => {
   try {
-    console.log('🛒 Starting purchase for package:', selectedPackage.identifier);
-    
-    const customerInfo = await Purchases.purchasePackage(selectedPackage);
-    
-    const isPro = customerInfo.entitlements.active[ENTITLEMENTS.PRO] != null;
-    
-    if (isPro) {
-      console.log('✅ Achat réussi! User est maintenant Pro');
-      return true;
-    } else {
-      console.log('⚠️ Achat complété mais entitlement pas encore actif');
-      return false;
-    }
+    console.log('🛒 Purchasing:', selectedPackage.identifier);
+    const { customerInfo } = await Purchases.purchasePackage(selectedPackage);
+    const isPremium =
+      customerInfo.entitlements.active[ENTITLEMENTS.PRO] != null;
+
+    return { success: isPremium, customerInfo };
   } catch (error) {
     if (error.userCancelled) {
-      console.log('👤 User cancelled the purchase');
-      return false;
+      console.log('👤 Purchase cancelled');
+      return { success: false, customerInfo: null };
     }
-    
-    console.error('❌ Error during purchase:', error);
-    return false;
+    console.error('❌ Purchase error:', error.message);
+    return { success: false, customerInfo: null };
   }
 };
 
 /**
- * Restaure les achats précédents
- * Utile pour les tests ou si l'utilisateur change de device
- * @returns {Promise<boolean>}
+ * Restaure les achats.
+ * @returns {{ success: boolean, customerInfo: Object|null }}
  */
 export const restorePurchases = async () => {
   try {
     console.log('🔄 Restoring purchases...');
-    
     const customerInfo = await Purchases.restorePurchases();
-    
-    const isPro = customerInfo.entitlements.active[ENTITLEMENTS.PRO] != null;
-    
-    console.log('✅ Purchases restored. Pro status:', isPro);
-    
-    return isPro;
+    const isPremium =
+      customerInfo.entitlements.active[ENTITLEMENTS.PRO] != null;
+    console.log('✅ Restore done. Premium:', isPremium);
+    return { success: isPremium, customerInfo };
   } catch (error) {
-    console.error('❌ Error restoring purchases:', error);
-    return false;
+    console.error('❌ Restore error:', error.message);
+    return { success: false, customerInfo: null };
   }
 };
 
+// ─────────────────────────────────────────────────
+// 5. Customer Center (manage subscription)
+// ─────────────────────────────────────────────────
+
 /**
- * Récupère la date d'expiration d'un entitlement
- * @param {string} entitlementId
- * @returns {Promise<Date|null>}
+ * Ouvre le Customer Center de RevenueCat.
+ * Après fermeture, re-fetch le statut (l'utilisateur a pu annuler).
  */
-export const getEntitlementExpiration = async (entitlementId) => {
+export const showCustomerCenter = async () => {
   try {
-    const customerInfo = await getCustomerInfo();
-    
-    if (!customerInfo) return null;
-    
-    const entitlement = customerInfo.entitlements.active[entitlementId];
-    
-    if (!entitlement) return null;
-    
-    const expirationDate = new Date(entitlement.expirationDate);
-    
-    console.log(`📅 Entitlement "${entitlementId}" expires at:`, expirationDate);
-    
-    return expirationDate;
+    console.log('🎫 Opening Customer Center...');
+    await Purchases.presentCustomerCenter();
+    // Re-fetch après fermeture
+    const customerInfo = await Purchases.getCustomerInfo();
+    console.log('✅ Customer Center closed');
+    return customerInfo;
   } catch (error) {
-    console.error('❌ Error getting entitlement expiration:', error);
+    console.error('❌ Customer Center error:', error.message);
     return null;
   }
 };
 
-/**
- * Ouvre le Customer Center de RevenueCat
- * Permet à l'utilisateur de gérer ses abonnements directement
- * @returns {Promise<void>}
- */
-export const showCustomerCenter = async () => {
-  try {
-    console.log('🎫 Opening RevenueCat Customer Center...');
-    
-    // Le Customer Center ouvre une interface native RevenueCat
-    await Purchases.presentCustomerCenter();
-    
-    console.log('✅ Customer Center closed');
-  } catch (error) {
-    console.error('❌ Error opening Customer Center:', error);
-  }
-};
+// ─────────────────────────────────────────────────
+// 6. RevenueCatUI Paywall
+// ─────────────────────────────────────────────────
 
 /**
- * ========== NEW METHODS FOR REVENUECATUI (v9.10+) ==========
- */
-
-/**
- * Présente le paywall RevenueCatUI avec gestion complète des résultats
- * Suit la documentation officielle: https://rev.cat/react-native-paywalls
- * 
- * @param {Object} options - Configuration optionnelle
- * @param {PurchasesOffering} options.offering - Offering spécifique (optionnel)
- * @param {Function} options.onPurchaseStarted - Callback quand l'achat commence
- * @param {Function} options.onPurchaseCompleted - Callback quand l'achat est complété
- * @param {Function} options.onPurchaseError - Callback en cas d'erreur
- * @param {Function} options.onPurchaseCancelled - Callback si utilisateur annule
- * @param {Function} options.onRestoreStarted - Callback quand restore commence
- * @param {Function} options.onRestoreCompleted - Callback quand restore est complété
- * @param {Function} options.onRestoreError - Callback si restore échoue
- * @param {Function} options.onDismiss - Callback quand le paywall se ferme
- * @returns {Promise<Object>} - { success: boolean, result: PAYWALL_RESULT, paywallResult }
+ * Présente le paywall RevenueCatUI.
+ * @param {Object} options - { offering, listeners }
+ * @returns {{ success: boolean, result: string, customerInfo: Object|null }}
  */
 export const presentPaywall = async (options = {}) => {
   try {
-    console.log('🎬 presentPaywall() called with listeners');
-    
-    const offeringToUse = options.offering || null;
+    console.log('🎬 Presenting paywall...');
 
-    // Préparer les listeners
-    const listeners = {
-      onPurchaseStarted: options.onPurchaseStarted || (() => {
-        console.log('💳 Purchase started...');
-      }),
-      onPurchaseCompleted: options.onPurchaseCompleted || ((customerInfo) => {
-        console.log('✅ Purchase completed!', customerInfo);
-      }),
-      onPurchaseError: options.onPurchaseError || ((error) => {
-        console.error('❌ Purchase error:', error);
-      }),
-      onPurchaseCancelled: options.onPurchaseCancelled || (() => {
-        console.log('👋 Purchase cancelled by user');
-      }),
-      onRestoreStarted: options.onRestoreStarted || (() => {
-        console.log('🔄 Restore purchases started...');
-      }),
-      onRestoreCompleted: options.onRestoreCompleted || ((customerInfo) => {
-        console.log('✅ Restore completed!', customerInfo);
-      }),
-      onRestoreError: options.onRestoreError || ((error) => {
-        console.error('❌ Restore error:', error);
-      }),
-      onDismiss: options.onDismiss || (() => {
-        console.log('🚪 Paywall dismissed');
-      }),
-    };
-
-    // Présenter le paywall avec listeners
-    console.log('📱 Calling RevenueCatUI.presentPaywall()...');
     const paywallResult = await RevenueCatUI.presentPaywall({
-      offering: offeringToUse,
-      ...listeners,
+      offering: options.offering || null,
+      ...(options.listeners || {}),
     });
 
     console.log('🎯 Paywall result:', paywallResult);
 
-    // Analyser le résultat
-    let success = false;
-    let message = '';
+    const success =
+      paywallResult === PAYWALL_RESULT.PURCHASED ||
+      paywallResult === PAYWALL_RESULT.RESTORED;
 
-    switch (paywallResult) {
-      case PAYWALL_RESULT.PURCHASED:
-        success = true;
-        message = 'Achat réussi! 🎉';
-        console.log('✅ PAYWALL_RESULT.PURCHASED');
-        break;
+    // Fetch fresh info après paywall si achat réussi
+    const customerInfo = success ? await Purchases.getCustomerInfo() : null;
 
-      case PAYWALL_RESULT.RESTORED:
-        success = true;
-        message = 'Achat restauré avec succès! 🎉';
-        console.log('✅ PAYWALL_RESULT.RESTORED');
-        break;
-
-      case PAYWALL_RESULT.CANCELLED:
-        success = false;
-        message = 'Paywall annulé par l\'utilisateur';
-        console.log('⚠️ PAYWALL_RESULT.CANCELLED');
-        break;
-
-      case PAYWALL_RESULT.NOT_PRESENTED:
-        success = false;
-        message = 'Le paywall n\'a pas pu être affiché';
-        console.warn('⚠️ PAYWALL_RESULT.NOT_PRESENTED');
-        break;
-
-      case PAYWALL_RESULT.ERROR:
-        success = false;
-        message = 'Une erreur est survenue lors de la présentation du paywall';
-        console.error('❌ PAYWALL_RESULT.ERROR');
-        break;
-
-      default:
-        success = false;
-        message = 'Statut du paywall inconnu';
-        console.warn('⚠️ Unknown PAYWALL_RESULT:', paywallResult);
-    }
-
-    return {
-      success,
-      result: paywallResult,
-      message,
-      paywallResult,
-    };
+    return { success, result: paywallResult, customerInfo };
   } catch (error) {
-    console.error('❌ Error presenting paywall:', error);
-    return {
-      success: false,
-      result: 'ERROR',
-      message: error.message,
-      error,
-    };
+    console.error('❌ Paywall error:', error.message);
+    return { success: false, result: 'ERROR', customerInfo: null };
   }
 };
 
+// ─────────────────────────────────────────────────
+// 7. Supabase premium sync (analytics)
+// ─────────────────────────────────────────────────
+
 /**
- * Présente le paywall UNIQUEMENT si l'utilisateur n'a pas l'entitlement requis
- * Idéal pour les paywalls au sein de l'app
- * 
- * @param {string} entitlementId - ID de l'entitlement requis (ex: "PupyTracker Pro")
- * @param {Object} options - Configuration optionnelle (listeners, offering)
- * @returns {Promise<Object>} - { success: boolean, hadEntitlement: boolean, result }
+ * Synchronise le statut premium dans user_subscriptions (Supabase).
+ * Upsert basé sur user_id.
+ *
+ * @param {string} userId - Supabase user.id
+ * @param {{ isPremium: boolean, expiresAt: Date|null }} premiumData
  */
-export const presentPaywallIfNeeded = async (entitlementId, options = {}) => {
+export const syncPremiumToSupabase = async (userId, premiumData) => {
   try {
-    console.log(`🎯 presentPaywallIfNeeded() - checking "${entitlementId}"`);
+    if (!userId) return;
 
-    // D'abord, vérifier si l'utilisateur a déjà l'entitlement
-    const hasAccess = await hasEntitlement(entitlementId);
-    
-    if (hasAccess) {
-      console.log(`✅ User already has "${entitlementId}" - no paywall needed`);
-      return {
-        success: true,
-        hadEntitlement: true,
-        result: 'ALREADY_ENTITLED',
-        message: `User already has access to ${entitlementId}`,
-      };
-    }
+    const customerInfo = await Purchases.getCustomerInfo();
+    const entitlement =
+      customerInfo?.entitlements?.active?.[ENTITLEMENTS.PRO];
 
-    console.log(`❌ User doesn't have "${entitlementId}" - presenting paywall`);
-
-    // Préparer les listeners
-    const listeners = {
-      onPurchaseStarted: options.onPurchaseStarted || (() => {
-        console.log('💳 Purchase started...');
-      }),
-      onPurchaseCompleted: options.onPurchaseCompleted || ((customerInfo) => {
-        console.log('✅ Purchase completed!');
-      }),
-      onPurchaseError: options.onPurchaseError || ((error) => {
-        console.error('❌ Purchase error:', error);
-      }),
-      onDismiss: options.onDismiss || (() => {
-        console.log('🚪 Paywall dismissed');
-      }),
+    const row = {
+      user_id: userId,
+      is_premium: premiumData.isPremium,
+      entitlement_id: ENTITLEMENTS.PRO,
+      product_id: entitlement?.productIdentifier || null,
+      expires_at: premiumData.expiresAt
+        ? premiumData.expiresAt.toISOString()
+        : null,
+      original_purchase_date: entitlement?.originalPurchaseDate || null,
+      latest_purchase_date: entitlement?.latestPurchaseDate || null,
+      revenue_cat_user_id: customerInfo?.originalAppUserId || null,
+      updated_at: new Date().toISOString(),
     };
 
-    // Présenter le paywall
-    console.log('📱 Calling RevenueCatUI.presentPaywallIfNeeded()...');
-    const paywallResult = await RevenueCatUI.presentPaywallIfNeeded({
-      requiredEntitlementIdentifier: entitlementId,
-      offering: options.offering || null,
-      ...listeners,
-    });
+    const { error } = await supabase
+      .from('user_subscriptions')
+      .upsert(row, { onConflict: 'user_id' });
 
-    console.log('🎯 Paywall result:', paywallResult);
-
-    // Analyser le résultat
-    let success = false;
-    let message = '';
-
-    switch (paywallResult) {
-      case PAYWALL_RESULT.PURCHASED:
-      case PAYWALL_RESULT.RESTORED:
-        success = true;
-        message = 'Achat réussi! 🎉';
-        console.log('✅ Purchase successful');
-        break;
-
-      case PAYWALL_RESULT.CANCELLED:
-      case PAYWALL_RESULT.NOT_PRESENTED:
-        success = false;
-        message = 'Paywall annulé ou non affiché';
-        console.log('⚠️ Paywall not completed');
-        break;
-
-      case PAYWALL_RESULT.ERROR:
-        success = false;
-        message = 'Une erreur est survenue';
-        console.error('❌ Paywall error');
-        break;
-
-      default:
-        success = false;
-        message = 'Statut inconnu';
+    if (error) {
+      console.error('❌ Supabase sync error:', error.message);
+    } else {
+      console.log('✅ Premium status synced to Supabase');
     }
-
-    return {
-      success,
-      hadEntitlement: false,
-      result: paywallResult,
-      message,
-    };
   } catch (error) {
-    console.error('❌ Error in presentPaywallIfNeeded:', error);
-    return {
-      success: false,
-      hadEntitlement: false,
-      result: 'ERROR',
-      message: error.message,
-      error,
-    };
+    console.error('❌ syncPremiumToSupabase error:', error.message);
   }
+};
+
+// ─────────────────────────────────────────────────
+// 8. Listener temps réel pour changements de statut
+// ─────────────────────────────────────────────────
+
+/**
+ * Ajoute un listener pour les mises à jour de customerInfo.
+ * Utile pour détecter un annulation via Customer Center.
+ * @param {Function} callback - (customerInfo) => void
+ * @returns {{ remove: Function }} subscription
+ */
+export const addCustomerInfoListener = (callback) => {
+  return Purchases.addCustomerInfoUpdateListener(callback);
 };

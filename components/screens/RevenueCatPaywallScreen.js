@@ -1,174 +1,124 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '../../context/AuthContext';
-import { colors, spacing } from '../../constants/theme';
-import { 
-  ENTITLEMENTS, 
-  hasEntitlement,
-  presentPaywall,
-} from '../../services/revenueCatService';
-
 /**
  * RevenueCatPaywallScreen
  *
- * Écran du paywall RevenueCat no-code.
- * Affiche le paywall custom que tu as créé sur le dashboard RevenueCat.
- *
- * Accessible via:
- * - deeplink: pupytracker://paywall
- * - Navigation dans le flow onboarding
- *
- * Après fermeture ou achat réussi, navigue vers l'écran approprié.
+ * Hard paywall : l'utilisateur DOIT acheter pour continuer.
+ * - Si l'utilisateur ferme sans acheter → le paywall se re-présente.
+ * - Affiché UNE seule fois par session grâce à UserContext.paywallShownThisSession.
+ * - Après achat ou restore réussi :
+ *   1) refreshPremiumStatus() met à jour isPremium dans UserContext
+ *   2) App.js observe isPremium et auto-dismiss le paywall (approche réactive)
+ *   3) Le callback onPaywallDismissed est aussi appelé en backup
  */
-const RevenueCatPaywallScreen = ({ navigation, revenueCatReady = false }) => {
-  const { user, currentDog } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [offeringId] = useState('PupyTracker');
 
-  console.log('🔷 RevenueCatPaywallScreen mounted');
-  console.log('  user:', user?.email || 'not logged in');
-  console.log('  currentDog:', currentDog?.name || 'no dog');
-  console.log('  revenueCatReady:', revenueCatReady);
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
+import { colors, spacing } from '../../constants/theme';
+import { presentPaywall } from '../../services/revenueCatService';
 
-  const navigateNext = async () => {
-    console.log('📍 navigateNext called');
+const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
+  const { user } = useAuth();
+  const {
+    isPremium,
+    revenueCatReady,
+    refreshPremiumStatus,
+    markPaywallShown,
+  } = useUser();
 
-    try {
-      // Si ouvert via deeplink et pas authenticated, fermer simplement
-      if (!user) {
-        console.log('→ No user, going back (deeplink case)');
-        navigation.goBack();
+  const [purchaseComplete, setPurchaseComplete] = useState(false);
+  const hasPresented = useRef(false);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  // ── Hard paywall loop ──
+  useEffect(() => {
+    if (!revenueCatReady) return;
+    if (hasPresented.current) return;
+
+    hasPresented.current = true;
+
+    const displayHardPaywall = async () => {
+      // Si déjà premium, skip direct
+      if (isPremium) {
+        console.log('✅ User already premium - skipping paywall');
+        markPaywallShown();
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        if (isMounted.current) setPurchaseComplete(true);
+        // App.js va auto-dismiss via le useEffect [isPremium]
+        // Backup callback au cas où :
+        try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
         return;
       }
 
-      // Marquer l'onboarding comme complété maintenant que le paywall est fermé
-      console.log('📝 Marking onboarding as completed (after paywall)');
-      await AsyncStorage.setItem('onboardingCompleted', 'true');
+      markPaywallShown();
+      console.log('🎯 Presenting HARD paywall...');
 
-      // Petit délai
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      let purchased = false;
 
-      // Après paywall, aller directement à Home
-      if (user && currentDog) {
-        console.log('→ Going to MainTabs (user + dog)');
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
-      } else if (user && !currentDog) {
-        console.log('→ Going to MainTabs (user + no dog yet)');
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'MainTabs' }],
-        });
-      } else {
-        console.log('→ Going to Auth (not logged in)');
-        navigation.reset({
-          index: 0,
-          routes: [{ name: 'Auth' }],
-        });
-      }
-    } catch (error) {
-      console.error('❌ Error in navigateNext:', error);
-      // Continuer quand même
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MainTabs' }],
-      });
-    }
-  };
+      while (!purchased && isMounted.current) {
+        try {
+          const { success } = await presentPaywall({
+            listeners: {
+              onPurchaseCompleted: () => console.log('✅ Purchase completed'),
+              onPurchaseCancelled: () => console.log('👋 Cancelled - will re-present'),
+              onRestoreCompleted: () => console.log('✅ Restore completed'),
+              onDismiss: () => console.log('🚪 Dismissed - checking entitlement'),
+            },
+          });
 
-  useEffect(() => {
-    const displayPaywall = async () => {
-      try {
-        // Attendre que RevenueCat soit prêt
-        if (!revenueCatReady) {
-          console.log('⏳ Waiting for RevenueCat to be ready...');
-          return;
+          // Vérifier le statut premium à la source
+          // Cela met à jour isPremium dans UserContext → App.js le détecte
+          const isNowPremium = await refreshPremiumStatus();
+
+          if (isNowPremium || success) {
+            purchased = true;
+            console.log('✅ Premium confirmed after purchase');
+          } else {
+            console.log('🔄 Not premium yet - re-presenting in 500ms...');
+            await new Promise((r) => setTimeout(r, 500));
+          }
+        } catch (error) {
+          console.error('❌ Paywall loop error:', error.message);
+          await new Promise((r) => setTimeout(r, 1000));
         }
+      }
 
-        setLoading(true);
-        console.log('🎯 Presenting RevenueCat paywall with RevenueCatUI...');
-
-        // 🎬 Appeler le nouveau service avec listeners
-        const paywallResponse = await presentPaywall({
-          offering: null, // Utilise l'offering par défaut
-          
-          // Listeners pour suivre le cycle de vie du paywall
-          onPurchaseStarted: () => {
-            console.log('💳 Purchase flow started');
-          },
-          
-          onPurchaseCompleted: (customerInfo) => {
-            console.log('✅ Purchase completed!', {
-              entitlements: Object.keys(customerInfo.entitlements.active || {}),
-            });
-          },
-          
-          onPurchaseError: (error) => {
-            console.error('❌ Purchase error during flow:', error);
-          },
-          
-          onPurchaseCancelled: () => {
-            console.log('👋 User cancelled purchase');
-          },
-          
-          onRestoreStarted: () => {
-            console.log('🔄 Restore purchases started');
-          },
-          
-          onRestoreCompleted: (customerInfo) => {
-            console.log('✅ Restore completed!', {
-              entitlements: Object.keys(customerInfo.entitlements.active || {}),
-            });
-          },
-          
-          onRestoreError: (error) => {
-            console.error('❌ Restore error:', error);
-          },
-          
-          onDismiss: () => {
-            console.log('🚪 Paywall dismissed');
-          },
-        });
-
-        console.log('📊 Paywall response:', {
-          success: paywallResponse.success,
-          result: paywallResponse.result,
-          message: paywallResponse.message,
-        });
-
-        // Vérifier si l'utilisateur a acheté après la fermeture
-        const hasPro = await hasEntitlement(ENTITLEMENTS.PRO);
-        console.log('🔑 Post-paywall entitlement check:', hasPro ? '✅ Pro' : '❌ Free');
-
-        setLoading(false);
-        
-        // Naviguer après fermeture du paywall
-        navigateNext();
-      } catch (error) {
-        console.error('❌ Unexpected error in paywall flow:', error);
-        console.error('  Error message:', error.message);
-        console.error('  Stack:', error.stack);
-
-        setLoading(false);
-        
-        Alert.alert(
-          '❌ Erreur Paywall',
-          `${error.message || 'Une erreur est survenue'}\n\nVeuillez réessayer.`,
-          [{ text: 'Continuer', onPress: navigateNext }]
-        );
+      if (isMounted.current) {
+        console.log('✅ Purchase loop finished');
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        setPurchaseComplete(true);
+        // App.js détecte isPremium=true et auto-dismiss.
+        // Backup callback :
+        try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
       }
     };
 
-    displayPaywall();
+    displayHardPaywall();
+  }, [revenueCatReady]);
 
-    return () => {
-      // Cleanup
-    };
-  }, [user, currentDog, navigation, revenueCatReady]);
+  // ── Fallback navigation.reset si on est toujours là 2s après l'achat ──
+  useEffect(() => {
+    if (!purchaseComplete) return;
+    const timeout = setTimeout(() => {
+      console.log('⏱️ Fallback: navigation.reset vers MainTabs');
+      try {
+        // Forcer la navigation si les state updates n'ont pas suffi
+        onPaywallDismissed?.();
+        navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+      } catch (e) {
+        console.warn('Fallback navigation error:', e);
+      }
+    }, 2000);
+    return () => clearTimeout(timeout);
+  }, [purchaseComplete, navigation, onPaywallDismissed]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
@@ -189,7 +139,9 @@ const RevenueCatPaywallScreen = ({ navigation, revenueCatReady = false }) => {
             textAlign: 'center',
           }}
         >
-          Chargement de l'offre spéciale...
+          {purchaseComplete
+            ? 'Préparation de votre espace...'
+            : 'Chargement de l\'offre spéciale...'}
         </Text>
       </View>
     </SafeAreaView>

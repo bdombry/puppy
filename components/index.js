@@ -12,6 +12,7 @@ export { ActionButtons } from './ActionButtons';
 export { LastWalkTimer } from './LastWalkTimer';
 export { ActionModal } from './ActionModal';
 export { TrialModal } from './TrialModal';
+export { default as PremiumContent } from './PremiumContent';
 
 // ===== COMPOSANTS ANALYTICS =====
 export { DogCommunicationStats } from './charts/AskToGoOutStats';

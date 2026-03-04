@@ -134,7 +134,7 @@ const Onboarding2Screen = ({ navigation }) => {
       {/* Bouton Continuer */}
       <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>
         <TouchableOpacity
-          onPress={() => navigation.navigate('Onboarding3')}
+          onPress={() => navigation.navigate('Onboarding3', { userProblems: selectedProblems })}
           disabled={!canProceed}
           style={{
             paddingVertical: spacing.md,

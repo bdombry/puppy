@@ -7,7 +7,7 @@ import {
   purchasePackage, 
   showCustomerCenter,
   getCustomerInfo,
-  hasEntitlement,
+  checkPremiumStatus,
   ENTITLEMENTS,
   restorePurchases
 } from '../../services/revenueCatService';
@@ -28,7 +28,7 @@ const DebugRevenueCatScreen = () => {
       setSelectedPackageId(pkg.identifier);
       
       console.log('🛒 Purchasing package:', pkg.identifier);
-      const success = await purchasePackage(pkg);
+      const { success } = await purchasePackage(pkg);
       
       if (success) {
         Alert.alert('✅ Success', 'Subscription purchased!');

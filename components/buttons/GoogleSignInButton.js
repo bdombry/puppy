@@ -30,6 +30,7 @@ const GoogleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs
             age_range: userData.ageRange || null,
             gender: userData.gender || null,
             family_situation: userData.situation || null,
+            user_problems: JSON.stringify(userData.problems || []),
           },
         ]);
 
@@ -57,15 +58,15 @@ const GoogleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs
         .from('Dogs')
         .insert([
           {
-            id: `${userId}-${Date.now()}`, // Génère un ID unique
+            // Laisser la BD générer l'ID (UUID auto-généré)
             user_id: userId,
             name: dogData.name || 'Mon chiot',
             breed: dogData.breed || '',
-            birthdate: dogData.birthDate || null,
+            birth_date: dogData.birthDate || null,
             sex: dogData.sex || 'unknown',
             photo_url: dogData.photo_url || null,
             situation: userData?.situation || dogData.situation || '',
-            created_at: new Date().toISOString(),
+            // created_at se met à jour automatiquement avec NOW()
           },
         ]);
 

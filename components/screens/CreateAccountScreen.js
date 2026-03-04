@@ -41,6 +41,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
       const ageRange = userData?.ageRange || null;
       const gender = userData?.gender || null;
       const situation = userData?.situation || null;
+      const problems = userData?.problems || [];
+      const appSource = userData?.app_source || null;
 
       const { error } = await supabase
         .from('profiles')
@@ -51,6 +53,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
             age_range: ageRange,
             gender: gender,
             family_situation: situation,
+            user_problems: JSON.stringify(problems),
+            app_source: appSource,
           },
         ])
         .select();
@@ -84,20 +88,22 @@ const CreateAccountScreen = ({ navigation, route }) => {
       const birthDate = dogData?.birthDate || null;
       const sex = dogData?.sex || 'unknown';
       const photoUrl = dogData?.photo_url || null;
+      const situation = userData?.situation || dogData?.situation || '';
 
-      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex });
+      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex, situation });
 
       const { data, error } = await supabase
         .from('Dogs')
         .insert([
           {
-            // Laisser la BD générer l'ID (c'est un bigint auto-increment)
+            // Laisser la BD générer l'ID (UUID auto-généré)
             user_id: userId,
             name: dogName,
             breed: breed,
-            birth_date: birthDate, // ✅ Correct: birth_date (pas birthdate)
+            birth_date: birthDate,
             sex: sex,
             photo_url: photoUrl,
+            situation: situation,
             // created_at se met à jour automatiquement avec NOW()
           },
         ])

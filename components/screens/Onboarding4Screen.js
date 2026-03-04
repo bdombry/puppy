@@ -33,6 +33,7 @@ const Onboarding4Screen = ({ navigation, route }) => {
     };
     navigation.navigate('Onboarding5', {
       dogData,
+      userProblems: route.params?.userProblems || [],
       onDogDataSelected: route.params?.onDogDataSelected,
     });
   };

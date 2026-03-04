@@ -8,19 +8,19 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
-        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
-        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
-        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PUBLIC_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
-        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
-        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
-        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PUBLIC_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
       }
     },
     "production": {
@@ -31,10 +31,10 @@
       "autoIncrement": true,
       "channel": "production",
       "env": {
-        "SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
-        "SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
-        "REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
-        "EXPO_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
+        "EXPO_PUBLIC_SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_REVENUE_CAT_API_KEY": "@REVENUE_CAT_API_KEY",
+        "EXPO_PUBLIC_PROJECT_ID": "c85a1484-9e01-422c-b2d3-11ebb4059322"
       }
     }
   },

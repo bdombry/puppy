@@ -3,7 +3,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   first_name TEXT,
   age_range TEXT CHECK (age_range IN ('18-24', '25-34', '35-44', '45-54', '55+', NULL)),
-  gender TEXT CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say', NULL))
+  gender TEXT CHECK (gender IN ('male', 'female', 'other', 'prefer_not_to_say', NULL)),
+  family_situation TEXT,
+  user_problems TEXT  -- JSON array ex: ["forget","nodemand","timing"]
 );
 
 -- Ajouter les permissions RLS (Row Level Security)

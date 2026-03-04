@@ -1,33 +1,18 @@
 /**
- * Configuration des variables d'environnement
- * En développement: Lire depuis process.env ou valeurs par défaut
- * En production (EAS): Lire depuis Expo Secrets (eas.json)
+ * Environment Configuration
+ * Centralizes all environment variables with EXPO_PUBLIC_ prefix
  */
 
-import Constants from 'expo-constants';
-
-// Récupérer les secrets d'Expo (disponibles en EAS Build)
-const expoSecrets = Constants.expoConfig?.extra || {};
-
 const ENV = {
-  // Supabase - Lire depuis les secrets Expo ou process.env
-  SUPABASE_URL: expoSecrets.SUPABASE_URL || process.env.SUPABASE_URL || '',
-  SUPABASE_ANON_KEY: expoSecrets.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '',
-  
-  // RevenueCat - Lire depuis les secrets Expo ou process.env
-  REVENUE_CAT_API_KEY: expoSecrets.REVENUE_CAT_API_KEY || process.env.REVENUE_CAT_API_KEY || '',
+  // Supabase
+  SUPABASE_URL: 'https://nbcbujuxoyifqjyrjaci.supabase.co',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5iY2J1anV4b3lpZnFqeXJqYWNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5NjgyMzYsImV4cCI6MjA3ODU0NDIzNn0.GPgsE91rOt6Dsr-r3eHMEgKUX92Py4sdzVHo9dhDptA',
 
-  // Expo - Lire depuis les secrets Expo ou process.env
-  EXPO_PROJECT_ID: expoSecrets.EXPO_PROJECT_ID || process.env.EXPO_PROJECT_ID || '',
+  // RevenueCat (Subscriptions)
+  REVENUE_CAT_API_KEY: 'appl_PuCLnbCQMkhIZrsPeIsPNTUQWDg',
+
+  // Expo
+  EXPO_PROJECT_ID: 'c85a1484-9e01-422c-b2d3-11ebb4059322',
 };
-
-// Validation - vérifier les clés requises
-if (!ENV.SUPABASE_URL || !ENV.SUPABASE_ANON_KEY) {
-  console.warn('⚠️ Warning: Supabase credentials not found');
-}
-
-if (!ENV.REVENUE_CAT_API_KEY) {
-  console.warn('⚠️ Warning: RevenueCat API key not found');
-}
 
 export default ENV;

@@ -17,6 +17,7 @@ const Onboarding5Screen = ({ navigation, route }) => {
     const birthDate = `${year}-${month}-${day}`;
     navigation.navigate('Onboarding6', {
       dogData: { ...dogData, birthDate },
+      userProblems: route.params?.userProblems || [],
       onDogDataSelected: route.params?.onDogDataSelected,
     });
   };

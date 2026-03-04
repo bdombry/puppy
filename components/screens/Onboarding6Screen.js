@@ -35,7 +35,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
       // Naviguer vers Onboarding7 (barre de progression)
       setTimeout(() => {
         navigation.navigate('Onboarding6Name', {
-          userData: { app_source: selected },
+          userData: { app_source: selected, problems: route.params?.userProblems || [] },
           dogData,
         });
       }, 300);

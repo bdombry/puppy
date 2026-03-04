@@ -39,6 +39,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
         sex,
         photo,
       },
+      userProblems: route.params?.userProblems || [],
       onDogDataSelected: route.params?.onDogDataSelected,
     });
   };

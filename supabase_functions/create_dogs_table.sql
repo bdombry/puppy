@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS Dogs (
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   breed TEXT,
-  birthdate DATE,
+  birth_date DATE,
   sex TEXT CHECK (sex IN ('male', 'female', 'unknown')),
   photo_url TEXT,
   situation TEXT,

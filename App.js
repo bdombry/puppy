@@ -1,13 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator, Linking, AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { UserProvider, useUser } from './context/UserContext';
 import { parseDeepLink, handleDeepLink } from './services/deeplinkService';
-import { initializeRevenueCat } from './services/revenueCatService';
-import ENV from './config/env';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
 import DogSetupScreen from './components/screens/DogSetupScreen';
@@ -110,12 +109,21 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog } = useAuth();
+  const { isPremium, premiumLoading, revenueCatReady, paywallShownThisSession } = useUser();
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
-  const [revenueCatReady, setRevenueCatReady] = useState(false);
   const navigationRef = useRef();
+
+  // ── Callback stable pour le paywall (évite remount du composant) ──
+  const handlePaywallDismissed = useCallback(() => {
+    console.log('✅ Paywall dismissed - navigating to MainTabs');
+    setPaywallDismissed(true);
+    setOnboardingCompleted(true);
+    AsyncStorage.setItem('show_paywall_on_login', 'false');
+    AsyncStorage.setItem('onboardingCompleted', 'true');
+  }, []);
 
   // Gérer les deeplinks
   useEffect(() => {
@@ -165,29 +173,6 @@ function AppNavigator() {
     checkOnboarding();
   }, []);
 
-  // 💳 Initialiser RevenueCat
-  useEffect(() => {
-    const initRevenueCat = async () => {
-      try {
-        console.log('💳 Initializing RevenueCat...');
-        const success = await initializeRevenueCat();
-        if (success) {
-          console.log('✅ RevenueCat initialized');
-          setRevenueCatReady(true);
-        } else {
-          console.warn('⚠️ RevenueCat initialization failed, still marking as ready');
-          setRevenueCatReady(true);
-        }
-      } catch (error) {
-        console.error('❌ Error initializing RevenueCat:', error);
-        // Even on error, mark as ready to avoid infinite wait
-        setRevenueCatReady(true);
-      }
-    };
-
-    initRevenueCat();
-  }, []);
-
   // ✅ Écouter les changements d'onboarding en temps réel
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (state) => {
@@ -208,12 +193,40 @@ function AppNavigator() {
     };
   }, []);
 
-  // Afficher le paywall seulement après une reconnexion manuelle
+  // Afficher le paywall seulement si non-premium
   useEffect(() => {
     const checkPaywall = async () => {
-      if (user && onboardingCompleted) {
+      if (user) {
+        // ── Transition onboarding → paywall ──
+        // Si user est authentifié mais onboarding pas terminé côté React state,
+        // c'est forcément un nouvel utilisateur qui vient de créer son compte
+        // pendant l'onboarding. On montre le paywall directement.
+        // (On ne lit PAS show_paywall_on_login car il y a une race condition :
+        //  le flag est set APRÈS signUp, mais le auth state change se déclenche
+        //  PENDANT signUp, donc le flag n'existe pas encore à ce moment.)
+        if (!onboardingCompleted) {
+          // Marquer l'onboarding terminé (state + AsyncStorage)
+          await AsyncStorage.setItem('onboardingCompleted', 'true');
+          setOnboardingCompleted(true);
+
+          if (!isPremium) {
+            console.log('🎯 Post-onboarding: activation du paywall (nouvel utilisateur)');
+            setShowPaywall(true);
+            setPaywallDismissed(false);
+          }
+          return;
+        }
+
+        // Si l'utilisateur est déjà premium, pas de paywall
+        if (isPremium) {
+          setShowPaywall(false);
+          AsyncStorage.setItem('show_paywall_on_login', 'false');
+          return;
+        }
+
+        // Reconnexion d'un utilisateur existant : vérifier le flag
         const shouldShowPaywall = await AsyncStorage.getItem('show_paywall_on_login');
-        if (shouldShowPaywall === 'true') {
+        if (shouldShowPaywall === 'true' && !paywallShownThisSession) {
           setShowPaywall(true);
           setPaywallDismissed(false);
         } else {
@@ -222,13 +235,22 @@ function AppNavigator() {
       } else {
         setShowPaywall(false);
         setPaywallDismissed(false);
-        // Reset le flag si pas authentifié
-        AsyncStorage.setItem('show_paywall_on_login', 'false');
       }
     };
 
     checkPaywall();
-  }, [user, onboardingCompleted]);
+  }, [user, onboardingCompleted, isPremium, paywallShownThisSession]);
+
+  // ── Auto-dismiss paywall quand premium confirmé (réactif, pas besoin de callback) ──
+  useEffect(() => {
+    if (showPaywall && !paywallDismissed && isPremium) {
+      console.log('✅ Premium détecté dans App.js → auto-dismiss du paywall');
+      setPaywallDismissed(true);
+      setOnboardingCompleted(true);
+      AsyncStorage.setItem('show_paywall_on_login', 'false');
+      AsyncStorage.setItem('onboardingCompleted', 'true');
+    }
+  }, [showPaywall, paywallDismissed, isPremium]);
 
   // Initialiser les notifications quand on a un chien
   useEffect(() => {
@@ -336,19 +358,14 @@ function AppNavigator() {
         {/* 3. PAYWALL REVENUECAT - Authentifié avec chien + paywall à afficher */}
         {isAuthenticated && hasCurrentDog && showPaywall && !paywallDismissed ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
-            <Stack.Screen 
-              name="RevenueCatPaywall" 
-              component={(props) => (
+            <Stack.Screen name="RevenueCatPaywall">
+              {(props) => (
                 <RevenueCatPaywallScreen 
                   {...props} 
-                  revenueCatReady={revenueCatReady}
-                  onPaywallDismissed={() => {
-                    setPaywallDismissed(true);
-                    AsyncStorage.setItem('show_paywall_on_login', 'false');
-                  }}
+                  onPaywallDismissed={handlePaywallDismissed}
                 />
               )}
-            />
+            </Stack.Screen>
           </Stack.Group>
         ) : null}
 
@@ -387,9 +404,7 @@ function AppNavigator() {
         <Stack.Group screenOptions={{ presentation: 'modal' }}>
           <Stack.Screen 
             name="RevenueCatPaywallModal" 
-            component={(props) => (
-              <RevenueCatPaywallScreen {...props} revenueCatReady={revenueCatReady} />
-            )}
+            component={RevenueCatPaywallScreen}
             options={{ headerShown: false, animationEnabled: true }}
           />
         </Stack.Group>
@@ -401,7 +416,9 @@ function AppNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppNavigator />
+      <UserProvider>
+        <AppNavigator />
+      </UserProvider>
     </AuthProvider>
   );
 }
