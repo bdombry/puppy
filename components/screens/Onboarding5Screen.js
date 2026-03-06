@@ -36,25 +36,25 @@ const Onboarding5Screen = ({ navigation, route }) => {
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }}>
 
         {/* Titre */}
-        <Text style={{ fontSize: 34, fontWeight: '700', color: '#000', marginBottom: spacing.xs, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 34, fontWeight: '700', color: colors.black, marginBottom: spacing.xs, letterSpacing: -0.5 }}>
           Date de
         </Text>
-        <Text style={{ fontSize: 34, fontWeight: '700', color: '#007AFF', marginBottom: spacing.lg, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 34, fontWeight: '700', color: colors.primary, marginBottom: spacing.lg, letterSpacing: -0.5 }}>
           naissance ?
         </Text>
 
         {/* Date affichée */}
-        <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, marginBottom: spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: '#e0e0e0' }}>
-          <Text style={{ fontSize: 14, color: '#666', marginBottom: spacing.sm }}>
+        <View style={{ backgroundColor: colors.pupyBackground, borderRadius: 12, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, marginBottom: spacing.lg, alignItems: 'center', borderWidth: 1, borderColor: colors.pupyBorder }}>
+          <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: spacing.sm }}>
             Date sélectionnée
           </Text>
-          <Text style={{ fontSize: 32, fontWeight: '700', color: '#007AFF', letterSpacing: 0.5 }}>
+          <Text style={{ fontSize: 32, fontWeight: '700', color: colors.primary, letterSpacing: 0.5 }}>
             {formatDate(date)}
           </Text>
         </View>
 
         {/* Native Date Picker */}
-        <View style={{ backgroundColor: '#f5f5f5', borderRadius: 12, borderWidth: 1, borderColor: '#e0e0e0', overflow: 'hidden' }}>
+        <View style={{ backgroundColor: colors.pupyBackground, borderRadius: 12, borderWidth: 1, borderColor: colors.pupyBorder, overflow: 'hidden' }}>
           <DateTimePicker
             value={date}
             onChange={(event, selectedDate) => {
@@ -73,9 +73,9 @@ const Onboarding5Screen = ({ navigation, route }) => {
       <View style={{ paddingHorizontal: spacing.lg, paddingBottom: spacing.lg }}>
         <TouchableOpacity
           onPress={handleContinue}
-          style={{ paddingVertical: spacing.md, borderRadius: 10, backgroundColor: '#007AFF', alignItems: 'center' }}
+          style={{ paddingVertical: spacing.md, borderRadius: 10, backgroundColor: colors.primary, alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+          <Text style={{ color: colors.pureWhite, fontWeight: '600', fontSize: 16 }}>
             Continuer
           </Text>
         </TouchableOpacity>

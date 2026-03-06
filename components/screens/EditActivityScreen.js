@@ -106,7 +106,7 @@ export default function EditActivityScreen() {
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
         <View style={styles.header}>
-          <View style={[screenStyles.avatar, { backgroundColor: '#faf5ff' }]}>
+          <View style={[screenStyles.avatar, { backgroundColor: colors.purpleLight }]}>
             <Text style={screenStyles.avatarEmoji}>🚶</Text>
           </View>
           <Text style={screenStyles.screenTitle}>Éditer balade</Text>
@@ -373,7 +373,7 @@ export default function EditActivityScreen() {
               style={[
                 screenStyles.button,
                 screenStyles.buttonPrimary,
-                { backgroundColor: '#8b5cf6', marginBottom: spacing.lg },
+                { backgroundColor: colors.purple, marginBottom: spacing.lg },
               ]}
               onPress={handleSave}
             >
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pickerValidateButton: {
-    backgroundColor: '#8b5cf6',
+    backgroundColor: colors.purple,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
@@ -538,19 +538,19 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
   },
   checkboxActiveTreat: {
-    backgroundColor: '#f59e0b',
-    borderColor: '#f59e0b',
+    backgroundColor: colors.warning,
+    borderColor: colors.warning,
   },
   checkboxActiveBlue: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   statusButtons: {
     flexDirection: 'row',
     padding: spacing.lg,
     paddingTop: spacing.md,
     gap: spacing.md,
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.gray150,
   },
   statusButton: {
     flex: 1,
@@ -564,11 +564,11 @@ const styles = StyleSheet.create({
     borderColor: colors.gray200,
   },
   statusButtonSuccess: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: colors.successLightest,
     borderColor: colors.success,
   },
   statusButtonIncident: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderColor: colors.error,
   },
   statusButtonText: {
@@ -587,8 +587,8 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   treatCardActive: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
+    backgroundColor: colors.warningLight,
+    borderColor: colors.warning,
   },
   treatLabel: {
     fontSize: typography.sizes.xl,
@@ -607,8 +607,8 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   initiativeCardActive: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
   },
   initiativeLabel: {
     fontSize: typography.sizes.xl,

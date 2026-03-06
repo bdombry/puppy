@@ -97,7 +97,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: selected === source.id ? colors.primary : colors.gray200,
-                backgroundColor: selected === source.id ? '#f0f4ff' : colors.gray100,
+                backgroundColor: selected === source.id ? colors.primaryLight : colors.gray100,
               }}
             >
               <Text style={{ fontSize: 32, marginRight: spacing.md }}>
@@ -120,7 +120,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
                   justifyContent: 'center',
                   alignItems: 'center',
                 }}>
-                  <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text>
+                  <Text style={{ color: colors.pureWhite, fontWeight: '700' }}>✓</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -136,11 +136,11 @@ const Onboarding7Screen = ({ navigation, route }) => {
           style={{
             paddingVertical: spacing.md,
             borderRadius: 10,
-            backgroundColor: selected ? colors.primary : '#d0d0d0',
+            backgroundColor: selected ? colors.primary : colors.disabled,
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+          <Text style={{ color: colors.pureWhite, fontWeight: '600', fontSize: 16 }}>
             {loading ? 'Finalisation...' : 'C\'est parti ! 🐕'}
           </Text>
         </TouchableOpacity>

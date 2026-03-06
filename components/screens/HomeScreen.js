@@ -162,7 +162,7 @@ export default function HomeScreen() {
         contentContainerStyle={screenStyles.screenContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#6366f1" />
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />
         }
       >
         {/* HEADER */}
@@ -269,8 +269,8 @@ export default function HomeScreen() {
                   style={{
                     padding: 15,
                     borderBottomWidth: 1,
-                    borderBottomColor: '#eee',
-                    backgroundColor: currentDog?.id === item.id ? '#f0f8ff' : 'transparent',
+                    borderBottomColor: colors.border,
+                    backgroundColor: currentDog?.id === item.id ? colors.primaryLight : 'transparent',
                   }}
                   onPress={() => handleDogSelect(item)}
                 >

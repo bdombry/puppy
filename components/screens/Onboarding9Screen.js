@@ -143,7 +143,7 @@ const Onboarding9Screen = ({ navigation, route }) => {
             }}
           >
             <Text style={{
-              color: '#FFFFFF',
+              color: colors.pureWhite,
               fontWeight: '700',
               fontSize: 15,
               letterSpacing: 0.2,

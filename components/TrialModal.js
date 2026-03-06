@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.gray900,
   },
   googleButton: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: colors.gray100,
     borderWidth: 1,
     borderColor: colors.gray200,
   },

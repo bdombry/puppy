@@ -313,7 +313,7 @@ const Onboarding1Screen = ({ navigation }) => {
                 style={{
                   width: progressWidth,
                   height: '100%',
-                  backgroundColor: '#F2A43B',
+                  backgroundColor: colors.pupyOrange,
                   borderRadius: 50,
                   justifyContent: 'center',
                   alignItems: 'center',
@@ -383,7 +383,7 @@ const Onboarding1Screen = ({ navigation }) => {
                 paddingVertical: spacing.md,
                 paddingHorizontal: spacing.xl,
                 borderRadius: 16,
-                backgroundColor: '#F2A43B',
+                backgroundColor: colors.pupyOrange,
                 alignItems: 'center',
                 justifyContent: 'center',
                 shadowColor: '#06b6a6',

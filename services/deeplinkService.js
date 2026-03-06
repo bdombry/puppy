@@ -7,7 +7,6 @@
  * - pupytracker://paywall - Ouvre directement le paywall
  * - pupytracker://invite/:token - Accepter une invitation
  * - pupytracker://auth - Aller à l'écran d'authentification
- * - pupytracker://setup - Configuration du chien
  */
 
 /**
@@ -61,9 +60,6 @@ export const handleDeepLink = (navigationRef, deeplink) => {
     case 'auth':
       navigationRef.current.navigate('Auth');
       break;
-    case 'setup':
-      navigationRef.current.navigate('DogSetup');
-      break;
     default:
       console.warn(`⚠️ Route deeplink inconnue: ${routeName}`);
   }
@@ -85,8 +81,6 @@ export const generateDeepLink = (routeName, params = {}) => {
       return `${baseUrl}invite/${params.token}`;
     case 'auth':
       return `${baseUrl}auth`;
-    case 'setup':
-      return `${baseUrl}setup`;
     default:
       console.warn(`⚠️ Route inconnue pour générer deeplink: ${routeName}`);
       return baseUrl;

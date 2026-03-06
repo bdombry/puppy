@@ -42,6 +42,7 @@ export const AuthProvider = ({ children }) => {
   const [currentDog, setCurrentDog] = useState(null);
   const [dogs, setDogs] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [dogsLoading, setDogsLoading] = useState(false);
 
   // ✅ CORRIGER la race condition: utiliser un flag pour initialiser une fois
   useEffect(() => {
@@ -91,12 +92,24 @@ export const AuthProvider = ({ children }) => {
       async (event, session) => {
         if (!isMounted) return;
 
+        // ✅ Ignorer INITIAL_SESSION - déjà géré par initAuth() ci-dessus
+        // Cela évite un double appel à loadUserDog() au démarrage
+        if (event === 'INITIAL_SESSION') return;
+
         if (session?.user) {
+          // ✅ Set dogsLoading BEFORE setUser so they batch in the same render
+          // This prevents a navigation gap where user is set but currentDog is null
+          setDogsLoading(true);
           setUser(session.user);
-          await loadUserDog(session.user.id);
+          try {
+            await loadUserDog(session.user.id);
+          } finally {
+            if (isMounted) setDogsLoading(false);
+          }
         } else {
           setUser(null);
           setCurrentDog(null);
+          setDogsLoading(false);
         }
       }
     );
@@ -109,7 +122,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, [isInitialized]);
 
-  const loadUserDog = async (userId) => {
+  const loadUserDog = async (userId, retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000;
+
     try {
       // 1️⃣ Chiens que l'utilisateur possède
       const { data: ownedDogs, error: ownedError } = await supabase
@@ -179,6 +195,14 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Chien actuel défini:', selectedDog?.name);
       setCurrentDog(selectedDog);
       
+      // Si aucun chien trouvé et qu'on peut encore réessayer
+      // (race condition: le chien est en cours de création après signup)
+      if (!selectedDog && retryCount < MAX_RETRIES) {
+        console.log(`⏳ Aucun chien trouvé, retry ${retryCount + 1}/${MAX_RETRIES} dans ${RETRY_DELAY}ms...`);
+        await new Promise(r => setTimeout(r, RETRY_DELAY));
+        return loadUserDog(userId, retryCount + 1);
+      }
+      
       // Sauvegarder le chien actuel pour les futures sessions
       if (selectedDog?.id) {
         await saveLastDogId(selectedDog.id);
@@ -207,20 +231,20 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signInWithEmail = async (email, password) => {
-    setLoading(true);
+    // ⚠️ NE PAS setLoading(true) ici !
+    // Le loading du contexte contrôle le navigator dans App.js.
+    // Si on met loading=true, ça démonte AuthScreen en plein login → crash.
+    // Le onAuthStateChange va gérer la transition via dogsLoading + setUser.
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      setUser(data.user);
-      await loadUserDog(data.user.id);
-
+      // ✅ NE PAS appeler loadUserDog() ici - le listener onAuthStateChange s'en charge!
+      // Cela évite les appels en double et les race conditions sur AsyncStorage
       return data.user;
     } catch (error) {
       // ✅ Relancer l'erreur pour que le screen puisse la catcher
       throw error;
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -448,6 +472,7 @@ export const AuthProvider = ({ children }) => {
         signUpWithEmail,
         saveDog,
         deleteDog,
+        dogsLoading,
         refreshDogs: () => user ? loadUserDog(user.id) : Promise.resolve(),
         signOut,
         updatePassword,

@@ -70,7 +70,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
           style={{
             fontSize: 34,
             fontWeight: '700',
-            color: '#000',
+            color: colors.black,
             marginBottom: spacing.xs,
             letterSpacing: -0.5,
           }}
@@ -81,7 +81,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
           style={{
             fontSize: 34,
             fontWeight: '700',
-            color: '#007AFF',
+            color: colors.primary,
             marginBottom: spacing.xxl,
             letterSpacing: -0.5,
           }}
@@ -96,9 +96,9 @@ const Onboarding3Screen = ({ navigation, route }) => {
             width: 140,
             height: 140,
             borderRadius: 70,
-            backgroundColor: '#f5f5f5',
+            backgroundColor: colors.pupyBackground,
             borderWidth: 2,
-            borderColor: '#e8e8e8',
+            borderColor: colors.pupyBorderLight,
             justifyContent: 'center',
             alignItems: 'center',
             alignSelf: 'center',
@@ -115,30 +115,30 @@ const Onboarding3Screen = ({ navigation, route }) => {
 
         {/* Nom */}
         <View style={{ marginBottom: spacing.lg }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', marginBottom: spacing.sm }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.black, marginBottom: spacing.sm }}>
             Nom
           </Text>
           <TextInput
             placeholder="Entrez le nom"
-            placeholderTextColor="#999"
+            placeholderTextColor={colors.textTertiary}
             value={dogName}
             onChangeText={setDogName}
             style={{
-              backgroundColor: '#f5f5f5',
+              backgroundColor: colors.pupyBackground,
               borderRadius: 10,
               paddingHorizontal: spacing.md,
               paddingVertical: spacing.md,
-              color: '#000',
+              color: colors.black,
               fontSize: 16,
               borderWidth: 1,
-              borderColor: '#e0e0e0',
+              borderColor: colors.pupyBorder,
             }}
           />
         </View>
 
         {/* Sexe */}
         <View style={{ marginBottom: spacing.xxl }}>
-          <Text style={{ fontSize: 16, fontWeight: '600', color: '#000', marginBottom: spacing.md }}>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: colors.black, marginBottom: spacing.md }}>
             Sexe
           </Text>
           <View style={{ flexDirection: 'row', gap: spacing.md }}>
@@ -150,15 +150,15 @@ const Onboarding3Screen = ({ navigation, route }) => {
                   flex: 1,
                   paddingVertical: spacing.md,
                   borderRadius: 10,
-                  backgroundColor: sex === s ? '#007AFF' : '#f5f5f5',
+                  backgroundColor: sex === s ? colors.primary : colors.pupyBackground,
                   borderWidth: 1,
-                  borderColor: sex === s ? '#007AFF' : '#e0e0e0',
+                  borderColor: sex === s ? colors.primary : colors.pupyBorder,
                   alignItems: 'center',
                 }}
               >
                 <Text
                   style={{
-                    color: sex === s ? '#fff' : '#000',
+                    color: sex === s ? colors.pureWhite : colors.black,
                     fontWeight: '600',
                     fontSize: 16,
                   }}
@@ -180,11 +180,11 @@ const Onboarding3Screen = ({ navigation, route }) => {
           style={{
             paddingVertical: spacing.md,
             borderRadius: 10,
-            backgroundColor: canProceed ? '#007AFF' : '#d0d0d0',
+            backgroundColor: canProceed ? colors.primary : colors.disabled,
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+          <Text style={{ color: colors.pureWhite, fontWeight: '600', fontSize: 16 }}>
             Continuer
           </Text>
         </TouchableOpacity>

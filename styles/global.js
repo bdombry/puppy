@@ -5,7 +5,7 @@ import { colors } from '../constants/theme';
 export const GlobalStyles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.pupyBackground,
   },
   pageMarginTop: {
     marginTop: Platform.OS === 'android' ? StatusBar.currentHeight + 8 : 60, 
@@ -16,11 +16,11 @@ export const GlobalStyles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: colors.pupyBackground,
     padding: 16,
   },
   buttonPrimary: {
-    backgroundColor: '#6366f1',
+    backgroundColor: colors.primary,
     paddingVertical: 20,
     paddingHorizontal: 32,
     borderRadius: 16,
@@ -29,7 +29,7 @@ export const GlobalStyles = StyleSheet.create({
     width: '90%',
   },
   buttonPrimaryText: {
-    color: '#fff',
+    color: colors.pureWhite,
     fontSize: 18,
     fontWeight: '700',
   },

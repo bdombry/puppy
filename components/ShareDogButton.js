@@ -2,6 +2,7 @@ import React from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, Alert, Share } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { generateInviteLink } from './services/collaboratorService';
+import { colors } from '../constants/theme';
 
 /**
  * Bouton simple pour partager le chien
@@ -31,7 +32,7 @@ export const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien' }) => {
   return (
     <TouchableOpacity
       style={{
-        backgroundColor: '#007AFF',
+        backgroundColor: colors.primary,
         borderRadius: 8,
         padding: 14,
         flexDirection: 'row',
@@ -44,11 +45,11 @@ export const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien' }) => {
       disabled={loading}
     >
       {loading ? (
-        <ActivityIndicator color="#fff" />
+        <ActivityIndicator color={colors.pureWhite} />
       ) : (
         <>
-          <MaterialCommunityIcons name="share-variant" size={20} color="#fff" />
-          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>
+          <MaterialCommunityIcons name="share-variant" size={20} color={colors.pureWhite} />
+          <Text style={{ color: colors.pureWhite, fontSize: 16, fontWeight: '600' }}>
             Partager {dogName}
           </Text>
         </>

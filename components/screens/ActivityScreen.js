@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     paddingTop: spacing.md,
     gap: spacing.md,
-    backgroundColor: '#fafafa',
+    backgroundColor: colors.gray150,
   },
   statusButton: {
     flex: 1,
@@ -608,11 +608,11 @@ const styles = StyleSheet.create({
     borderColor: colors.gray200,
   },
   statusButtonSuccess: {
-    backgroundColor: '#f0fdf4',
+    backgroundColor: colors.successLightest,
     borderColor: colors.success,
   },
   statusButtonIncident: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderColor: colors.error,
   },
   statusButtonText: {
@@ -688,12 +688,12 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   treatCardActive: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
+    backgroundColor: colors.warningLight,
+    borderColor: colors.warning,
   },
   checkboxActiveTreat: {
-    backgroundColor: '#f59e0b',
-    borderColor: '#f59e0b',
+    backgroundColor: colors.warning,
+    borderColor: colors.warning,
   },
   treatLabel: {
     fontSize: typography.sizes.xl,
@@ -712,12 +712,12 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   initiativeCardActive: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primary,
   },
   checkboxActiveBlue: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   initiativeLabel: {
     fontSize: typography.sizes.xl,

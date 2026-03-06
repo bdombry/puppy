@@ -496,16 +496,16 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   optionCardActivePurple: {
-    backgroundColor: '#faf5ff',
-    borderColor: '#d8b4fe',
+    backgroundColor: colors.purpleLight,
+    borderColor: colors.purpleLighter,
   },
   optionCardActiveBlue: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryLighter,
   },
   optionCardActiveYellow: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fbbf24',
+    backgroundColor: colors.warningLightest,
+    borderColor: colors.warningLighter,
   },
   checkbox: {
     width: 28,
@@ -526,16 +526,16 @@ const styles = StyleSheet.create({
     borderColor: colors.error,
   },
   checkboxActivePurple: {
-    backgroundColor: '#d8b4fe',
-    borderColor: '#d8b4fe',
+    backgroundColor: colors.purpleLighter,
+    borderColor: colors.purpleLighter,
   },
   checkboxActiveBlue: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   checkboxActiveYellow: {
-    backgroundColor: '#fbbf24',
-    borderColor: '#fbbf24',
+    backgroundColor: colors.warningLighter,
+    borderColor: colors.warningLighter,
   },
   optionLabel: {
     fontSize: typography.sizes.xl,
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   reasonButtonActive: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderColor: colors.error,
   },
   reasonButtonText: {
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
   },
   reasonOptionActive: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderColor: colors.error,
   },
   reasonOptionText: {

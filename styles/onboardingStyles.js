@@ -82,7 +82,7 @@ export const onboardingStyles = StyleSheet.create({
   input: {
     width: '100%',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.pureWhite,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.base,
@@ -96,7 +96,7 @@ export const onboardingStyles = StyleSheet.create({
   dateInput: {
     width: '100%',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.pureWhite,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: borderRadius.base,
@@ -126,7 +126,7 @@ export const onboardingStyles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   buttonSecondary: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.pureWhite,
     borderWidth: 1.5,
     borderColor: colors.border,
   },
@@ -145,7 +145,7 @@ export const onboardingStyles = StyleSheet.create({
   buttonText: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#fff',
+    color: colors.pureWhite,
   },
   buttonTextDark: {
     color: colors.text,
@@ -204,7 +204,7 @@ export const onboardingStyles = StyleSheet.create({
   splashTitle: {
     fontSize: 40,
     fontWeight: '700',
-    color: '#fff',
+    color: colors.pureWhite,
     marginBottom: spacing.sm,
     lineHeight: 46,
     textAlign: 'center',

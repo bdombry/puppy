@@ -4,7 +4,7 @@ import { colors, spacing, borderRadius, shadows, typography } from '../constants
 
 export const homeStyles = StyleSheet.create({
   container: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.pupyBackground,
   },
   header: {
     paddingBottom: spacing.lg,
@@ -462,8 +462,8 @@ export const homeStyles = StyleSheet.create({
     borderColor: colors.success,
   },
   modalOptionFeeding: {
-    backgroundColor: '#fef3c7',
-    borderColor: '#f59e0b',
+    backgroundColor: colors.warningLight,
+    borderColor: colors.warning,
   },
   modalOptionRow: {
     flexDirection: 'row',
@@ -484,7 +484,7 @@ export const homeStyles = StyleSheet.create({
     backgroundColor: colors.successLight,
   },
   modalOptionIconFeeding: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: colors.warningLight,
   },
   modalOptionIcon: {
     fontSize: typography.sizes.xxxl,

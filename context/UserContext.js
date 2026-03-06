@@ -48,6 +48,17 @@ export const UserProvider = ({ children }) => {
   const initializedForUser = useRef(null);
   const listenerRef = useRef(null);
 
+  // ✅ Synchronous premiumLoading reset quand user?.id change
+  // Pattern React recommandé : setState pendant render pour état dérivé
+  // Empêche un render avec premiumLoading=false périmé (de l'init anonyme)
+  const [prevUserId, setPrevUserId] = useState(undefined);
+  if (user?.id !== prevUserId) {
+    setPrevUserId(user?.id);
+    if (user?.id && !premiumLoading) {
+      setPremiumLoading(true);
+    }
+  }
+
   // ── Refresh premium status ──
   const refreshPremiumStatus = useCallback(async () => {
     try {
@@ -68,8 +79,10 @@ export const UserProvider = ({ children }) => {
   }, [user?.id]);
 
   // ── Init RevenueCat quand le user change ──
+  // Délai de 2s pour laisser l'app se charger avant de toucher au SDK natif
   useEffect(() => {
     let isMounted = true;
+    let delayTimer = null;
 
     const init = async () => {
       const userId = user?.id || null;
@@ -83,18 +96,29 @@ export const UserProvider = ({ children }) => {
 
       try {
         // 1. Configure/logIn RevenueCat
-        if (userId) {
-          if (!revenueCatReady) {
-            await initializeRevenueCat(userId);
+        try {
+          if (userId) {
+            if (!revenueCatReady) {
+              await initializeRevenueCat(userId);
+            } else {
+              await loginRevenueCat(userId);
+            }
           } else {
-            await loginRevenueCat(userId);
+            if (!revenueCatReady) {
+              await initializeRevenueCat(null);
+            } else {
+              await logoutRevenueCat();
+            }
           }
-        } else {
-          if (!revenueCatReady) {
-            await initializeRevenueCat(null);
-          } else {
-            await logoutRevenueCat();
+        } catch (rcError) {
+          console.error('❌ RevenueCat configure/login error:', rcError);
+          // Ne pas bloquer l'app si RevenueCat plante
+          if (isMounted) {
+            setRevenueCatReady(true);
+            initializedForUser.current = userId;
+            setPremiumLoading(false);
           }
+          return;
         }
 
         if (!isMounted) return;
@@ -103,7 +127,12 @@ export const UserProvider = ({ children }) => {
         initializedForUser.current = userId;
 
         // 2. Check premium
-        const status = await checkPremiumStatus();
+        let status = { isPremium: false, expiresAt: null };
+        try {
+          status = await checkPremiumStatus();
+        } catch (premErr) {
+          console.error('❌ checkPremiumStatus error:', premErr);
+        }
         if (!isMounted) return;
 
         setIsPremium(status.isPremium);
@@ -115,9 +144,13 @@ export const UserProvider = ({ children }) => {
         }
 
         // 4. Fetch offerings
-        const currentOffering = await getOfferings();
-        if (!isMounted) return;
-        setOfferings(currentOffering);
+        try {
+          const currentOffering = await getOfferings();
+          if (!isMounted) return;
+          setOfferings(currentOffering);
+        } catch (offErr) {
+          console.error('❌ getOfferings error:', offErr);
+        }
       } catch (error) {
         console.error('❌ UserContext init error:', error.message);
         if (isMounted) {
@@ -130,10 +163,14 @@ export const UserProvider = ({ children }) => {
       }
     };
 
-    init();
+    // Délai pour éviter crash natif pendant le montage initial
+    delayTimer = setTimeout(() => {
+      init();
+    }, 1500);
 
     return () => {
       isMounted = false;
+      if (delayTimer) clearTimeout(delayTimer);
     };
   }, [user?.id]);
 
@@ -147,22 +184,26 @@ export const UserProvider = ({ children }) => {
     }
 
     listenerRef.current = addCustomerInfoListener(async (customerInfo) => {
-      console.log('📡 CustomerInfo update received');
-      const entitlement = customerInfo.entitlements.active[ENTITLEMENTS.PRO];
-      const newIsPremium = entitlement != null;
-      const newExpiresAt = entitlement?.expirationDate
-        ? new Date(entitlement.expirationDate)
-        : null;
+      try {
+        console.log('📡 CustomerInfo update received');
+        const entitlement = customerInfo?.entitlements?.active?.[ENTITLEMENTS.PRO];
+        const newIsPremium = entitlement != null;
+        const newExpiresAt = entitlement?.expirationDate
+          ? new Date(entitlement.expirationDate)
+          : null;
 
       setIsPremium(newIsPremium);
       setExpiresAt(newExpiresAt);
 
-      // Sync Supabase
-      if (user?.id) {
-        syncPremiumToSupabase(user.id, {
-          isPremium: newIsPremium,
-          expiresAt: newExpiresAt,
-        }).catch(() => {});
+        // Sync Supabase
+        if (user?.id) {
+          syncPremiumToSupabase(user.id, {
+            isPremium: newIsPremium,
+            expiresAt: newExpiresAt,
+          }).catch(() => {});
+        }
+      } catch (listenerErr) {
+        console.error('❌ CustomerInfo listener error:', listenerErr);
       }
     });
 

@@ -167,7 +167,7 @@ export default function WalkHistoryScreen() {
       }
       if (item.location) {
         badges.push(
-          <View key="location" style={[styles.detailBadge, { backgroundColor: '#dbeafe' }]}>
+          <View key="location" style={[styles.detailBadge, { backgroundColor: colors.primaryLighter }]}>
             <Text style={styles.detailIcon}>📍</Text>
             <Text style={styles.detailText}>{item.location}</Text>
           </View>
@@ -175,7 +175,7 @@ export default function WalkHistoryScreen() {
       }
       if (item.duration_minutes) {
         badges.push(
-          <View key="duration" style={[styles.detailBadge, { backgroundColor: '#fef3c7' }]}>
+          <View key="duration" style={[styles.detailBadge, { backgroundColor: colors.warningLight }]}>
             <Text style={styles.detailIcon}>⏱️</Text>
             <Text style={styles.detailText}>{item.duration_minutes}m</Text>
           </View>
@@ -270,8 +270,8 @@ export default function WalkHistoryScreen() {
             <Text style={styles.statNumber}>{totalStats.successCount}</Text>
             <Text style={screenStyles.statLabel}>réussites</Text>
           </View>
-          <View style={[styles.statBadge, { backgroundColor: '#faf5ff' }]}>
-            <Text style={[styles.statNumber, { color: '#8b5cf6' }]}>
+          <View style={[styles.statBadge, { backgroundColor: colors.purpleLight }]}>
+            <Text style={[styles.statNumber, { color: colors.purple }]}>
               {totalStats.activitiesCount}
             </Text>
             <Text style={screenStyles.statLabel}>balades</Text>
@@ -314,7 +314,7 @@ export default function WalkHistoryScreen() {
           <Text style={[styles.tabText, activeTab === 'activities' && styles.tabTextActive]}>
             Balades
           </Text>
-          {activeTab === 'activities' && <View style={[styles.tabIndicator, { backgroundColor: '#8b5cf6' }]} />}
+          {activeTab === 'activities' && <View style={[styles.tabIndicator, { backgroundColor: colors.purple }]} />}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -508,15 +508,15 @@ const styles = StyleSheet.create({
   },
   cardSuccess: {
     borderColor: colors.success,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: colors.successLightest,
   },
   cardIncident: {
     borderColor: colors.error,
     backgroundColor: colors.errorLight,
   },
   cardActivity: {
-    borderColor: '#8b5cf6',
-    backgroundColor: '#faf5ff',
+    borderColor: colors.purple,
+    backgroundColor: colors.purpleLight,
   },
   cardHeader: {
     flexDirection: 'row',

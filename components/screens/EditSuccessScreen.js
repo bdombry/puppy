@@ -403,12 +403,12 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
   },
   optionCardActivePurple: {
-    backgroundColor: '#faf5ff',
-    borderColor: '#d8b4fe',
+    backgroundColor: colors.purpleLight,
+    borderColor: colors.purpleLighter,
   },
   optionCardActiveBlue: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#bfdbfe',
+    backgroundColor: colors.primaryLight,
+    borderColor: colors.primaryLighter,
   },
   checkbox: {
     width: 28,
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
     borderColor: colors.success,
   },
   checkboxActivePurple: {
-    backgroundColor: '#d8b4fe',
-    borderColor: '#d8b4fe',
+    backgroundColor: colors.purpleLighter,
+    borderColor: colors.purpleLighter,
   },
   checkboxActiveBlue: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
   },
   optionLabel: {
     fontSize: typography.sizes.xl,

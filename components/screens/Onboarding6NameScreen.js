@@ -71,7 +71,7 @@ const Onboarding6NameScreen = ({ navigation, route }) => {
               paddingVertical: spacing.md,
               paddingHorizontal: spacing.lg,
               borderRadius: 14,
-              backgroundColor: name ? colors.primary : '#d0d0d0',
+              backgroundColor: name ? colors.primary : colors.disabled,
               alignItems: 'center',
               shadowColor: colors.primary,
               shadowOffset: { width: 0, height: 3 },
@@ -80,7 +80,7 @@ const Onboarding6NameScreen = ({ navigation, route }) => {
               elevation: 4,
             }}
           >
-            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>
+            <Text style={{ color: colors.pureWhite, fontWeight: '700', fontSize: 15 }}>
               Continuer
             </Text>
           </TouchableOpacity>

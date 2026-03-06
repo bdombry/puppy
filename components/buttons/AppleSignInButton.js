@@ -202,20 +202,20 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
         paddingVertical: spacing.base,
         paddingHorizontal: spacing.base,
         borderRadius: borderRadius.xl,
-        backgroundColor: '#000000',
+        backgroundColor: colors.black,  // Apple brand black
         alignItems: 'center',
         marginBottom: spacing.md,
         opacity: loading ? 0.7 : 1,
       }}
     >
       {loading ? (
-        <ActivityIndicator color="#FFFFFF" />
+        <ActivityIndicator color={colors.pureWhite} />
       ) : (
         <Text
           style={{
             fontSize: typography.sizes.lg,
             fontWeight: '600',
-            color: '#FFFFFF',
+            color: colors.pureWhite,
           }}
         >
           🍎 Continuer avec Apple

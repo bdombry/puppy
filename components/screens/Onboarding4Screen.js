@@ -4,14 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
-
-const DOG_BREEDS = [
-  'Labrador', 'Golden Retriever', 'Berger Allemand', 'Beagle', 'Bulldog',
-  'Caniche', 'Rottweiler', 'Yorkshire Terrier', 'Chihuahua', 'Dachshund',
-  'Boxer', 'Husky Sibérien', 'Cocker Spaniel', 'Schnauzer', 'Dalmatien',
-  'Carlin', 'Boston Terrier', 'Cavalier King Charles', 'Shiba Inu', 'Akita',
-  'Autre race'
-].sort();
+import DOG_BREEDS from '../../constants/dogBreeds';
 
 const Onboarding4Screen = ({ navigation, route }) => {
   const [breed, setBreed] = useState('');
@@ -47,39 +40,39 @@ const Onboarding4Screen = ({ navigation, route }) => {
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg }}>
 
         {/* Titre */}
-        <Text style={{ fontSize: 34, fontWeight: '700', color: '#000', marginBottom: spacing.xs, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 34, fontWeight: '700', color: colors.black, marginBottom: spacing.xs, letterSpacing: -0.5 }}>
           Quelle est la
         </Text>
-        <Text style={{ fontSize: 34, fontWeight: '700', color: '#007AFF', marginBottom: spacing.lg, letterSpacing: -0.5 }}>
+        <Text style={{ fontSize: 34, fontWeight: '700', color: colors.primary, marginBottom: spacing.lg, letterSpacing: -0.5 }}>
           race ?
         </Text>
 
         {/* Sous-titre */}
-        <Text style={{ fontSize: 16, color: '#666', marginBottom: spacing.lg, lineHeight: 24 }}>
+        <Text style={{ fontSize: 16, color: colors.textSecondary, marginBottom: spacing.lg, lineHeight: 24 }}>
           Sélectionnez la race de votre chien
         </Text>
 
         {/* Barre de recherche */}
         <TextInput
           placeholder="Rechercher une race..."
-          placeholderTextColor="#999"
+          placeholderTextColor={colors.textTertiary}
           value={searchBreed}
           onChangeText={setSearchBreed}
           style={{
-            backgroundColor: '#f5f5f5',
+            backgroundColor: colors.pupyBackground,
             borderRadius: 10,
             paddingHorizontal: spacing.md,
             paddingVertical: spacing.md,
-            color: '#000',
+            color: colors.black,
             fontSize: 16,
             marginBottom: spacing.lg,
             borderWidth: 1,
-            borderColor: '#e0e0e0',
+            borderColor: colors.pupyBorder,
           }}
         />
 
         {/* Liste des races */}
-        <ScrollView style={{ maxHeight: 320, backgroundColor: '#f5f5f5', borderRadius: 10, borderWidth: 1, borderColor: '#e0e0e0' }} scrollEnabled={true} nestedScrollEnabled={true}>
+        <ScrollView style={{ maxHeight: 320, backgroundColor: colors.pupyBackground, borderRadius: 10, borderWidth: 1, borderColor: colors.pupyBorder }} scrollEnabled={true} nestedScrollEnabled={true}>
           {filteredBreeds.map((b, index) => (
             <TouchableOpacity
               key={`${b}-${index}`}
@@ -88,11 +81,11 @@ const Onboarding4Screen = ({ navigation, route }) => {
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.md,
                 borderBottomWidth: 1,
-                borderBottomColor: '#e8e8e8',
-                backgroundColor: breed === b ? '#e6f2ff' : 'transparent',
+                borderBottomColor: colors.pupyBorderLight,
+                backgroundColor: breed === b ? colors.primaryLight : 'transparent',
               }}
             >
-              <Text style={{ fontSize: 16, color: breed === b ? '#007AFF' : '#000', fontWeight: breed === b ? '600' : '400' }}>
+              <Text style={{ fontSize: 16, color: breed === b ? colors.primary : colors.black, fontWeight: breed === b ? '600' : '400' }}>
                 {b}
               </Text>
             </TouchableOpacity>
@@ -101,9 +94,9 @@ const Onboarding4Screen = ({ navigation, route }) => {
 
         {/* Affichage race sélectionnée */}
         {breed && (
-          <View style={{ backgroundColor: '#f5f5f5', borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: spacing.md, marginTop: spacing.lg, marginBottom: spacing.lg }}>
-            <Text style={{ fontSize: 14, color: '#666', marginBottom: spacing.xs }}>Race sélectionnée</Text>
-            <Text style={{ fontSize: 18, color: '#007AFF', fontWeight: '600' }}>{breed}</Text>
+          <View style={{ backgroundColor: colors.pupyBackground, borderRadius: 10, paddingHorizontal: spacing.md, paddingVertical: spacing.md, marginTop: spacing.lg, marginBottom: spacing.lg }}>
+            <Text style={{ fontSize: 14, color: colors.textSecondary, marginBottom: spacing.xs }}>Race sélectionnée</Text>
+            <Text style={{ fontSize: 18, color: colors.primary, fontWeight: '600' }}>{breed}</Text>
           </View>
         )}
       </ScrollView>
@@ -116,11 +109,11 @@ const Onboarding4Screen = ({ navigation, route }) => {
           style={{
             paddingVertical: spacing.md,
             borderRadius: 10,
-            backgroundColor: breed ? '#007AFF' : '#d0d0d0',
+            backgroundColor: breed ? colors.primary : colors.disabled,
             alignItems: 'center',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>
+          <Text style={{ color: colors.pureWhite, fontWeight: '600', fontSize: 16 }}>
             Continuer
           </Text>
         </TouchableOpacity>

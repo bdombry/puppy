@@ -45,6 +45,7 @@ export const colors = {
   purpleDark: '#7c3aed',
 
   // Neutre
+  pureWhite: '#FFFFFF',
   white: '#F4F1EC',
   black: '#000000',
   gray50: '#f9fafb',
@@ -58,16 +59,25 @@ export const colors = {
   gray700: '#374151',
   gray800: '#1f2937',
   gray900: '#111827',
+  disabled: '#d0d0d0',
 
   // PupyTracker Custom
-  pupyBackground: '#ffffff',
+  pupyBackground: '#f5f5f5',
   pupyAccent: '#A8C7D8',
   pupyPremium: '#D6B26E',
+  pupyOrange: '#F2A43B',
   pupyTextPrimary: '#2E2E2E',
   pupyTextSecondary: '#7A7A7A',
+  pupyBorder: '#e0e0e0',
+  pupyBorderLight: '#e8e8e8',
+
+  // Semantic light backgrounds
+  successLightest: '#f0fdf4',
+  warningLightest: '#fffbeb',
 
   // Alias
   text: '#2E2E2E',
+  textPrimary: '#2E2E2E',
   textSecondary: '#7A7A7A',
   textTertiary: '#9ca3af',
   border: '#f3f4f6',

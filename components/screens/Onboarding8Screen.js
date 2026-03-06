@@ -147,7 +147,7 @@ const Onboarding8Screen = ({ navigation, route }) => {
               }}
             >
               <Text style={{
-                color: '#fff',
+                color: colors.pureWhite,
                 fontWeight: '600',
                 fontSize: 16,
               }}>

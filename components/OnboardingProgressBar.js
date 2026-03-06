@@ -15,14 +15,14 @@ export const OnboardingProgressBar = ({ current, total, percent }) => {
         marginBottom: spacing.lg,
         marginHorizontal: spacing.base,
         borderWidth: 1.5,
-        borderColor: '#F2A43B',
+        borderColor: colors.pupyOrange,
       }}
     >
       <View
         style={{
           height: '100%',
           width: `${Math.max(0, Math.min(100, progress))}%`,
-          backgroundColor: '#F2A43B',
+          backgroundColor: colors.pupyOrange,
           borderRadius: 3,
         }}
       />

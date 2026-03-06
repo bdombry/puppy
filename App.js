@@ -7,6 +7,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { UserProvider, useUser } from './context/UserContext';
 import { parseDeepLink, handleDeepLink } from './services/deeplinkService';
+import { colors } from './constants/theme';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
 import DogSetupScreen from './components/screens/DogSetupScreen';
@@ -108,7 +109,7 @@ function MainTabNavigator() {
 }
 
 function AppNavigator() {
-  const { loading, user, currentDog } = useAuth();
+  const { loading, user, currentDog, dogsLoading } = useAuth();
   const { isPremium, premiumLoading, revenueCatReady, paywallShownThisSession } = useUser();
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
@@ -193,44 +194,39 @@ function AppNavigator() {
     };
   }, []);
 
-  // Afficher le paywall seulement si non-premium
+  // Afficher le paywall seulement pour les NOUVEAUX utilisateurs (post-onboarding)
+  // Les utilisateurs existants (premium, cancelled, etc.) vont direct à l'app
   useEffect(() => {
     const checkPaywall = async () => {
+      // Attendre que RevenueCat ait fini de charger avant de décider
+      if (premiumLoading) return;
+
       if (user) {
-        // ── Transition onboarding → paywall ──
-        // Si user est authentifié mais onboarding pas terminé côté React state,
-        // c'est forcément un nouvel utilisateur qui vient de créer son compte
-        // pendant l'onboarding. On montre le paywall directement.
-        // (On ne lit PAS show_paywall_on_login car il y a une race condition :
-        //  le flag est set APRÈS signUp, mais le auth state change se déclenche
-        //  PENDANT signUp, donc le flag n'existe pas encore à ce moment.)
-        if (!onboardingCompleted) {
-          // Marquer l'onboarding terminé (state + AsyncStorage)
-          await AsyncStorage.setItem('onboardingCompleted', 'true');
-          setOnboardingCompleted(true);
+        // ✅ Toujours lire AsyncStorage pour avoir l'état le plus récent
+        // (le state React peut être désynchronisé si login vient de Onboarding → Auth)
+        const asyncOnboarding = await AsyncStorage.getItem('onboardingCompleted');
+        const isReturningUser = onboardingCompleted || asyncOnboarding === 'true';
 
-          if (!isPremium) {
-            console.log('🎯 Post-onboarding: activation du paywall (nouvel utilisateur)');
-            setShowPaywall(true);
-            setPaywallDismissed(false);
-          }
-          return;
-        }
-
-        // Si l'utilisateur est déjà premium, pas de paywall
-        if (isPremium) {
+        if (isReturningUser) {
+          // ── Utilisateur existant qui se reconnecte ──
+          // Sync le state React si nécessaire
+          if (!onboardingCompleted) setOnboardingCompleted(true);
+          // Premium, cancelled, expired... on ne montre JAMAIS le paywall au login
+          console.log(`🔑 Returning user - isPremium: ${isPremium} - skipping paywall`);
           setShowPaywall(false);
           AsyncStorage.setItem('show_paywall_on_login', 'false');
           return;
         }
 
-        // Reconnexion d'un utilisateur existant : vérifier le flag
-        const shouldShowPaywall = await AsyncStorage.getItem('show_paywall_on_login');
-        if (shouldShowPaywall === 'true' && !paywallShownThisSession) {
+        // ── Transition onboarding → paywall ──
+        // Vraiment un nouvel utilisateur (onboarding jamais complété)
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        setOnboardingCompleted(true);
+
+        if (!isPremium) {
+          console.log('🎯 Post-onboarding: activation du paywall (nouvel utilisateur)');
           setShowPaywall(true);
           setPaywallDismissed(false);
-        } else {
-          setShowPaywall(false);
         }
       } else {
         setShowPaywall(false);
@@ -239,7 +235,7 @@ function AppNavigator() {
     };
 
     checkPaywall();
-  }, [user, onboardingCompleted, isPremium, paywallShownThisSession]);
+  }, [user, onboardingCompleted, isPremium, premiumLoading]);
 
   // ── Auto-dismiss paywall quand premium confirmé (réactif, pas besoin de callback) ──
   useEffect(() => {
@@ -262,11 +258,26 @@ function AppNavigator() {
     }
   }, [currentDog]);
 
-  if (loading || checkingOnboarding) {
+  // Attendre auth + onboarding check + dog loading + RevenueCat avant de render la navigation
+  // Sécurité : timeout pour éviter un chargement infini si le chien n'arrive jamais
+  const [dogWaitTimedOut, setDogWaitTimedOut] = useState(false);
+  useEffect(() => {
+    if (user && !currentDog && !dogsLoading && !loading) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Timeout: chien non trouvé après 15s');
+        setDogWaitTimedOut(true);
+      }, 15000);
+      return () => clearTimeout(timeout);
+    } else {
+      setDogWaitTimedOut(false);
+    }
+  }, [user, currentDog, dogsLoading, loading]);
+
+  if (loading || checkingOnboarding || dogsLoading || (user && premiumLoading) || (user && !currentDog && !dogWaitTimedOut)) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.pupyBackground }}>
         <Text style={{ fontSize: 18, marginBottom: 20 }}>🐕 Chargement...</Text>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -352,6 +363,11 @@ function AppNavigator() {
               component={AcceptInvitationScreen}
               options={{ animationEnabled: true }}
             />
+            <Stack.Screen 
+              name="Onboarding1" 
+              component={Onboarding1Screen}
+              options={{ animationEnabled: true }}
+            />
           </Stack.Group>
         ) : null}
 
@@ -400,6 +416,13 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
+        {/* 5b. FALLBACK - Authentifié mais aucun chien trouvé (évite navigator vide = crash) */}
+        {isAuthenticated && !hasCurrentDog ? (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen name="DogSetup" component={DogSetupScreen} />
+          </Stack.Group>
+        ) : null}
+
         {/* 6. MODAL GLOBAL - Paywall accessible depuis n'importe quel état via deeplink */}
         <Stack.Group screenOptions={{ presentation: 'modal' }}>
           <Stack.Screen 
@@ -413,12 +436,54 @@ function AppNavigator() {
   );
 }
 
+// Error Boundary pour attraper les crash React et éviter fermeture brutale
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null, errorInfo: null };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('💥 App crash attrapé:', error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: '#f5f5f5' }}>
+          <Text style={{ fontSize: 50, marginBottom: 20 }}>😵</Text>
+          <Text style={{ fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 10 }}>
+            Oups, une erreur est survenue
+          </Text>
+          <Text style={{ fontSize: 14, textAlign: 'center', color: '#666', marginBottom: 10 }}>
+            {this.state.error?.message || 'Erreur inconnue'}
+          </Text>
+          <Text style={{ fontSize: 11, textAlign: 'left', color: '#999', marginBottom: 20, maxHeight: 200 }} numberOfLines={15}>
+            {this.state.error?.stack || ''}
+          </Text>
+          <TouchableOpacity
+            onPress={() => this.setState({ hasError: false, error: null, errorInfo: null })}
+            style={{ backgroundColor: '#3B82F6', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 12 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>Réessayer</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <AuthProvider>
-      <UserProvider>
-        <AppNavigator />
-      </UserProvider>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <UserProvider>
+          <AppNavigator />
+        </UserProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

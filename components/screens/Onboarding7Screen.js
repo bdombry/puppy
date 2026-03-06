@@ -140,7 +140,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
           <View style={{ width: '100%', marginBottom: spacing.xxxl }}>
             <View style={{
               height: 8,
-              backgroundColor: '#e0e0e0',
+              backgroundColor: colors.pupyBorder,
               borderRadius: 4,
               overflow: 'hidden',
               marginBottom: spacing.lg,
@@ -199,7 +199,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
             }}
           >
             <Text style={{
-              color: '#fff',
+              color: colors.pureWhite,
               fontWeight: '600',
               fontSize: 16,
             }}>

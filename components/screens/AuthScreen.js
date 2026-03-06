@@ -3,9 +3,12 @@ import { View, ScrollView, Text, TouchableOpacity, TextInput, Alert, ActivityInd
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, typography, borderRadius } from '../../constants/theme';
 import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 const AuthScreen = ({ navigation }) => {
+  const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -20,39 +23,82 @@ const AuthScreen = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      // ✅ Utiliser le contexte AuthContext (pas d'appel Supabase direct)
+      // Cela synchronise correctement le state user/loading/dogs
+      const user = await signInWithEmail(email, password);
+      
+      // Marquer l'onboarding comme complété (utilisateur existant qui se reconnecte)
+      await AsyncStorage.setItem('onboardingCompleted', 'true');
+      console.log('✅ Connecté avec:', user.email);
+    } catch (err) {
+      let message = err.message;
+      
+      if (err.message?.includes('Invalid login credentials')) {
+        message = 'Email ou mot de passe incorrect';
+      } else if (err.message?.includes('Email not confirmed')) {
+        message = 'Veuillez confirmer votre email avant de vous connecter';
+      } else if (err.message?.includes('User not found')) {
+        message = 'Cet email n\'existe pas';
+      }
+      
+      Alert.alert('Erreur de connexion', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle Apple Sign In (LOGIN ONLY - ne crée jamais de compte)
+  const handleAppleLogin = async () => {
+    setLoading(true);
+    try {
+      // 1. Vérifier disponibilité
+      const available = await AppleAuthentication.isAvailableAsync();
+      if (!available) {
+        Alert.alert('Erreur', 'La connexion Apple n\'est pas disponible sur cet appareil');
+        return;
+      }
+
+      // 2. Demander les credentials Apple
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      if (!credential.identityToken) {
+        throw new Error('Aucun token Apple reçu');
+      }
+
+      // 3. Connexion via Supabase
+      // ⚠️ signInWithIdToken déclenche onAuthStateChange → AuthScreen va se démonter
+      // On doit juste lancer le login et laisser le contexte gérer le reste
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
       });
 
       if (error) {
-        let message = error.message;
-        
-        // Messages d'erreur plus clairs
-        if (error.message.includes('Invalid login credentials')) {
-          message = 'Email ou mot de passe incorrect';
-        } else if (error.message.includes('Email not confirmed')) {
-          message = 'Veuillez confirmer votre email avant de vous connecter';
-        } else if (error.message.includes('User not found')) {
-          message = 'Cet email n\'existe pas';
-        }
-        
-        Alert.alert('Erreur de connexion', message);
-      } else {
-        // Connexion réussie
-        await AsyncStorage.setItem('onboardingCompleted', 'true');
-        // Marquer que le paywall doit être affiché
-        await AsyncStorage.setItem('show_paywall_on_login', 'true');
-        
-        // Forcer un refresh du contexte d'authentification
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          console.log('✅ Connecté avec:', session.user.email);
-          // L'AuthContext va détecter le changement automatiquement
-        }
+        Alert.alert('Erreur de connexion', error.message);
+        return;
       }
-    } catch (err) {
-      Alert.alert('Erreur', err.message);
+
+      // 4. Marquer l'onboarding comme complété IMMÉDIATEMENT
+      // (avant que onAuthStateChange ne démonte ce composant)
+      await AsyncStorage.setItem('onboardingCompleted', 'true');
+      console.log('✅ Apple login réussi, le contexte prend le relais');
+      
+      // Le onAuthStateChange dans AuthContext va:
+      // - setUser() → App.js détecte le user
+      // - loadUserDog() → charge les chiens
+      // - Si pas de chien, le fallback DogSetup s'affiche (ajouté dans App.js)
+    } catch (error) {
+      if (error.code === 'ERR_REQUEST_CANCELED') {
+        console.log('👋 Apple Sign In annulé par l\'utilisateur');
+      } else {
+        console.error('❌ Apple login error:', error);
+        Alert.alert('Erreur', 'Impossible de se connecter avec Apple');
+      }
     } finally {
       setLoading(false);
     }
@@ -135,6 +181,45 @@ const AuthScreen = ({ navigation }) => {
             Retrouvez votre compte PupyTracker
           </Text>
 
+          {/* Apple Sign In Button (iOS only, login only) */}
+          {Platform.OS === 'ios' && (
+            <>
+              <TouchableOpacity
+                onPress={handleAppleLogin}
+                disabled={loading}
+                style={{
+                  paddingVertical: spacing.base,
+                  paddingHorizontal: spacing.base,
+                  borderRadius: borderRadius.xl,
+                  backgroundColor: colors.black,
+                  alignItems: 'center',
+                  marginBottom: spacing.md,
+                  opacity: loading ? 0.7 : 1,
+                }}
+              >
+                {loading ? (
+                  <ActivityIndicator color={colors.pureWhite} />
+                ) : (
+                  <Text
+                    style={{
+                      fontSize: typography.sizes.lg,
+                      fontWeight: '600',
+                      color: colors.pureWhite,
+                    }}
+                  >
+                    🍎 Se connecter avec Apple
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md }}>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.pupyBorder }} />
+                <Text style={{ marginHorizontal: spacing.md, color: colors.pupyTextSecondary, fontSize: typography.sizes.sm }}>ou</Text>
+                <View style={{ flex: 1, height: 1, backgroundColor: colors.pupyBorder }} />
+              </View>
+            </>
+          )}
+
           {/* Email Input */}
           <TextInput
             placeholder="Votre email"
@@ -211,13 +296,7 @@ const AuthScreen = ({ navigation }) => {
 
           {/* Sign Up Link */}
           <TouchableOpacity 
-            onPress={async () => {
-              // Réinitialiser l'onboarding
-              await AsyncStorage.setItem('onboardingCompleted', 'false');
-              console.log('✨ Onboarding réinitialisé - AppNavigator devrait se mettre à jour');
-              // AppState listener dans App.js va détecter le changement
-              // et AppNavigator va se re-render pour montrer Onboarding1
-            }}
+            onPress={() => navigation.navigate('Onboarding1')}
             style={{ marginBottom: spacing.xl, alignItems: 'center' }}
           >
             <Text

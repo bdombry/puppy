@@ -108,6 +108,15 @@ export default function DogProfileScreen() {
   };
 
   const handleDelete = () => {
+    // Sécurité : impossible de supprimer le dernier chien
+    if (dogs.length <= 1) {
+      Alert.alert(
+        '🐕 Impossible',
+        'Tu ne peux pas supprimer ton seul chien. Ajoute un autre chien avant de supprimer celui-ci.'
+      );
+      return;
+    }
+
     Alert.alert(
       ' Supprimer le profil',
       `Veux-tu vraiment supprimer le profil de ${currentDog?.name} ?\n\nToutes les données seront perdues.`,
@@ -138,8 +147,8 @@ export default function DogProfileScreen() {
                         // S'il y a d'autres chiens, aller à l'accueil
                         navigation.navigate('Home');
                       } else {
-                        // S'il n'y a plus aucun chien, aller à l'ajout de chien
-                        navigation.replace('AddDog');
+                        // S'il n'y a plus aucun chien, rester dans l'app sur l'accueil
+                        navigation.navigate('Home');
                       }
                     } catch (error) {
                       Alert.alert('Erreur', 'Impossible de supprimer le profil');
@@ -210,7 +219,7 @@ export default function DogProfileScreen() {
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
 
-        {/* Bouton pour ajouter un autre chien */}
+        {/* Acces AddDog uniquement depuis ce bouton */}
         <TouchableOpacity
           style={styles.addDogButton}
           onPress={() => navigation.navigate('AddDog')}
@@ -222,10 +231,11 @@ export default function DogProfileScreen() {
             </View>
             <View style={styles.addDogButtonTextContainer}>
               <Text style={styles.addDogButtonTitle}>Ajouter un chien</Text>
-              <Text style={styles.addDogButtonSubtitle}>Gérer plusieurs compagnons</Text>
+              <Text style={styles.addDogButtonSubtitle}>Gerer plusieurs compagnons</Text>
             </View>
           </View>
         </TouchableOpacity>
+
         <TouchableOpacity 
           onPress={() => setShowDogSelector(true)}
           style={{ flexDirection: 'row', alignItems: 'center' }}
@@ -444,10 +454,13 @@ export default function DogProfileScreen() {
             />
 
             <TouchableOpacity
-              style={[screenStyles.button, screenStyles.buttonDanger]}
+              style={[screenStyles.button, dogs.length <= 1 ? { backgroundColor: colors.gray200, borderRadius: 12, opacity: 0.5 } : screenStyles.buttonDanger]}
               onPress={handleDelete}
+              disabled={dogs.length <= 1}
             >
-              <Text style={screenStyles.buttonDangerText}> Supprimer le profil</Text>
+              <Text style={dogs.length <= 1 ? { color: colors.gray600, fontSize: 16, fontWeight: '600' } : screenStyles.buttonDangerText}>
+                {dogs.length <= 1 ? '🔒 Suppression impossible (seul chien)' : '🗑 Supprimer le profil'}
+              </Text>
             </TouchableOpacity>
           </>
         )}
@@ -489,54 +502,45 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   cameraIcon: {
-    fontSize: 20,
+    fontSize: 18,
   },
   editButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.lg,
     paddingVertical: spacing.base,
-    backgroundColor: colors.primary,
-    borderRadius: borderRadius.full,
-    ...shadows.small,
+    marginTop: spacing.base,
   },
   editButtonText: {
-    color: colors.white,
+    color: colors.primary,
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.bold,
   },
   form: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.background,
-    borderWidth: 1.5,
-    borderColor: colors.primary,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.base,
     paddingVertical: spacing.base,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   dateButtonText: {
-    fontSize: typography.sizes.base,
     color: colors.text,
-    fontWeight: typography.weights.normal,
+    fontSize: typography.sizes.base,
   },
   ageBox: {
-    backgroundColor: colors.warningLight,
-    borderRadius: borderRadius.lg,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.base,
     marginTop: spacing.base,
+    paddingHorizontal: spacing.base,
+    paddingVertical: spacing.sm,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.warningLight,
   },
   ageText: {
     fontSize: typography.sizes.base,
     color: colors.warning,
     fontWeight: typography.weights.bold,
-  },  addDogButton: {
+  },
+  addDogButton: {
     backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     paddingHorizontal: spacing.lg,
@@ -602,7 +606,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.base,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: colors.border,
     backgroundColor: 'transparent',
     flexDirection: 'row',
     justifyContent: 'space-between',

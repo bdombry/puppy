@@ -47,7 +47,7 @@ const Onboarding2Screen = ({ navigation }) => {
           style={{
             fontSize: 34,
             fontWeight: '700',
-            color: '#000',
+            color: colors.black,
             marginBottom: spacing.xs,
             letterSpacing: -0.5,
           }}
@@ -58,7 +58,7 @@ const Onboarding2Screen = ({ navigation }) => {
           style={{
             fontSize: 34,
             fontWeight: '700',
-            color: '#007AFF',
+            color: colors.primary,
             marginBottom: spacing.lg,
             letterSpacing: -0.5,
           }}
@@ -70,7 +70,7 @@ const Onboarding2Screen = ({ navigation }) => {
         <Text
           style={{
             fontSize: 14,
-            color: '#666',
+            color: colors.textSecondary,
             marginBottom: spacing.lg,
           }}
         >
@@ -89,11 +89,11 @@ const Onboarding2Screen = ({ navigation }) => {
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.md,
                 backgroundColor: selectedProblems.includes(problem.id)
-                  ? '#e6f2ff'
-                  : '#f5f5f5',
+                  ? colors.primaryLight
+                  : colors.pupyBackground,
                 borderRadius: 10,
                 borderWidth: 1,
-                borderColor: selectedProblems.includes(problem.id) ? '#007AFF' : '#e0e0e0',
+                borderColor: selectedProblems.includes(problem.id) ? colors.primary : colors.pupyBorder,
               }}
             >
               {/* Checkbox */}
@@ -103,15 +103,15 @@ const Onboarding2Screen = ({ navigation }) => {
                   height: 24,
                   borderRadius: 6,
                   borderWidth: 2,
-                  borderColor: selectedProblems.includes(problem.id) ? '#007AFF' : '#ccc',
-                  backgroundColor: selectedProblems.includes(problem.id) ? '#007AFF' : 'transparent',
+                  borderColor: selectedProblems.includes(problem.id) ? colors.primary : colors.gray300,
+                  backgroundColor: selectedProblems.includes(problem.id) ? colors.primary : 'transparent',
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginRight: spacing.md,
                 }}
               >
                 {selectedProblems.includes(problem.id) && (
-                  <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>✓</Text>
+                  <Text style={{ color: colors.pureWhite, fontWeight: 'bold', fontSize: 16 }}>✓</Text>
                 )}
               </View>
 
@@ -121,7 +121,7 @@ const Onboarding2Screen = ({ navigation }) => {
                   flex: 1,
                   fontSize: 15,
                   fontWeight: '500',
-                  color: '#000',
+                  color: colors.black,
                 }}
               >
                 {problem.label}
@@ -139,13 +139,13 @@ const Onboarding2Screen = ({ navigation }) => {
           style={{
             paddingVertical: spacing.md,
             borderRadius: 10,
-            backgroundColor: canProceed ? '#007AFF' : '#d0d0d0',
+            backgroundColor: canProceed ? colors.primary : colors.disabled,
             alignItems: 'center',
           }}
         >
           <Text
             style={{
-              color: '#fff',
+              color: colors.pureWhite,
               fontWeight: '600',
               fontSize: 16,
             }}

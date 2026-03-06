@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { acceptInvitation } from '../services/collaboratorService';
 import { useAuth } from '../../context/AuthContext';
+import { colors } from '../../constants/theme';
 
 /**
  * Écran pour accepter une invitation de partage de chien
@@ -174,7 +175,7 @@ export const AcceptInvitationScreen = ({ route, navigation }) => {
 const styles = {
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: colors.pureWhite,
   },
   inviteContainer: {
     flexGrow: 1,
@@ -206,21 +207,21 @@ const styles = {
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#000',
+    color: colors.black,
     textAlign: 'center',
     marginBottom: 12,
   },
   successTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#34C759',
+    color: colors.success,
     textAlign: 'center',
     marginBottom: 12,
   },
   errorTitle: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#FF3B30',
+    color: colors.error,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -254,18 +255,18 @@ const styles = {
     alignItems: 'flex-start',
     gap: 12,
     padding: 12,
-    backgroundColor: '#f0f7ff',
+    backgroundColor: colors.primaryLight,
     borderRadius: 8,
     marginBottom: 24,
   },
   infoText: {
     flex: 1,
     fontSize: 14,
-    color: '#333',
+    color: colors.text,
     lineHeight: 20,
   },
   button: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 14,
     flexDirection: 'row',
@@ -275,24 +276,24 @@ const styles = {
     marginBottom: 12,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.pureWhite,
     fontSize: 16,
     fontWeight: '600',
   },
   cancelButton: {
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: colors.primary,
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',
   },
   cancelButtonText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     borderRadius: 8,
     padding: 14,
     flexDirection: 'row',
@@ -303,7 +304,7 @@ const styles = {
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: colors.primary,
     borderRadius: 8,
     padding: 14,
     flexDirection: 'row',
@@ -312,7 +313,7 @@ const styles = {
     gap: 8,
   },
   secondaryButtonText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },

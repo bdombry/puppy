@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.pupyAccent || '#FFF8F0',
+    backgroundColor: colors.pupyAccent,
     borderRadius: borderRadius.lg,
     margin: spacing.lg,
   },
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.pureWhite,
     fontWeight: '700',
     fontSize: 16,
   },

@@ -110,11 +110,13 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
     const timeout = setTimeout(() => {
       console.log('⏱️ Fallback: navigation.reset vers MainTabs');
       try {
-        // Forcer la navigation si les state updates n'ont pas suffi
         onPaywallDismissed?.();
-        navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+        // Vérifier que MainTabs existe dans le navigateur avant de reset
+        if (navigation.getState()?.routeNames?.includes('MainTabs')) {
+          navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+        }
       } catch (e) {
-        console.warn('Fallback navigation error:', e);
+        console.warn('Fallback navigation error (non-bloquant):', e);
       }
     }, 2000);
     return () => clearTimeout(timeout);

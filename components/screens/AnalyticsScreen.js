@@ -175,11 +175,11 @@ export default function AnalyticsScreen() {
           {stats.trend && (
             <View style={[
               styles.insightCard, 
-              { backgroundColor: stats.trend === 'improving' ? '#f0fdf4' : stats.trend === 'declining' ? '#fef2f2' : '#f3f4f6' }
+              { backgroundColor: stats.trend === 'improving' ? colors.successLightest : stats.trend === 'declining' ? colors.errorLight : colors.gray100 }
             ]}>
               <View style={[
                 styles.insightIcon, 
-                { backgroundColor: stats.trend === 'improving' ? '#d1fae5' : stats.trend === 'declining' ? '#fee2e2' : '#e5e7eb' }
+                { backgroundColor: stats.trend === 'improving' ? colors.successLight : stats.trend === 'declining' ? colors.errorLighter : colors.gray200 }
               ]}>
                 <Text style={{ fontSize: 32 }}>
                   {stats.trend === 'improving' ? '📈' : stats.trend === 'declining' ? '📉' : '➡️'}
@@ -199,8 +199,8 @@ export default function AnalyticsScreen() {
 
           {/* Heure à risque */}
           {stats.mostFrequentIncidentHour && (
-            <View style={[styles.insightCard, { backgroundColor: '#fef2f2' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#fee2e2' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.errorLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.errorLighter }]}>
                 <Text style={{ fontSize: 32 }}>⏰</Text>
               </View>
               <View style={styles.insightContent}>
@@ -215,8 +215,8 @@ export default function AnalyticsScreen() {
 
           {/* Meilleure heure */}
           {stats.mostFrequentSuccessHour && (
-            <View style={[styles.insightCard, { backgroundColor: '#f0fdf4' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#d1fae5' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.successLightest }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.successLight }]}>
                 <Text style={{ fontSize: 32 }}>⭐</Text>
               </View>
               <View style={styles.insightContent}>
@@ -231,8 +231,8 @@ export default function AnalyticsScreen() {
 
           {/* Temps moyen entre sorties */}
           {stats.avgTimeBetweenOutings && (
-            <View style={[styles.insightCard, { backgroundColor: '#eff6ff' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#dbeafe' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.primaryLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.primaryLighter }]}>
                 <Text style={{ fontSize: 32 }}>⏱️</Text>
               </View>
               <View style={styles.insightContent}>
@@ -247,8 +247,8 @@ export default function AnalyticsScreen() {
 
           {/* Record de jours propres */}
           {stats.maxStreak > 0 && (
-            <View style={[styles.insightCard, { backgroundColor: '#fef3c7' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#fde68a' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.warningLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.warningLighter }]}>
                 <Text style={{ fontSize: 32 }}>🏅</Text>
               </View>
               <View style={styles.insightContent}>
@@ -263,8 +263,8 @@ export default function AnalyticsScreen() {
 
           {/* Ratio pipi/caca */}
           {stats.peeVsPoopRatio && (
-            <View style={[styles.insightCard, { backgroundColor: '#faf5ff' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#e9d5ff' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.purpleLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.purpleLighter }]}>
                 <Text style={{ fontSize: 32 }}>📊</Text>
               </View>
               <View style={styles.insightContent}>
@@ -279,8 +279,8 @@ export default function AnalyticsScreen() {
 
           {/* Meilleure journée */}
           {stats.bestDay && (
-            <View style={[styles.insightCard, { backgroundColor: '#f0fdf4' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#d1fae5' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.successLightest }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.successLight }]}>
                 <Text style={{ fontSize: 32 }}>🏆</Text>
               </View>
               <View style={styles.insightContent}>
@@ -300,8 +300,8 @@ export default function AnalyticsScreen() {
 
           {/* Pire journée */}
           {stats.worstDay && stats.worstDayPercentage < 100 && (
-            <View style={[styles.insightCard, { backgroundColor: '#fef2f2' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#fee2e2' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.errorLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.errorLighter }]}>
                 <Text style={{ fontSize: 32 }}>📅</Text>
               </View>
               <View style={styles.insightContent}>
@@ -321,8 +321,8 @@ export default function AnalyticsScreen() {
 
           {/* Badge excellence */}
           {stats.peeSuccessRate >= 80 && stats.poopSuccessRate >= 80 && (
-            <View style={[styles.insightCard, { backgroundColor: '#fef3c7' }]}>
-              <View style={[styles.insightIcon, { backgroundColor: '#fde68a' }]}>
+            <View style={[styles.insightCard, { backgroundColor: colors.warningLight }]}>
+              <View style={[styles.insightIcon, { backgroundColor: colors.warningLighter }]}>
                 <Text style={{ fontSize: 32 }}>🎉</Text>
               </View>
               <View style={styles.insightContent}>
@@ -377,7 +377,7 @@ export default function AnalyticsScreen() {
               </Text>
             )}
             {stats.treatPercentage >= 50 && stats.peeSuccessRate >= 80 && stats.poopSuccessRate >= 80 && stats.trend !== 'declining' && (
-              <Text style={[styles.recommendationText, { color: '#059669' }]}>
+              <Text style={[styles.recommendationText, { color: colors.successDark }]}>
                 ✅ Continue comme ça, tu fais un excellent travail ! Ton chiot progresse super bien 🎉
               </Text>
             )}
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     borderWidth: 1,
-    borderColor: '#dbeafe',
+    borderColor: colors.primaryLighter,
   },
   recommendationText: {
     fontSize: typography.sizes.base,

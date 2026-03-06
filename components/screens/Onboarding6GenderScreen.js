@@ -48,14 +48,14 @@ const Onboarding6GenderScreen = ({ navigation, route }) => {
                 borderRadius: 12,
                 borderWidth: 2,
                 borderColor: selected === opt.id ? colors.primary : colors.gray200,
-                backgroundColor: selected === opt.id ? '#f0f4ff' : colors.gray100,
+                backgroundColor: selected === opt.id ? colors.primaryLight : colors.gray100,
               }}
             >
               <Text style={{ fontSize: 24, marginRight: spacing.md }}>{opt.id === 'male' ? '👨' : opt.id === 'female' ? '👩' : '❓'}</Text>
               <Text style={{ fontSize: 16, fontWeight: selected === opt.id ? '600' : '500', color: selected === opt.id ? colors.primary : colors.textPrimary, flex: 1 }}>{opt.label}</Text>
               {selected === opt.id && (
                 <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ color: '#fff', fontWeight: '700' }}>✓</Text>
+                  <Text style={{ color: colors.pureWhite, fontWeight: '700' }}>✓</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -67,9 +67,9 @@ const Onboarding6GenderScreen = ({ navigation, route }) => {
         <TouchableOpacity
           onPress={submit}
           disabled={!selected}
-          style={{ paddingVertical: spacing.md, borderRadius: 10, backgroundColor: selected ? colors.primary : '#d0d0d0', alignItems: 'center' }}
+          style={{ paddingVertical: spacing.md, borderRadius: 10, backgroundColor: selected ? colors.primary : colors.disabled, alignItems: 'center' }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>{selected ? 'Continuer' : 'Sélectionner pour continuer'}</Text>
+          <Text style={{ color: colors.pureWhite, fontWeight: '600', fontSize: 16 }}>{selected ? 'Continuer' : 'Sélectionner pour continuer'}</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

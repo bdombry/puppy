@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   reasonOptionActive: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: colors.errorLight,
     borderColor: colors.error,
   },
   reasonOptionText: {
