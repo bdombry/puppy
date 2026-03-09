@@ -62,6 +62,11 @@ export default function EditIncidentScreen() {
       return;
     }
 
+    if (!incident?.id) {
+      Alert.alert('❌ Erreur', 'Données d\'incident manquantes');
+      return;
+    }
+
     setLoading(true);
     try {
       const pad = (n) => String(n).padStart(2, '0');

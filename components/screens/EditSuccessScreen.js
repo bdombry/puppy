@@ -55,6 +55,11 @@ export default function EditSuccessScreen() {
       return;
     }
 
+    if (!success?.id) {
+      Alert.alert('❌ Erreur', 'Données de réussite manquantes');
+      return;
+    }
+
     setLoading(true);
     try {
       const pad = (n) => String(n).padStart(2, '0');

@@ -30,6 +30,7 @@ import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
 import { EMOJI } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
+import { colors } from '../../constants/theme';
 
 export default function HomeScreen() {
   const { currentDog, dogs, setCurrentDog, signOut } = useAuth();

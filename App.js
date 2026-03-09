@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { View, Text, ActivityIndicator, Linking, AppState } from 'react-native';
+import { View, Text, ActivityIndicator, Linking, AppState, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -420,6 +420,9 @@ function AppNavigator() {
         {isAuthenticated && !hasCurrentDog ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="DogSetup" component={DogSetupScreen} />
+            <Stack.Screen name="DogRaceScreen" component={DogRaceScreen} />
+            <Stack.Screen name="DogBirthdateScreen" component={DogBirthdateScreen} />
+            <Stack.Screen name="DogPhotoScreen" component={DogPhotoScreen} />
           </Stack.Group>
         ) : null}
 

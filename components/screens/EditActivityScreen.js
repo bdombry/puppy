@@ -56,6 +56,11 @@ export default function EditActivityScreen() {
   };
 
   const handleSave = async () => {
+    if (!activity?.id) {
+      Alert.alert('❌ Erreur', 'Données d\'activité manquantes');
+      return;
+    }
+
     if (!pee && !poop) {
       Alert.alert('⚠️ Attention', 'Coche au moins pipi ou caca');
       return;
