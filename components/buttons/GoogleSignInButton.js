@@ -64,7 +64,7 @@ const GoogleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs
             breed: dogData.breed || '',
             birth_date: dogData.birthDate || null,
             sex: dogData.sex || 'unknown',
-            photo_url: dogData.photo_url || null,
+            photo_url: dogData.photo || dogData.photo_url || null,
             situation: userData?.situation || dogData.situation || '',
             // created_at se met à jour automatiquement avec NOW()
           },
@@ -119,9 +119,10 @@ const GoogleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs
         }
 
         // Rafraîchir les infos du chien dans le context
-        if (refreshDogs) {
+        // ⚠️ Passer userId explicitement car refreshDogs() a une closure périmée
+        if (refreshDogs && data?.user?.id) {
           console.log('🔄 Refreshing dogs after Google Sign In...');
-          await refreshDogs();
+          await refreshDogs(data.user.id);
         }
 
         // Marquer que le paywall doit être affiché

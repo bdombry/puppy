@@ -1,104 +1,16 @@
 import React, { useState } from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../config/supabase';
+import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, typography, borderRadius } from '../../constants/theme';
 import PropTypes from 'prop-types';
 
-const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs }) => {
+const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
+  const { beginSignup, completeSignup, cancelSignup } = useAuth();
   const [loading, setLoading] = useState(false);
-
-  // Sauvegarde les infos de l'utilisateur dans la table profiles
-  const saveUserInfo = async (userId) => {
-    try {
-      console.log('💾 saveUserInfo called with userId:', userId);
-      console.log('   userData:', userData);
-
-      const firstName = userData?.name || '';
-      const ageRange = userData?.ageRange || null;
-      const gender = userData?.gender || null;
-      const situation = userData?.situation || null;
-      const problems = userData?.problems || [];
-      const appSource = userData?.app_source || null;
-
-      const { error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: userId,
-            first_name: firstName,
-            age_range: ageRange,
-            gender: gender,
-            family_situation: situation,
-            user_problems: JSON.stringify(problems),
-            app_source: appSource,
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.error('❌ Could not save user info:', error);
-        console.error('   Error details:', error.message, error.code);
-        // Ne pas bloquer même si ça échoue
-        return false;
-      } else {
-        console.log('✅ User info saved successfully');
-        return true;
-      }
-    } catch (err) {
-      console.error('❌ Error saving user info:', err);
-      // Ne pas bloquer même si ça échoue
-      return false;
-    }
-  };
-
-  // Sauvegarde les infos du chien
-  const saveDogInfo = async (userId) => {
-    try {
-      console.log('💾 saveDogInfo called with userId:', userId);
-      console.log('   dogData:', dogData);
-      console.log('   userData:', userData);
-
-      // Créer un dog avec les données disponibles ou des valeurs par défaut
-      const dogName = dogData?.name || 'Mon chiot';
-      const breed = dogData?.breed || '';
-      const birthDate = dogData?.birthDate || null;
-      const sex = dogData?.sex || 'unknown';
-      const situation = userData?.situation || dogData?.situation || '';
-      const photoUrl = dogData?.photo_url || null;
-
-      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex, situation });
-
-      const { data, error } = await supabase
-        .from('Dogs')
-        .insert([
-          {
-            // Laisser la BD générer l'ID (UUID auto-généré)
-            user_id: userId,
-            name: dogName,
-            breed: breed,
-            birth_date: birthDate,
-            sex: sex,
-            photo_url: photoUrl,
-            situation: situation,
-            // created_at se met à jour automatiquement avec NOW()
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.error('❌ Could not save dog info:', error);
-        console.error('   Error details:', error.message, error.code);
-        return false;
-      } else {
-        console.log('✅ Dog info saved successfully:', data);
-        return true;
-      }
-    } catch (err) {
-      console.error('❌ Error saving dog info:', err);
-      return false;
-    }
-  };
+  const [statusMessage, setStatusMessage] = useState('');
 
   const handleAppleSignIn = async () => {
     try {
@@ -121,68 +33,125 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
 
       console.log('✅ Apple credential received:', credential.identityTokenPayload?.email);
 
-      // Envoyer le token à Supabase
-      if (credential.identityToken) {
-        const { data, error } = await supabase.auth.signInWithIdToken({
-          provider: 'apple',
-          token: credential.identityToken,
-        });
-
-        if (error) {
-          console.error('❌ Supabase error:', error);
-          onError(error);
-        } else {
-          console.log('✅ User signed in via Apple:', data.user?.email);
-
-          const userId = data.user?.id;
-          if (!userId) {
-            console.error('❌ No user ID returned');
-            throw new Error('No user ID returned from Apple Sign In');
-          }
-
-          // Sauvegarder les infos de l'utilisateur
-          console.log('👤 Saving user info...');
-          await saveUserInfo(userId);
-
-          // Sauvegarder les infos du chien - CRUCIAL
-          console.log('🐕 Saving dog info...');
-          await saveDogInfo(userId);
-
-          // Mettre à jour le profil avec le prénom Apple si disponible
-          // (et si first_name n'a pas été rempli pendant l'onboarding)
-          if (credential.fullName?.givenName) {
-            const { error: nameError } = await supabase
-              .from('profiles')
-              .update({ first_name: credential.fullName.givenName })
-              .eq('id', userId)
-              .is('first_name', null); // Ne pas écraser si déjà rempli
-
-            if (nameError) {
-              console.warn('⚠️ Could not update profile first_name:', nameError);
-            } else {
-              console.log('✅ Profile updated with Apple first_name:', credential.fullName.givenName);
-            }
-          }
-
-          // Attendre que les données soient persistées et synchro
-          console.log('⏳ Waiting for data sync...');
-          await new Promise(resolve => setTimeout(resolve, 1500));
-          
-          // Rafraîchir les infos du chien dans le context
-          console.log('🔄 Refreshing dogs...');
-          if (refreshDogs) {
-            console.log('🔄 Refreshing dogs after Apple Sign In...');
-            await refreshDogs();
-          }
-          
-          console.log('✅ Apple Sign In - calling onSuccess');
-          onSuccess?.();
-        }
-      } else {
+      if (!credential.identityToken) {
         throw new Error('No identity token');
       }
+
+      // ══════════════════════════════════════════════════
+      // PHASE 1: Auth Apple + Création données + Vérification
+      // ══════════════════════════════════════════════════
+      console.log('📝 PHASE 1: Auth Apple + données...');
+      setStatusMessage('Connexion Apple...');
+
+      // Activer la garde: onAuthStateChange ne naviguera PAS
+      beginSignup();
+
+      // 1a. Auth Apple → Supabase
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      const userId = data.user?.id;
+      if (!userId) throw new Error('No user ID from Apple auth');
+      console.log('✅ Apple auth OK, userId:', userId);
+
+      // 1b. Vérifier si c'est un returning user (a déjà des chiens)
+      const { data: existingDogs } = await supabase
+        .from('Dogs')
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (existingDogs && existingDogs.length > 0) {
+        // Returning user → pas besoin de créer le chien
+        console.log('🔄 Returning Apple user - skipping data creation');
+        setStatusMessage('Connexion...');
+
+        // ══ PHASE 2 directe: Connexion ══
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        await completeSignup();
+        console.log('✅ Returning user connected');
+        onSuccess?.();
+        return;
+      }
+
+      // 1c. Nouveau user → créer profil
+      setStatusMessage('Configuration du profil...');
+      console.log('📝 Creating profile...');
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert([{
+          id: userId,
+          first_name: credential.fullName?.givenName || userData?.name || '',
+          age_range: userData?.ageRange || null,
+          gender: userData?.gender || null,
+          family_situation: userData?.situation || null,
+          user_problems: JSON.stringify(userData?.problems || []),
+        }], { onConflict: 'id' })
+        .select();
+
+      if (profileError) {
+        console.warn('⚠️ Profile error (non-blocking):', profileError.message);
+      } else {
+        console.log('✅ Profile created');
+      }
+
+      // 1d. Créer le chien
+      setStatusMessage('Ajout de votre chien...');
+      console.log('🐕 Creating dog...');
+      const { data: dogResult, error: dogError } = await supabase
+        .from('Dogs')
+        .insert([{
+          user_id: userId,
+          name: dogData?.name || 'Mon chiot',
+          breed: dogData?.breed || '',
+          birth_date: dogData?.birthDate || null,
+          sex: dogData?.sex || 'unknown',
+          photo_url: dogData?.photo || dogData?.photo_url || null,
+          situation: userData?.situation || dogData?.situation || '',
+        }])
+        .select();
+
+      if (dogError) {
+        throw new Error('Dog creation failed: ' + dogError.message);
+      }
+      console.log('✅ Dog created:', dogResult?.[0]?.id);
+
+      // 1e. Vérification
+      setStatusMessage('Vérification...');
+      const { data: verifyDog } = await supabase
+        .from('Dogs')
+        .select('id, name')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (!verifyDog || verifyDog.length === 0) {
+        throw new Error('Dog verification failed');
+      }
+      console.log('✅ PHASE 1 COMPLETE: dog verified -', verifyDog[0].name);
+
+      // ══════════════════════════════════════════════════
+      // PHASE 2: Connexion → navigation
+      // ══════════════════════════════════════════════════
+      console.log('🔗 PHASE 2: Connexion...');
+      setStatusMessage('Connexion...');
+
+      await AsyncStorage.setItem('onboardingCompleted', 'true');
+      await AsyncStorage.setItem('show_paywall_on_login', 'true');
+
+      await completeSignup();
+      console.log('✅ PHASE 2 COMPLETE');
+      onSuccess?.();
+
     } catch (error) {
       console.error('❌ Apple Sign In error:', error);
+      cancelSignup();
+      setStatusMessage('');
       onError?.(error);
     } finally {
       setLoading(false);
@@ -202,7 +171,7 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData, refreshDogs 
         paddingVertical: spacing.base,
         paddingHorizontal: spacing.base,
         borderRadius: borderRadius.xl,
-        backgroundColor: colors.black,  // Apple brand black
+        backgroundColor: colors.black,
         alignItems: 'center',
         marginBottom: spacing.md,
         opacity: loading ? 0.7 : 1,
@@ -230,7 +199,6 @@ AppleSignInButton.propTypes = {
   onError: PropTypes.func,
   dogData: PropTypes.object,
   userData: PropTypes.object,
-  refreshDogs: PropTypes.func,
 };
 
 export default AppleSignInButton;

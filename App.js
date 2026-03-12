@@ -10,10 +10,7 @@ import { parseDeepLink, handleDeepLink } from './services/deeplinkService';
 import { colors } from './constants/theme';
 import SplashScreen from './components/screens/SplashScreen';
 import AuthScreen from './components/screens/AuthScreen';
-import DogSetupScreen from './components/screens/DogSetupScreen';
-import DogRaceScreen from './components/screens/DogRaceScreen';
-import DogBirthdateScreen from './components/screens/DogBirthdateScreen';
-import DogPhotoScreen from './components/screens/DogPhotoScreen';
+// Suppression des imports obsolètes : DogSetupScreen, DogRaceScreen, DogBirthdateScreen, DogPhotoScreen
 import AddDogScreen from './components/screens/AddDogScreen';
 import HomeScreen from './components/screens/HomeScreen';
 import WalkScreen from './components/screens/WalkScreen';
@@ -211,7 +208,18 @@ function AppNavigator() {
           // ── Utilisateur existant qui se reconnecte ──
           // Sync le state React si nécessaire
           if (!onboardingCompleted) setOnboardingCompleted(true);
-          // Premium, cancelled, expired... on ne montre JAMAIS le paywall au login
+
+          // ✅ Vérifier si c'est un NOUVEAU signup qui vient de poser le flag
+          // (onboardingCompleted=true a été posé AVANT completeSignup)
+          const paywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
+          if (paywallFlag === 'true' && !isPremium) {
+            console.log('🎯 Post-signup: affichage du paywall pour nouvel utilisateur');
+            setShowPaywall(true);
+            setPaywallDismissed(false);
+            return;
+          }
+
+          // Vraiment un returning user → pas de paywall
           console.log(`🔑 Returning user - isPremium: ${isPremium} - skipping paywall`);
           setShowPaywall(false);
           AsyncStorage.setItem('show_paywall_on_login', 'false');
@@ -261,19 +269,44 @@ function AppNavigator() {
   // Attendre auth + onboarding check + dog loading + RevenueCat avant de render la navigation
   // Sécurité : timeout pour éviter un chargement infini si le chien n'arrive jamais
   const [dogWaitTimedOut, setDogWaitTimedOut] = useState(false);
+  const [premiumTimedOut, setPremiumTimedOut] = useState(false);
+
   useEffect(() => {
     if (user && !currentDog && !dogsLoading && !loading) {
       const timeout = setTimeout(() => {
-        console.warn('⚠️ Timeout: chien non trouvé après 15s');
+        console.warn('⚠️ Timeout: chien non trouvé après 10s');
         setDogWaitTimedOut(true);
-      }, 15000);
+      }, 10000);
       return () => clearTimeout(timeout);
     } else {
       setDogWaitTimedOut(false);
     }
   }, [user, currentDog, dogsLoading, loading]);
 
-  if (loading || checkingOnboarding || dogsLoading || (user && premiumLoading) || (user && !currentDog && !dogWaitTimedOut)) {
+  // ✅ Safety timeout pour premiumLoading: ne jamais bloquer plus de 8s
+  useEffect(() => {
+    if (user && premiumLoading) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Premium loading timeout: forcing through after 8s');
+        setPremiumTimedOut(true);
+      }, 8000);
+      return () => clearTimeout(timeout);
+    } else {
+      setPremiumTimedOut(false);
+    }
+  }, [user, premiumLoading]);
+
+  // Debug logging pour comprendre l'état de chargement
+  useEffect(() => {
+    console.log('📊 Loading state:', {
+      loading, checkingOnboarding, dogsLoading,
+      premiumLoading, premiumTimedOut,
+      user: !!user, currentDog: !!currentDog,
+      dogWaitTimedOut, onboardingCompleted, showPaywall, paywallDismissed
+    });
+  }, [loading, checkingOnboarding, dogsLoading, premiumLoading, premiumTimedOut, user, currentDog, dogWaitTimedOut, onboardingCompleted, showPaywall, paywallDismissed]);
+
+  if (loading || checkingOnboarding || dogsLoading || (user && premiumLoading && !premiumTimedOut) || (user && !currentDog && !dogWaitTimedOut)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.pupyBackground }}>
         <Text style={{ fontSize: 18, marginBottom: 20 }}>🐕 Chargement...</Text>
@@ -416,15 +449,7 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 5b. FALLBACK - Authentifié mais aucun chien trouvé (évite navigator vide = crash) */}
-        {isAuthenticated && !hasCurrentDog ? (
-          <Stack.Group screenOptions={{ animationEnabled: false }}>
-            <Stack.Screen name="DogSetup" component={DogSetupScreen} />
-            <Stack.Screen name="DogRaceScreen" component={DogRaceScreen} />
-            <Stack.Screen name="DogBirthdateScreen" component={DogBirthdateScreen} />
-            <Stack.Screen name="DogPhotoScreen" component={DogPhotoScreen} />
-          </Stack.Group>
-        ) : null}
+        {/* 5b. Fallback supprimé : plus de mini-onboarding chien */}
 
         {/* 6. MODAL GLOBAL - Paywall accessible depuis n'importe quel état via deeplink */}
         <Stack.Group screenOptions={{ presentation: 'modal' }}>

@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../config/supabase';
 
@@ -43,6 +43,11 @@ export const AuthProvider = ({ children }) => {
   const [dogs, setDogs] = useState([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [dogsLoading, setDogsLoading] = useState(false);
+
+  // ✅ GARDE de signup: quand true, onAuthStateChange ne déclenche PAS
+  // la navigation (pas de setUser/loadUserDog). L'écran de création garde le contrôle.
+  const signupInProgress = useRef(false);
+  const pendingAuthSession = useRef(null);
 
   // ✅ CORRIGER la race condition: utiliser un flag pour initialiser une fois
   useEffect(() => {
@@ -93,16 +98,27 @@ export const AuthProvider = ({ children }) => {
         if (!isMounted) return;
 
         // ✅ Ignorer INITIAL_SESSION - déjà géré par initAuth() ci-dessus
-        // Cela évite un double appel à loadUserDog() au démarrage
         if (event === 'INITIAL_SESSION') return;
 
+        console.log('🔑 onAuthStateChange:', event, '- signupInProgress:', signupInProgress.current);
+
         if (session?.user) {
-          // ✅ Set dogsLoading BEFORE setUser so they batch in the same render
-          // This prevents a navigation gap where user is set but currentDog is null
+          // ✅ GARDE: si un signup est en cours, on stocke la session
+          // mais on NE déclenche PAS la navigation (pas de setUser).
+          // C'est l'écran de création qui appellera completeSignup() quand tout sera prêt.
+          if (signupInProgress.current) {
+            console.log('🔒 Signup in progress → session stored, navigation deferred');
+            pendingAuthSession.current = session;
+            return;
+          }
+
+          // Flux normal (login classique, reconnexion)
           setDogsLoading(true);
           setUser(session.user);
           try {
             await loadUserDog(session.user.id);
+          } catch (err) {
+            console.error('❌ Error loading dogs after auth change:', err);
           } finally {
             if (isMounted) setDogsLoading(false);
           }
@@ -123,8 +139,9 @@ export const AuthProvider = ({ children }) => {
   }, [isInitialized]);
 
   const loadUserDog = async (userId, retryCount = 0) => {
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 2000;
+    const MAX_RETRIES = 2;
+    const RETRY_DELAY = 1500;
+    console.log(`🐕 loadUserDog attempt ${retryCount}/${MAX_RETRIES} for user:`, userId);
 
     try {
       // 1️⃣ Chiens que l'utilisateur possède
@@ -259,11 +276,77 @@ export const AuthProvider = ({ children }) => {
 
       return data.user;
     } catch (error) {
-      // ✅ Relancer l'erreur pour que le screen puisse la catcher
       throw error;
     } finally {
       setLoading(false);
     }
+  };
+
+  // ═══════════════════════════════════════════════════════
+  // SIGNUP EN 2 PHASES: beginSignup / completeSignup / cancelSignup
+  // ═══════════════════════════════════════════════════════
+
+  /**
+   * Phase 1: Appelé AVANT signUp() ou signInWithIdToken().
+   * Active la garde: onAuthStateChange ne naviguera pas.
+   */
+  const beginSignup = () => {
+    console.log('🔒 beginSignup: activating signup guard');
+    signupInProgress.current = true;
+    pendingAuthSession.current = null;
+  };
+
+  /**
+   * Phase 2: Appelé APRÈS avoir créé le profil + chien + vérifié.
+   * Désactive la garde et applique la session en attente → navigation.
+   */
+  const completeSignup = async () => {
+    console.log('🔓 completeSignup: deactivating guard, applying session');
+    signupInProgress.current = false;
+
+    const session = pendingAuthSession.current;
+    pendingAuthSession.current = null;
+
+    let userId = null;
+
+    if (session?.user) {
+      userId = session.user.id;
+    } else {
+      // onAuthStateChange n'a pas encore tiré, récupérer la session courante
+      console.log('⏳ No pending session yet, fetching current session...');
+      const { data } = await supabase.auth.getSession();
+      if (data.session?.user) {
+        userId = data.session.user.id;
+      }
+    }
+
+    if (!userId) {
+      console.error('❌ completeSignup: no user found');
+      return;
+    }
+
+    // Appliquer la session → déclenche la navigation dans App.js
+    setDogsLoading(true);
+    const finalSession = session || (await supabase.auth.getSession()).data.session;
+    setUser(finalSession.user);
+
+    try {
+      await loadUserDog(userId);
+      console.log('✅ completeSignup: dog loaded, navigation will proceed');
+    } catch (err) {
+      console.error('❌ completeSignup loadUserDog error:', err);
+    } finally {
+      setDogsLoading(false);
+    }
+  };
+
+  /**
+   * Annulation: désactive la garde en cas d'erreur pendant le signup.
+   */
+  const cancelSignup = () => {
+    console.log('❌ cancelSignup: clearing signup guard');
+    signupInProgress.current = false;
+    pendingAuthSession.current = null;
   };
 
   const saveDog = async (dogData) => {
@@ -470,10 +553,23 @@ export const AuthProvider = ({ children }) => {
         setCurrentDog: setCurrentDogWithPersistence,
         signInWithEmail,
         signUpWithEmail,
+        beginSignup,
+        completeSignup,
+        cancelSignup,
         saveDog,
         deleteDog,
         dogsLoading,
-        refreshDogs: () => user ? loadUserDog(user.id) : Promise.resolve(),
+        refreshDogs: async (userIdOverride) => {
+          const id = userIdOverride || user?.id;
+          if (id) {
+            setDogsLoading(true);
+            try {
+              await loadUserDog(id);
+            } finally {
+              setDogsLoading(false);
+            }
+          }
+        },
         signOut,
         updatePassword,
         deleteAccount,

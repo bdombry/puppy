@@ -22,113 +22,17 @@ import AppleSignInButton from '../buttons/AppleSignInButton';
 const CreateAccountScreen = ({ navigation, route }) => {
   const dogData = route?.params?.dogData || {};
   const userData = route?.params?.userData || {};
-  const { refreshDogs } = useAuth();
+  const { beginSignup, completeSignup, cancelSignup } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [useEmailSignup, setUseEmailSignup] = useState(false);
 
-  // Sauvegarde les infos de l'utilisateur dans la table profiles
-  const saveUserInfo = async (userId) => {
-    try {
-      console.log('💾 saveUserInfo called with userId:', userId);
-      console.log('   userData:', userData);
-
-      const firstName = userData?.name || '';
-      const ageRange = userData?.ageRange || null;
-      const gender = userData?.gender || null;
-      const situation = userData?.situation || null;
-      const problems = userData?.problems || [];
-      const appSource = userData?.app_source || null;
-
-      const { error } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            id: userId,
-            first_name: firstName,
-            age_range: ageRange,
-            gender: gender,
-            family_situation: situation,
-            user_problems: JSON.stringify(problems),
-            app_source: appSource,
-          },
-        ])
-        .select();
-
-      if (error) {
-        console.error('❌ Could not save user info:', error);
-        console.error('   Error details:', error.message, error.code);
-        // Ne pas bloquer la création du compte si ça échoue
-        return false;
-      } else {
-        console.log('✅ User info saved to profiles table');
-        return true;
-      }
-    } catch (err) {
-      console.error('❌ Error saving user info:', err);
-      // Ne pas bloquer la création du compte si ça échoue
-      return false;
-    }
-  };
-
-  // Sauvegarde les infos du chien après création du compte
-  const saveDogInfo = async (userId) => {
-    try {
-      console.log('💾 saveDogInfo called with userId:', userId);
-      console.log('   dogData:', dogData);
-      console.log('   userData:', userData);
-
-      // Créer un dog avec les données disponibles ou des valeurs par défaut
-      const dogName = dogData?.name || 'Mon chiot';
-      const breed = dogData?.breed || '';
-      const birthDate = dogData?.birthDate || null;
-      const sex = dogData?.sex || 'unknown';
-      const photoUrl = dogData?.photo_url || null;
-      const situation = userData?.situation || dogData?.situation || '';
-
-      console.log('📝 Dog data to insert:', { dogName, breed, birthDate, sex, situation });
-
-      const { data, error } = await supabase
-        .from('Dogs')
-        .insert([
-          {
-            // Laisser la BD générer l'ID (UUID auto-généré)
-            user_id: userId,
-            name: dogName,
-            breed: breed,
-            birth_date: birthDate,
-            sex: sex,
-            photo_url: photoUrl,
-            situation: situation,
-            // created_at se met à jour automatiquement avec NOW()
-          },
-        ])
-        .select(); // Récupère les données créées
-
-      if (error) {
-        console.error('❌ Could not save dog info:', error);
-        console.error('   Error code:', error.code);
-        console.error('   Error message:', error.message);
-        console.error('   Error status:', error.status);
-        console.error('   Error hint:', error.hint);
-        console.error('   Full error object:', JSON.stringify(error, null, 2));
-        // Ne pas bloquer la création du compte si ça échoue
-        return false;
-      } else {
-        console.log('✅ Dog info saved successfully:', data);
-        return true;
-      }
-    } catch (err) {
-      console.error('❌ Error saving dog info:', err);
-      return false;
-    }
-  };
-
-  // Handle Email Signup
+  // Handle Email Signup - 2 PHASES
   const handleEmailSignup = async () => {
     if (!email || !password || !confirmPassword) {
       Alert.alert('Erreur', 'Veuillez remplir tous les champs');
@@ -147,95 +51,115 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
     setLoading(true);
     try {
-      console.log('🚀 Starting email signup...');
-      const { error, data } = await supabase.auth.signUp({
+      // ══════════════════════════════════════════════════
+      // PHASE 1: Création du compte + données + vérification
+      // ══════════════════════════════════════════════════
+      console.log('📝 PHASE 1: Création du compte...');
+      setStatusMessage('Création du compte...');
+
+      // Activer la garde: onAuthStateChange ne naviguera PAS
+      beginSignup();
+
+      // 1a. Créer le compte Supabase
+      const { data: signupData, error: signupError } = await supabase.auth.signUp({
         email,
         password,
       });
 
-      if (error) {
-        let message = error.message;
-        
-        if (error.message.includes('already registered')) {
+      if (signupError) {
+        let message = signupError.message;
+        if (signupError.message.includes('already registered')) {
           message = 'Cet email est déjà utilisé';
-        } else if (error.message.includes('Password')) {
-          message = error.message;
         }
-        
-        console.error('❌ Signup error:', message);
-        Alert.alert('Erreur de création', message);
-      } else {
-        const userId = data?.user?.id;
-        console.log('✅ User created with ID:', userId);
-        
-        if (!userId) {
-          Alert.alert('Erreur', 'Impossible de créer le compte');
-          setLoading(false);
-          return;
-        }
-        
-        // Sauvegarder les infos de l'utilisateur
-        console.log('👤 Saving user info...');
-        await saveUserInfo(userId);
-        
-        // Sauvegarder les infos du chien - CRUCIAL
-        console.log('🐕 Saving dog info...');
-        const dogCreated = await saveDogInfo(userId);
-        
-        if (!dogCreated) {
-          console.warn('⚠️ Dog creation may have failed, but continuing...');
-        }
-        
-        // Attendre que les données soient persistées et synchro
-        console.log('⏳ Waiting for data sync...');
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Forcer le rechargement du chien dans le context
-        console.log('🔄 Refreshing dogs...');
-        if (refreshDogs) {
-          await refreshDogs();
-          console.log('✅ Dogs refreshed');
-        }
-        
-        // Marquer que le paywall doit être affiché
-        console.log('📋 Setting paywall flag...');
-        await AsyncStorage.setItem('show_paywall_on_login', 'true');
-        
-        // L'app va se re-render et montrer le paywall automatiquement
-        console.log('✅ Email signup complete - App will navigate to paywall');
-        setLoading(false);
+        throw new Error(message);
       }
+
+      const userId = signupData.user?.id;
+      if (!userId) throw new Error('Pas d\'identifiant utilisateur retourné');
+      console.log('✅ Compte créé, userId:', userId);
+
+      // 1b. Créer le profil utilisateur
+      setStatusMessage('Configuration du profil...');
+      console.log('📝 Création du profil...', JSON.stringify(userData));
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert([{
+          id: userId,
+          first_name: userData.name || '',
+          age_range: userData.ageRange || null,
+          gender: userData.gender || null,
+          family_situation: userData.situation || null,
+          user_problems: JSON.stringify(userData.problems || []),
+          app_source: userData.app_source || null,
+        }], { onConflict: 'id' })
+        .select();
+
+      if (profileError) {
+        console.warn('⚠️ Erreur profil (non bloquante):', profileError.message);
+      } else {
+        console.log('✅ Profil créé');
+      }
+
+      // 1c. Créer le chien
+      setStatusMessage('Ajout de votre chien...');
+      console.log('🐕 Création du chien...', JSON.stringify(dogData));
+      // Mapper le sexe en anglais pour l'enum Supabase
+      let mappedSex = 'unknown';
+      if (dogData.sex === 'Mâle') mappedSex = 'male';
+      else if (dogData.sex === 'Femelle') mappedSex = 'female';
+      else if (['male', 'female', 'unknown'].includes(dogData.sex)) mappedSex = dogData.sex;
+
+      const { data: dogResult, error: dogError } = await supabase
+        .from('Dogs')
+        .insert([{
+          user_id: userId,
+          name: dogData.name || 'Mon chiot',
+          breed: dogData.breed || '',
+          birth_date: dogData.birthDate || null,
+          sex: mappedSex,
+          photo_url: dogData.photo || dogData.photo_url || null,
+        }])
+        .select();
+
+      if (dogError) {
+        throw new Error('Erreur création du chien: ' + dogError.message);
+      }
+      console.log('✅ Chien créé:', dogResult?.[0]?.id, dogResult?.[0]?.name);
+
+      // 1d. Vérification: le chien existe bien en BD
+      setStatusMessage('Vérification...');
+      const { data: verifyDog, error: verifyError } = await supabase
+        .from('Dogs')
+        .select('id, name')
+        .eq('user_id', userId)
+        .limit(1);
+
+      if (verifyError || !verifyDog || verifyDog.length === 0) {
+        throw new Error('Vérification échouée: chien non trouvé en base de données');
+      }
+      console.log('✅ PHASE 1 TERMINÉE: chien vérifié -', verifyDog[0].name);
+
+      // ══════════════════════════════════════════════════
+      // PHASE 2: Connexion → navigation automatique
+      // ══════════════════════════════════════════════════
+      console.log('🔗 PHASE 2: Connexion...');
+      setStatusMessage('Connexion...');
+
+      // Poser les flags AVANT de connecter
+      await AsyncStorage.setItem('onboardingCompleted', 'true');
+      await AsyncStorage.setItem('show_paywall_on_login', 'true');
+
+      // Libérer la garde → setUser + loadUserDog → navigation
+      await completeSignup();
+      console.log('✅ PHASE 2 TERMINÉE: navigation en cours');
+
     } catch (err) {
-      console.error('❌ Email signup exception:', err);
-      Alert.alert('Erreur', err.message);
+      console.error('❌ Signup error:', err.message);
+      cancelSignup();
+      setStatusMessage('');
+      Alert.alert('Erreur de création', err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Handle Apple Sign In
-  const handleAppleSignIn = async () => {
-    try {
-      console.log('🍎 Starting Apple Sign In...');
-      // Le bouton AppleSignInButton va gérer la logique
-      // On suppose qu'il navigue après connexion
-      // Marquer le paywall
-      await AsyncStorage.setItem('show_paywall_on_login', 'true');
-    } catch (error) {
-      Alert.alert('Erreur', error.message);
-    }
-  };
-
-  // Handle Google Sign In
-  const handleGoogleSignIn = async () => {
-    try {
-      console.log('🔵 Starting Google Sign In...');
-      // Le bouton GoogleSignInButton va gérer la logique
-      // On suppose qu'il navigue après connexion
-      // Marquer le paywall
-      await AsyncStorage.setItem('show_paywall_on_login', 'true');
-    } catch (error) {
-      Alert.alert('Erreur', error.message);
     }
   };
 
@@ -287,10 +211,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
                 <AppleSignInButton 
                   dogData={dogData}
                   userData={userData}
-                  refreshDogs={refreshDogs}
                   onSuccess={() => {
                     console.log('✅ Apple Sign In successful');
-                    AsyncStorage.setItem('show_paywall_on_login', 'true');
                   }}
                   onError={(err) => {
                     Alert.alert('Erreur Apple', err.message);
@@ -485,7 +407,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
                       color: colors.white,
                     }}
                   >
-                    Création...
+                    {statusMessage || 'Création...'}
                   </Text>
                 </>
               ) : (
