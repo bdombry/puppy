@@ -9,20 +9,20 @@ import { colors, spacing, typography, borderRadius, shadows } from '../constants
 export const commonStyles = StyleSheet.create({
   // ===== CARDS =====
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pureWhite,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     ...shadows.base,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.primary,
   },
   cardSmall: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pureWhite,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
     ...shadows.small,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.primary,
   },
 
   // ===== BOUTONS =====

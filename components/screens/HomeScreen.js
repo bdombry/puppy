@@ -167,24 +167,24 @@ export default function HomeScreen() {
         }
       >
         {/* HEADER */}
-        <View style={homeStyles.header}>
+        <View style={{ ...homeStyles.header, backgroundColor: colors.pupyBackground }}>
           <View style={homeStyles.headerRow}>
-            <TouchableOpacity onPress={handleDogSelectorOpen} style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={homeStyles.headerTitle}>{currentDog?.name || 'Sélectionner un chien'}</Text>
-              <Text style={{ fontSize: 16, marginLeft: 5 }}>▼</Text>
-            </TouchableOpacity>
+            {/* Titre marketing */}
+            <Text style={{ ...homeStyles.headerTitle, color: colors.primary }}>PupyTracker</Text>
             <TouchableOpacity
-              style={homeStyles.headerAccountButtonRight}
+              style={{ ...homeStyles.headerAccountButtonRight, backgroundColor: colors.primary }}
               onPress={() => navigation.navigate('Account')}
             >
-              <Text style={homeStyles.headerAccountEmoji}>🧑</Text>
+              <Text style={{ ...homeStyles.headerAccountEmoji, color: colors.pureWhite }}>🧑</Text>
             </TouchableOpacity>
           </View>
-          {currentDog && (
-            <Text style={homeStyles.headerSubtitle}>
-              Suivi des besoins de {currentDog.name}
+          {/* Sélecteur de chien en sous-titre cliquable */}
+          <TouchableOpacity onPress={handleDogSelectorOpen} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
+            <Text style={{ ...homeStyles.headerSubtitle, color: colors.pupyTextPrimary }}>
+              {currentDog?.name ? `Suivi des besoins de ${currentDog.name}` : 'Sélectionner un chien'}
             </Text>
-          )}
+            <Text style={{ fontSize: 16, marginLeft: 5, color: colors.primary }}>▼</Text>
+          </TouchableOpacity>
 
           <TimersSection lastOuting={timeSince || null} />
           <LastPeeTimer lastPeeTime={timeSincePee || null} />

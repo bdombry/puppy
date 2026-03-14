@@ -404,8 +404,8 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 3. PAYWALL REVENUECAT - Authentifié avec chien + paywall à afficher */}
-        {isAuthenticated && hasCurrentDog && showPaywall && !paywallDismissed ? (
+        {/* 3. PAYWALL REVENUECAT - Authentifié + paywall à afficher (chien ou non) */}
+        {isAuthenticated && showPaywall && !paywallDismissed ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="RevenueCatPaywall">
               {(props) => (
@@ -418,8 +418,8 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 5. MAIN APP - Authentifié + a un chien */}
-        {isAuthenticated && hasCurrentDog ? (
+        {/* 5. MAIN APP - Authentifié + a un chien + premium */}
+        {isAuthenticated && hasCurrentDog && isPremium ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AddDog" component={AddDogScreen} />

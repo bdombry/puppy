@@ -99,7 +99,7 @@ export const Footer = ({ state, descriptors, navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pureWhite,
     borderTopWidth: 1,
     borderTopColor: colors.gray200,
     ...shadows.base,
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 48,
     borderRadius: 22,
-    backgroundColor: colors.gray200,
+    backgroundColor: colors.pureWhite,
   },
   icon: {
     fontSize: 18,

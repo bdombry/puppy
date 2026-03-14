@@ -45,11 +45,13 @@ export const screenStyles = StyleSheet.create({
 
   // ===== CARDS & CONTAINERS =====
   infoCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.pureWhite,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     marginBottom: spacing.xl,
-    ...shadows.small,
+    ...shadows.base,
+    borderWidth: 1,
+    borderColor: colors.primary,
   },
   section: {
     marginBottom: spacing.xl,

@@ -70,27 +70,22 @@ export const homeStyles = StyleSheet.create({
   content: {
   },
   dogCard: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.pureWhite,
     borderRadius: borderRadius.xxxl,
     padding: spacing.xxl,
     marginBottom: spacing.xl,
     ...shadows.base,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
     borderWidth: 1,
-    borderColor: colors.primaryLight,
+    borderColor: colors.primary,
   },
   dogCardWithProgress: {
-    backgroundColor: colors.card,
+    backgroundColor: colors.pureWhite,
     borderRadius: borderRadius.xxxl,
     padding: spacing.lg,
     marginBottom: spacing.xl,
     ...shadows.base,
     borderWidth: 1,
-    borderColor: colors.primaryLight,
+    borderColor: colors.primary,
   },
   dogCardDivider: {
     height: 1,
@@ -368,8 +363,8 @@ export const homeStyles = StyleSheet.create({
     ...shadows.base,
     paddingVertical: spacing.xl + spacing.md,
     paddingHorizontal: spacing.lg,
-    borderWidth: 3,
-    borderColor: colors.purpleDark,
+    // borderWidth: 3, // supprimé pour enlever le contour violet
+    // borderColor: colors.purpleDark, // supprimé pour enlever le contour violet
     marginBottom: spacing.lg,
   },
   actionButtonSecondary: {

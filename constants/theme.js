@@ -82,7 +82,7 @@ export const colors = {
   textTertiary: '#9ca3af',
   border: '#f3f4f6',
   background: '#F4F1EC',
-  card: '#F4F1EC',
+  card: '#FFFFFF', // alias, mais on force l'usage de pureWhite dans les styles
 };
 
 // ===== TYPOGRAPHIES =====
