@@ -127,7 +127,7 @@ export default function FeedingScreen() {
         <View style={styles.header}>
           <View style={[
             screenStyles.avatar,
-            { backgroundColor: colors.primaryLight }
+            { backgroundColor: colors.infoLight }
           ]}>
             <Text style={screenStyles.avatarEmoji}>🍽️</Text>
           </View>
@@ -321,8 +321,8 @@ const styles = StyleSheet.create({
     borderColor: colors.gray200,
   },
   optionCardActive: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
+    backgroundColor: colors.infoLight,
+    borderColor: colors.info,
   },
   checkbox: {
     width: 28,
@@ -335,8 +335,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.lg,
   },
   checkboxActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
+    backgroundColor: colors.info,
+    borderColor: colors.info,
   },
   optionLabel: {
     fontSize: typography.sizes.xl,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   pickerValidateButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.info,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,

@@ -1,3 +1,11 @@
+  const [notifStatus, setNotifStatus] = useState('unknown');
+
+  useEffect(() => {
+    // Vérifie le statut de permission à l'ouverture
+    Notifications.getPermissionsAsync().then(res => {
+      setNotifStatus(res.status);
+    });
+  }, []);
 /**
  * Écran de configuration des notifications
  * Sélection du preset + configuration des heures silencieuses
@@ -131,6 +139,12 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Affichage du statut de permission notification */}
+      <View style={{ padding: 12, alignItems: 'center' }}>
+        <Text style={{ color: notifStatus === 'granted' ? colors.success : colors.error, fontWeight: 'bold' }}>
+          Permission notifications : {notifStatus}
+        </Text>
+      </View>
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
@@ -311,17 +325,28 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => {
-              Alert.alert('✅ Test', 'Notif dans 10 secondes...');
-              Notifications.scheduleNotificationAsync({
-                identifier: 'test-10sec',
-                content: {
-                  title: 'Test',
-                  body: 'Si tu vois ça, les notifs marchent !',
-                  sound: 'default',
-                },
-                trigger: { seconds: 10, repeats: false },
-              });
+            onPress={async () => {
+              try {
+                const perm = await Notifications.getPermissionsAsync();
+                setNotifStatus(perm.status);
+                if (perm.status !== 'granted') {
+                  Alert.alert('❌ Permission refusée', 'Active les notifications dans les réglages iOS.');
+                  return;
+                }
+                Alert.alert('✅ Test', 'Notif dans 10 secondes...');
+                await Notifications.scheduleNotificationAsync({
+                  identifier: 'test-10sec',
+                  content: {
+                    title: 'Test',
+                    body: 'Si tu vois ça, les notifs marchent !',
+                    sound: 'default',
+                  },
+                  trigger: { seconds: 10, repeats: false },
+                });
+                Alert.alert('✅ Planification OK', 'Notification planifiée sans erreur.');
+              } catch (e) {
+                Alert.alert('❌ Erreur planification', e.message);
+              }
             }}
           >
             <Text style={styles.actionButtonText}>Test</Text>

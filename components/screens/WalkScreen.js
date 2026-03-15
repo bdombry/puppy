@@ -154,20 +154,27 @@ export default function WalkScreen() {
         <View style={styles.header}>
           <View style={[
             screenStyles.avatar,
-            { backgroundColor: isIncident ? colors.errorLight : colors.successLight }
+            { backgroundColor:
+                isIncident
+                  ? colors.errorLight
+                  : eventType === 'walk'
+                    ? colors.pupyAccent
+                    : colors.successLight }
           ]}>
             <Text style={screenStyles.avatarEmoji}>
-              {isIncident ? '⚠️' : '🌳'}
+              {isIncident ? '⚠️' : eventType === 'walk' ? '🚶' : '🌳'}
             </Text>
           </View>
 
           <Text style={screenStyles.screenTitle}>
-            {isIncident ? 'Incident' : 'Réussite'}
+            {isIncident ? 'Incident' : eventType === 'walk' ? 'Balade' : 'Réussite'}
           </Text>
           <Text style={screenStyles.screenSubtitle}>
             {isIncident
               ? messages.incidentInside
-              : `Qu'a fait ${currentDog?.name} ?`}
+              : eventType === 'walk'
+                ? `Balade avec ${currentDog?.name}`
+                : `Qu'a fait ${currentDog?.name} ?`}
           </Text>
         </View>
 
@@ -246,7 +253,11 @@ export default function WalkScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              pee && (isIncident ? styles.optionCardActiveRed : styles.optionCardActiveGreen),
+              pee && (isIncident
+                ? styles.optionCardActiveRed
+                : eventType === 'walk'
+                  ? styles.optionCardActiveBlue
+                  : styles.optionCardActiveGreen),
             ]}
             onPress={() => {
               console.log('💧 WalkScreen: Toggle pee, avant:', pee);
@@ -258,7 +269,11 @@ export default function WalkScreen() {
               <View
                 style={[
                   styles.checkbox,
-                  pee && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
+                  pee && (isIncident
+                    ? styles.checkboxActiveRed
+                    : eventType === 'walk'
+                      ? styles.checkboxActiveBlue
+                      : styles.checkboxActiveGreen),
                 ]}
               >
                 {pee && <Text style={styles.checkmark}>✓</Text>}
@@ -273,7 +288,11 @@ export default function WalkScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              poop && (isIncident ? styles.optionCardActiveRed : styles.optionCardActiveGreen),
+              poop && (isIncident
+                ? styles.optionCardActiveRed
+                : eventType === 'walk'
+                  ? styles.optionCardActiveBlue
+                  : styles.optionCardActiveGreen),
             ]}
             onPress={() => {
               console.log('💩 WalkScreen: Toggle poop, avant:', poop);
@@ -285,7 +304,11 @@ export default function WalkScreen() {
               <View
                 style={[
                   styles.checkbox,
-                  poop && (isIncident ? styles.checkboxActiveRed : styles.checkboxActiveGreen),
+                  poop && (isIncident
+                    ? styles.checkboxActiveRed
+                    : eventType === 'walk'
+                      ? styles.checkboxActiveBlue
+                      : styles.checkboxActiveGreen),
                 ]}
               >
                 {poop && <Text style={styles.checkmark}>✓</Text>}
