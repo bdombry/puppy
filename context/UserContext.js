@@ -38,6 +38,7 @@ export const UserProvider = ({ children }) => {
 
   // ── Premium state ──
   const [isPremium, setIsPremium] = useState(false);
+  const [hasMadeTransaction, setHasMadeTransaction] = useState(false);
   const [premiumLoading, setPremiumLoading] = useState(true);
   const [expiresAt, setExpiresAt] = useState(null);
   const [offerings, setOfferings] = useState(null);
@@ -64,6 +65,7 @@ export const UserProvider = ({ children }) => {
     try {
       const status = await checkPremiumStatus();
       setIsPremium(status.isPremium);
+      setHasMadeTransaction(status.hasMadeTransaction);
       setExpiresAt(status.expiresAt);
 
       // Sync vers Supabase si un user est connecté

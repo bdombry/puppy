@@ -107,7 +107,7 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog, dogsLoading } = useAuth();
-  const { isPremium, premiumLoading, revenueCatReady, paywallShownThisSession } = useUser();
+  const { isPremium, hasMadeTransaction, premiumLoading, revenueCatReady, paywallShownThisSession } = useUser();
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
@@ -212,7 +212,7 @@ function AppNavigator() {
           // ✅ Vérifier si c'est un NOUVEAU signup qui vient de poser le flag
           // (onboardingCompleted=true a été posé AVANT completeSignup)
           const paywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
-          if (paywallFlag === 'true' && !isPremium) {
+          if (paywallFlag === 'true' && !hasMadeTransaction) {
             console.log('🎯 Post-signup: affichage du paywall pour nouvel utilisateur');
             setShowPaywall(true);
             setPaywallDismissed(false);
@@ -220,7 +220,7 @@ function AppNavigator() {
           }
 
           // Vraiment un returning user → pas de paywall
-          console.log(`🔑 Returning user - isPremium: ${isPremium} - skipping paywall`);
+          console.log(`🔑 Returning user - hasMadeTransaction: ${hasMadeTransaction} - skipping paywall`);
           setShowPaywall(false);
           AsyncStorage.setItem('show_paywall_on_login', 'false');
           return;
@@ -231,7 +231,7 @@ function AppNavigator() {
         await AsyncStorage.setItem('onboardingCompleted', 'true');
         setOnboardingCompleted(true);
 
-        if (!isPremium) {
+        if (!hasMadeTransaction) {
           console.log('🎯 Post-onboarding: activation du paywall (nouvel utilisateur)');
           setShowPaywall(true);
           setPaywallDismissed(false);

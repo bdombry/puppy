@@ -108,7 +108,7 @@ export const checkPremiumStatus = async () => {
     const customerInfo = await Purchases.getCustomerInfo();
 
     if (!customerInfo) {
-      return { isPremium: false, expiresAt: null, entitlement: null };
+      return { isPremium: false, expiresAt: null, entitlement: null, hasMadeTransaction: false };
     }
 
     const entitlement = customerInfo.entitlements.active[ENTITLEMENTS.PRO];
@@ -117,15 +117,21 @@ export const checkPremiumStatus = async () => {
       ? new Date(entitlement.expirationDate)
       : null;
 
+    // Nouvelle logique: a-t-il déjà fait une transaction ?
+    const hasMadeTransaction =
+      (customerInfo.allPurchasedProductIdentifiers && customerInfo.allPurchasedProductIdentifiers.length > 0) ||
+      !!customerInfo.originalPurchaseDate;
+
     console.log(
       `🔑 Premium: ${isPremium ? '✅' : '❌'}`,
-      expiresAt ? `expires ${expiresAt.toISOString()}` : ''
+      expiresAt ? `expires ${expiresAt.toISOString()}` : '',
+      `hasMadeTransaction: ${hasMadeTransaction ? '✅' : '❌'}`
     );
 
-    return { isPremium, expiresAt, entitlement };
+    return { isPremium, expiresAt, entitlement, hasMadeTransaction };
   } catch (error) {
     console.error('❌ Error checking premium:', error.message);
-    return { isPremium: false, expiresAt: null, entitlement: null };
+    return { isPremium: false, expiresAt: null, entitlement: null, hasMadeTransaction: false };
   }
 };
 
