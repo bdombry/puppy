@@ -3,14 +3,20 @@ import { TouchableOpacity, Text, ActivityIndicator, Alert, Share } from 'react-n
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { generateInviteLink } from './services/collaboratorService';
 import { colors } from '../constants/theme';
+import PropTypes from 'prop-types';
 
 /**
  * Bouton simple pour partager le chien
+ * forcePremium: si true, bloque l'action et appelle onPressPremium
  */
-export const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien' }) => {
+const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien', forcePremium = false, onPressPremium }) => {
   const [loading, setLoading] = React.useState(false);
 
   const handleShareDog = async () => {
+    if (forcePremium && onPressPremium) {
+      onPressPremium();
+      return;
+    }
     setLoading(true);
     try {
       const result = await generateInviteLink(dogId, userId);
@@ -56,6 +62,14 @@ export const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien' }) => {
       )}
     </TouchableOpacity>
   );
+};
+
+ShareDogButton.propTypes = {
+  dogId: PropTypes.any,
+  userId: PropTypes.any,
+  dogName: PropTypes.string,
+  forcePremium: PropTypes.bool,
+  onPressPremium: PropTypes.func,
 };
 
 export default ShareDogButton;

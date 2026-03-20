@@ -55,6 +55,7 @@ export const screenStyles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing.xl,
+    
   },
   sectionContent: {
     gap: spacing.md,
@@ -166,7 +167,7 @@ export const screenStyles = StyleSheet.create({
     color: colors.primary,
   },
   statCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     ...shadows.small,

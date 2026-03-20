@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   fieldCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     padding: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 2,
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     marginLeft: -spacing.lg,
     marginRight: -spacing.lg,
     marginBottom: -spacing.lg,
-    backgroundColor: colors.gray50,
+    backgroundColor: colors.card,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md,
     borderTopWidth: 1,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   pickerWrapper: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.gray200,

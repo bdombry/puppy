@@ -1,11 +1,3 @@
-  const [notifStatus, setNotifStatus] = useState('unknown');
-
-  useEffect(() => {
-    // Vérifie le statut de permission à l'ouverture
-    Notifications.getPermissionsAsync().then(res => {
-      setNotifStatus(res.status);
-    });
-  }, []);
 /**
  * Écran de configuration des notifications
  * Sélection du preset + configuration des heures silencieuses
@@ -33,6 +25,7 @@ import {
   PUPPY_PRESETS,
 } from '../services/notificationService';
 
+
 export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const [settings, setSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS);
   const [originalSettings, setOriginalSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS);
@@ -43,9 +36,17 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [newRangeStart, setNewRangeStart] = useState(new Date(2025, 11, 2, 22, 0));
   const [newRangeEnd, setNewRangeEnd] = useState(new Date(2025, 11, 2, 8, 0));
+  const [notifStatus, setNotifStatus] = useState('unknown');
 
   useEffect(() => {
     loadSettings();
+  }, []);
+
+  useEffect(() => {
+    // Vérifie le statut de permission à l'ouverture
+    Notifications.getPermissionsAsync().then(res => {
+      setNotifStatus(res.status);
+    });
   }, []);
 
   const loadSettings = async () => {

@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   progressCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.base,
     marginBottom: spacing.md,
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.medium,
   },
   insightCard: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.card,
     borderRadius: borderRadius.xl,
     padding: spacing.lg,
     flexDirection: 'row',

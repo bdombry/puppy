@@ -46,7 +46,7 @@ export const colors = {
 
   // Neutre
   pureWhite: '#FFFFFF',
-  white: '#F4F1EC',
+  white: '#FFFFFF',
   black: '#000000',
   gray50: '#f9fafb',
   gray100: '#f3f4f6',

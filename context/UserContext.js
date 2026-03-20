@@ -16,7 +16,7 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { useAuth } from './AuthContext';
 import {
   initializeRevenueCat,
@@ -36,10 +36,12 @@ const UserContext = createContext();
 export const UserProvider = ({ children }) => {
   const { user } = useAuth();
 
+
   // ── Premium state ──
   const [isPremium, setIsPremium] = useState(false);
   const [hasMadeTransaction, setHasMadeTransaction] = useState(false);
-  const [premiumLoading, setPremiumLoading] = useState(true);
+  // Sur le web, premiumLoading est toujours false pour ne jamais bloquer l'app
+  const [premiumLoading, setPremiumLoading] = useState(Platform.OS === 'web' ? false : true);
   const [expiresAt, setExpiresAt] = useState(null);
   const [offerings, setOfferings] = useState(null);
   const [revenueCatReady, setRevenueCatReady] = useState(false);

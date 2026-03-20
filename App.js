@@ -1,6 +1,27 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, ActivityIndicator, Linking, AppState, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+// Purge du cache et de la session Supabase si la version change
+const APP_VERSION = '1.2.0'; // À incrémenter à chaque release majeure
+
+const purgeCacheIfNeeded = async () => {
+  try {
+    const storedVersion = await AsyncStorage.getItem('app_version');
+    if (storedVersion !== APP_VERSION) {
+      // Purge des clés locales (onboarding, paywall, chien sélectionné)
+      await AsyncStorage.removeItem('onboardingCompleted');
+      await AsyncStorage.removeItem('show_paywall_on_login');
+      await AsyncStorage.removeItem('@last_selected_dog');
+      // Ne supprime PAS la session Supabase
+      await AsyncStorage.setItem('app_version', APP_VERSION);
+      console.log('🧹 Purge du cache local (nouvelle version, session conservée)');
+    }
+  } catch (e) {
+    console.error('Erreur purge cache/version:', e);
+  }
+};
+// Appel de la purge au tout début du composant principal
+purgeCacheIfNeeded();
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -45,6 +66,7 @@ import CreateAccountScreen from './components/screens/CreateAccountScreen';
 import RevenueCatPaywallScreen from './components/screens/RevenueCatPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
+// import useHasEverPaid from './hooks/useHasEverPaid';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -107,12 +129,15 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog, dogsLoading } = useAuth();
-  const { isPremium, hasMadeTransaction, premiumLoading, revenueCatReady, paywallShownThisSession } = useUser();
+  const { premiumLoading, isPremium } = useUser();
+  // On ne dépend plus de isPremium/hasMadeTransaction pour le paywall
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
   const navigationRef = useRef();
+
+  // On ne vérifie plus l'historique de paiement ici
 
   // ── Callback stable pour le paywall (évite remount du composant) ──
   const handlePaywallDismissed = useCallback(() => {
@@ -191,70 +216,37 @@ function AppNavigator() {
     };
   }, []);
 
-  // Afficher le paywall seulement pour les NOUVEAUX utilisateurs (post-onboarding)
-  // Les utilisateurs existants (premium, cancelled, etc.) vont direct à l'app
+  // Nouvelle logique: afficher le paywall UNIQUEMENT à la fin de l'onboarding (jamais lors d'une connexion existante)
   useEffect(() => {
     const checkPaywall = async () => {
-      // Attendre que RevenueCat ait fini de charger avant de décider
-      if (premiumLoading) return;
-
-      if (user) {
-        // ✅ Toujours lire AsyncStorage pour avoir l'état le plus récent
-        // (le state React peut être désynchronisé si login vient de Onboarding → Auth)
-        const asyncOnboarding = await AsyncStorage.getItem('onboardingCompleted');
-        const isReturningUser = onboardingCompleted || asyncOnboarding === 'true';
-
-        if (isReturningUser) {
-          // ── Utilisateur existant qui se reconnecte ──
-          // Sync le state React si nécessaire
-          if (!onboardingCompleted) setOnboardingCompleted(true);
-
-          // ✅ Vérifier si c'est un NOUVEAU signup qui vient de poser le flag
-          // (onboardingCompleted=true a été posé AVANT completeSignup)
-          const paywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
-          if (paywallFlag === 'true' && !hasMadeTransaction) {
-            console.log('🎯 Post-signup: affichage du paywall pour nouvel utilisateur');
-            setShowPaywall(true);
-            setPaywallDismissed(false);
-            return;
-          }
-
-          // Vraiment un returning user → pas de paywall
-          console.log(`🔑 Returning user - hasMadeTransaction: ${hasMadeTransaction} - skipping paywall`);
-          setShowPaywall(false);
-          AsyncStorage.setItem('show_paywall_on_login', 'false');
-          return;
-        }
-
-        // ── Transition onboarding → paywall ──
-        // Vraiment un nouvel utilisateur (onboarding jamais complété)
-        await AsyncStorage.setItem('onboardingCompleted', 'true');
-        setOnboardingCompleted(true);
-
-        if (!hasMadeTransaction) {
-          console.log('🎯 Post-onboarding: activation du paywall (nouvel utilisateur)');
-          setShowPaywall(true);
-          setPaywallDismissed(false);
-        }
-      } else {
+      if (!user) {
         setShowPaywall(false);
         setPaywallDismissed(false);
+        return;
+      }
+      // Vérifier si l'onboarding vient d'être complété (nouveau compte)
+      const asyncOnboarding = await AsyncStorage.getItem('onboardingCompleted');
+      const isReturningUser = onboardingCompleted || asyncOnboarding === 'true';
+      if (!isReturningUser) {
+        // Fin d'onboarding → afficher le paywall
+        await AsyncStorage.setItem('onboardingCompleted', 'true');
+        setOnboardingCompleted(true);
+        setShowPaywall(true);
+        setPaywallDismissed(false);
+        console.log('🎯 Affichage du paywall (fin onboarding)');
+      } else {
+        // Connexion via "j'ai déjà un compte" → jamais de paywall
+        setShowPaywall(false);
+        setPaywallDismissed(false);
+        AsyncStorage.setItem('show_paywall_on_login', 'false');
+        console.log('🔑 Connexion existante, pas de paywall');
       }
     };
-
     checkPaywall();
-  }, [user, onboardingCompleted, isPremium, premiumLoading]);
+  }, [user, onboardingCompleted]);
 
-  // ── Auto-dismiss paywall quand premium confirmé (réactif, pas besoin de callback) ──
-  useEffect(() => {
-    if (showPaywall && !paywallDismissed && isPremium) {
-      console.log('✅ Premium détecté dans App.js → auto-dismiss du paywall');
-      setPaywallDismissed(true);
-      setOnboardingCompleted(true);
-      AsyncStorage.setItem('show_paywall_on_login', 'false');
-      AsyncStorage.setItem('onboardingCompleted', 'true');
-    }
-  }, [showPaywall, paywallDismissed, isPremium]);
+  // ── Auto-dismiss paywall si besoin (ex: bouton, ou paiement local) ──
+  // (plus de logique automatique ici)
 
   // Initialiser les notifications quand on a un chien
   useEffect(() => {

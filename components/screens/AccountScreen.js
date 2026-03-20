@@ -16,9 +16,22 @@ import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { EMOJI } from '../../constants/config';
+import { useUser } from '../../context/UserContext';
 
 export default function AccountScreen() {
   const { user, deleteAccount } = useAuth();
+  const { isPremium, manageSubscription, premiumLoading } = useUser();
+    // Handler pour résilier l'abonnement (ouvrir Customer Center RevenueCat)
+    const handleCancelSubscription = async () => {
+      try {
+        setLoading(true);
+        await manageSubscription();
+      } catch (err) {
+        Alert.alert('Erreur', 'Impossible d’ouvrir la gestion d’abonnement.');
+      } finally {
+        setLoading(false);
+      }
+    };
   const navigation = useNavigation();
   const [loading, setLoading] = useState(false);
 
@@ -138,6 +151,20 @@ export default function AccountScreen() {
         </View>
 
         <View style={[screenStyles.section, styles.sectionDanger]}>
+                  {/* Résilier abonnement (visible si premium) */}
+                  {isPremium && (
+                    <TouchableOpacity
+                      style={[screenStyles.button, { backgroundColor: colors.warning, marginBottom: spacing.md }]}
+                      onPress={handleCancelSubscription}
+                      disabled={loading || premiumLoading}
+                    >
+                      {loading || premiumLoading ? (
+                        <ActivityIndicator color={colors.white} size="small" />
+                      ) : (
+                        <Text style={[screenStyles.buttonText, { color: colors.white }]}>Résilier mon abonnement</Text>
+                      )}
+                    </TouchableOpacity>
+                  )}
           <Text style={screenStyles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
           
           <TouchableOpacity

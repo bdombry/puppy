@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import BreedAutoComplete from '../BreedAutoComplete';
 import {
   ScrollView,
   Alert,
@@ -41,6 +42,14 @@ export default function AddDogScreen() {
       Alert.alert('Erreur', 'Le nom du chien est obligatoire');
       return;
     }
+    if (!breed) {
+      Alert.alert('Erreur', 'La race du chien est obligatoire');
+      return;
+    }
+    if (!birthDate) {
+      Alert.alert('Erreur', 'La date de naissance du chien est obligatoire');
+      return;
+    }
 
     setLoading(true);
     try {
@@ -48,17 +57,9 @@ export default function AddDogScreen() {
         name: name.trim(),
         sex,
         photo_url: photoUrl,
+        breed: breed.trim(),
+        birth_date: birthDate.toISOString().split('T')[0],
       };
-
-      // Ajouter breed seulement s'il y a une valeur
-      if (breed && breed.trim()) {
-        dogData.breed = breed.trim();
-      }
-
-      // Ajouter birth_date seulement s'il y a une valeur
-      if (birthDate) {
-        dogData.birth_date = birthDate.toISOString().split('T')[0];
-      }
 
       console.log('🐕 Création du chien:', dogData);
 
@@ -159,11 +160,10 @@ export default function AddDogScreen() {
             required
           />
 
-          <FormInput
-            label="Race (optionnel)"
+          <BreedAutoComplete
+            label="Race du chien"
             value={breed}
-            onChangeText={setBreed}
-            placeholder="Ex: Labrador, Berger allemand..."
+            onChange={setBreed}
           />
 
           <View style={screenStyles.formGroup}>
@@ -172,9 +172,8 @@ export default function AddDogScreen() {
           </View>
 
           <View style={screenStyles.formGroup}>
-            <Text style={screenStyles.label}>Date de naissance (optionnel)</Text>
+            <Text style={screenStyles.label}>Date de naissance</Text>
             <TouchableOpacity
-              style={styles.dateButton}
               onPress={() => setShowPicker(true)}
             >
               <Text style={styles.dateButtonText}>

@@ -24,9 +24,23 @@ import { EMOJI } from '../../constants/config';
 import SexToggle from '../SexToggle';
 import { useImageUpload } from '../../hooks/useImageUpload';
 import ShareDogButton from '../ShareDogButton';
+import { useUser } from '../../context/UserContext';
+import { presentPaywall } from '../../services/revenueCatService';
+import { Modal as RNModal } from 'react-native';
 
 export default function DogProfileScreen() {
   const { currentDog, dogs, user, setCurrentDog, deleteDog } = useAuth();
+  const { isPremium, premiumLoading } = useUser();
+    // État pour le modal premium
+    const [showPremiumModal, setShowPremiumModal] = useState(false);
+    const [pendingPremiumAction, setPendingPremiumAction] = useState(null); // 'addDog' | 'shareDog'
+
+    // Handler pour afficher le paywall après le modal
+    const handleShowPaywall = async () => {
+      setShowPremiumModal(false);
+      await presentPaywall();
+      setPendingPremiumAction(null);
+    };
   const navigation = useNavigation();
   const { pickImage, uploadImage } = useImageUpload();
 
@@ -222,7 +236,14 @@ export default function DogProfileScreen() {
         {/* Acces AddDog uniquement depuis ce bouton */}
         <TouchableOpacity
           style={styles.addDogButton}
-          onPress={() => navigation.navigate('AddDog')}
+          onPress={() => {
+            if (isPremium) {
+              navigation.navigate('AddDog');
+            } else {
+              setPendingPremiumAction('addDog');
+              setShowPremiumModal(true);
+            }
+          }}
           activeOpacity={0.8}
         >
           <View style={styles.addDogButtonContent}>
@@ -451,7 +472,42 @@ export default function DogProfileScreen() {
               dogId={currentDog?.id}
               userId={user?.id}
               dogName={currentDog?.name}
+              onPressPremium={() => {
+                setPendingPremiumAction('shareDog');
+                setShowPremiumModal(true);
+              }}
+              forcePremium={!isPremium}
             />
+      {/* Modal premium */}
+      <RNModal
+        visible={showPremiumModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowPremiumModal(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 28, width: '80%', alignItems: 'center' }}>
+            <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 12 }}>Fonctionnalité Premium</Text>
+            <Text style={{ fontSize: 16, marginBottom: 24, textAlign: 'center' }}>
+              Cette fonctionnalité est réservée aux membres premium. Devenez premium pour ajouter ou partager un chien !
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <TouchableOpacity
+                style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 24, marginRight: 8 }}
+                onPress={handleShowPaywall}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 16 }}>OK</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ backgroundColor: colors.gray200, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 24 }}
+                onPress={handleShowPaywall}
+              >
+                <Text style={{ color: colors.text, fontWeight: 'bold', fontSize: 16 }}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </RNModal>
 
             <TouchableOpacity
               style={[screenStyles.button, dogs.length <= 1 ? { backgroundColor: colors.gray200, borderRadius: 12, opacity: 0.5 } : screenStyles.buttonDanger]}
