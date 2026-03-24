@@ -167,6 +167,7 @@ export default function AnalyticsScreen() {
           <Text style={styles.explanationNote}>* Montre les raisons des incidents quand tu les as enregistrées</Text>
         </View>
 
+
         {/* Insights */}
         <View style={screenStyles.section}>
           <Text style={screenStyles.sectionTitle}>Insights 💡</Text>

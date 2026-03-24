@@ -212,7 +212,10 @@ export const restorePurchases = async () => {
 export const showCustomerCenter = async () => {
   try {
     console.log('🎫 Opening Customer Center...');
-    await Purchases.presentCustomerCenter();
+    if (typeof RevenueCatUI.presentCustomerCenter !== 'function') {
+      throw new Error('presentCustomerCenter is not available on RevenueCatUI. Check package version.');
+    }
+    await RevenueCatUI.presentCustomerCenter();
     // Re-fetch après fermeture
     const customerInfo = await Purchases.getCustomerInfo();
     console.log('✅ Customer Center closed');

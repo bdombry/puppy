@@ -57,12 +57,37 @@ export const AuthProvider = ({ children }) => {
       try {
         // ✅ Étape 1: Vérifier la session avec timeout
         const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) => 
+        const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Session check timeout')), 10000)
         );
-        
-        const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
-        
+        let session = null;
+        try {
+          const { data } = await Promise.race([sessionPromise, timeoutPromise]);
+          session = data?.session;
+        } catch (err) {
+          console.warn('⚠️ getSession failed or timed out:', err);
+        }
+
+        // Si pas de session, tenter un refresh explicite
+        if (!session) {
+          try {
+            console.log('🔄 Tentative explicite de refreshSession...');
+            const refreshPromise = supabase.auth.refreshSession();
+            const refreshTimeout = new Promise((_, reject) =>
+              setTimeout(() => reject(new Error('Refresh session timeout')), 8000)
+            );
+            const { data: refreshData } = await Promise.race([refreshPromise, refreshTimeout]);
+            session = refreshData?.session;
+            if (session) {
+              console.log('✅ refreshSession a réussi');
+            } else {
+              console.warn('❌ refreshSession n\'a pas retourné de session');
+            }
+          } catch (refreshErr) {
+            console.error('❌ refreshSession a échoué:', refreshErr);
+          }
+        }
+
         if (!isMounted) return;
 
         if (session?.user) {
@@ -71,11 +96,17 @@ export const AuthProvider = ({ children }) => {
         } else {
           setUser(null);
           setCurrentDog(null);
+          // Si tout a échoué, forcer un signOut pour nettoyer
+          try {
+            await supabase.auth.signOut();
+            console.log('🚪 signOut forcé après échec session/refresh');
+          } catch (signOutErr) {
+            console.error('❌ Erreur lors du signOut forcé:', signOutErr);
+          }
         }
       } catch (error) {
         console.error('❌ Erreur AuthProvider init:', error);
         if (isMounted) {
-          // En cas d'erreur, on considère qu'il n'y a pas de session
           setUser(null);
           setCurrentDog(null);
         }
