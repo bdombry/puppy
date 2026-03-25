@@ -129,7 +129,7 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog, dogsLoading } = useAuth();
-  const { premiumLoading, isPremium } = useUser();
+  const { premiumLoading, isPremium, hasMadeTransaction } = useUser();
   // On ne dépend plus de isPremium/hasMadeTransaction pour le paywall
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
@@ -216,34 +216,28 @@ function AppNavigator() {
     };
   }, []);
 
-  // Nouvelle logique: afficher le paywall UNIQUEMENT à la fin de l'onboarding (jamais lors d'une connexion existante)
+  // Nouvelle logique : afficher le paywall uniquement à la fin de l'onboarding (jamais à la connexion)
+  // Afficher le paywall uniquement à la toute première complétion de l'onboarding (pas à la connexion)
+  const prevOnboardingCompleted = useRef(false);
   useEffect(() => {
-    const checkPaywall = async () => {
-      if (!user) {
-        setShowPaywall(false);
-        setPaywallDismissed(false);
-        return;
-      }
-      // Vérifier si l'onboarding vient d'être complété (nouveau compte)
-      const asyncOnboarding = await AsyncStorage.getItem('onboardingCompleted');
-      const isReturningUser = onboardingCompleted || asyncOnboarding === 'true';
-      if (!isReturningUser) {
-        // Fin d'onboarding → afficher le paywall
-        await AsyncStorage.setItem('onboardingCompleted', 'true');
-        setOnboardingCompleted(true);
-        setShowPaywall(true);
-        setPaywallDismissed(false);
-        console.log('🎯 Affichage du paywall (fin onboarding)');
-      } else {
-        // Connexion via "j'ai déjà un compte" → jamais de paywall
-        setShowPaywall(false);
-        setPaywallDismissed(false);
-        AsyncStorage.setItem('show_paywall_on_login', 'false');
-        console.log('🔑 Connexion existante, pas de paywall');
-      }
-    };
-    checkPaywall();
-  }, [user, onboardingCompleted]);
+    // On détecte la transition false -> true
+    if (
+      user &&
+      onboardingCompleted &&
+      !prevOnboardingCompleted.current &&
+      !paywallDismissed &&
+      !isPremium &&
+      !hasMadeTransaction // Ajout : ne pas afficher le paywall si déjà transaction
+    ) {
+      setShowPaywall(true);
+      setPaywallDismissed(false);
+      AsyncStorage.setItem('onboardingCompleted', 'true');
+      console.log('🎯 Affichage du paywall (fin onboarding)');
+    } else {
+      setShowPaywall(false);
+    }
+    prevOnboardingCompleted.current = onboardingCompleted;
+  }, [user, onboardingCompleted, paywallDismissed, isPremium, hasMadeTransaction]);
 
   // ── Auto-dismiss paywall si besoin (ex: bouton, ou paiement local) ──
   // (plus de logique automatique ici)
@@ -388,15 +382,26 @@ function AppNavigator() {
               component={AcceptInvitationScreen}
               options={{ animationEnabled: true }}
             />
-            <Stack.Screen 
-              name="Onboarding1" 
-              component={Onboarding1Screen}
-              options={{ animationEnabled: true }}
-            />
+            <Stack.Screen name="Onboarding1" component={Onboarding1Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding1_5" component={Onboarding1_5Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding2" component={Onboarding2Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding3" component={Onboarding3Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding4" component={Onboarding4Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding5" component={Onboarding5Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding6" component={Onboarding6Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding6Name" component={Onboarding6NameScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding6Gender" component={Onboarding6GenderScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding6Age" component={Onboarding6AgeScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding6Situation" component={Onboarding6SituationScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding7" component={Onboarding7Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding8" component={Onboarding8Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="Onboarding9" component={Onboarding9Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="AccessCode" component={AccessCodeScreen} options={{ animationEnabled: true }} />
           </Stack.Group>
         ) : null}
 
-        {/* 3. PAYWALL REVENUECAT - Authentifié + paywall à afficher (chien ou non) */}
+        {/* 3. PAYWALL REVENUECAT - Affiché uniquement à la fin de l'onboarding */}
         {isAuthenticated && showPaywall && !paywallDismissed ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="RevenueCatPaywall">

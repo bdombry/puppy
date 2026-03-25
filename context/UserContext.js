@@ -272,6 +272,7 @@ export const UserProvider = ({ children }) => {
       value={{
         // État premium
         isPremium,
+        hasMadeTransaction,
         premiumLoading,
         expiresAt,
         revenueCatReady,
