@@ -54,62 +54,11 @@ export const AuthProvider = ({ children }) => {
     let isMounted = true;
 
     const initAuth = async () => {
-      try {
-        // ✅ Étape 1: Vérifier la session avec timeout
-        const sessionPromise = supabase.auth.getSession();
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Session check timeout')), 10000)
-        );
-        let session = null;
-        try {
-          const { data } = await Promise.race([sessionPromise, timeoutPromise]);
-          session = data?.session;
-        } catch (err) {
-          console.warn('⚠️ getSession failed or timed out:', err);
-        }
-
-        // Si pas de session, tenter un refresh explicite
-        if (!session) {
-          try {
-            console.log('🔄 Tentative explicite de refreshSession...');
-            const refreshPromise = supabase.auth.refreshSession();
-            const refreshTimeout = new Promise((_, reject) =>
-              setTimeout(() => reject(new Error('Refresh session timeout')), 8000)
-            );
-            const { data: refreshData } = await Promise.race([refreshPromise, refreshTimeout]);
-            session = refreshData?.session;
-            if (session) {
-              console.log('✅ refreshSession a réussi');
-            } else {
-              console.warn('❌ refreshSession n\'a pas retourné de session');
-            }
-          } catch (refreshErr) {
-            // Ne pas invalider agressivement la session sur timeout réseau transitoire.
-            console.warn('⚠️ refreshSession a échoué (transitoire):', refreshErr);
-          }
-        }
-
-        if (!isMounted) return;
-
-        if (session?.user) {
-          // Connexion/reprise de session classique: ne jamais relancer le paywall onboarding.
-          await AsyncStorage.setItem('show_paywall_on_login', 'false');
-          setUser(session.user);
-          await loadUserDog(session.user.id);
-        } else {
-          // Pas de session disponible - laisser onAuthStateChange être la source de vérité
-          // (ne pas forcer setUser(null) ici, ça peut écraser une session valide qui arrive via onAuthStateChange)
-          console.log('ℹ️ initAuth: pas de session trouvée via getSession/refreshSession');
-        }
-      } catch (error) {
-        console.error('❌ Erreur AuthProvider init:', error);
-        // Ne pas forcer setUser(null) ici - laisser onAuthStateChange être la source de vérité
-        // (on peut écraser une session valide)
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-          setIsInitialized(true);
-        }
+      // ✅ SIMPLIFIÉ: Ne pas appeler getSession/refreshSession qui timeout
+      // Laisser onAuthStateChange + INITIAL_SESSION charger la session depuis AsyncStorage
+      if (isMounted) {
+        setLoading(false);
+        setIsInitialized(true);
       }
     };
 
@@ -122,9 +71,6 @@ export const AuthProvider = ({ children }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return;
-
-        // ✅ Ignorer INITIAL_SESSION - déjà géré par initAuth() ci-dessus
-        if (event === 'INITIAL_SESSION') return;
 
         console.log('🔑 onAuthStateChange:', event, '- signupInProgress:', signupInProgress.current);
 
