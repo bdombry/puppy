@@ -81,7 +81,6 @@ const linking = {
       MainTabs: '',
       Auth: 'auth',
       DogSetup: 'setup',
-      RevenueCatPaywall: 'paywall',
       CreateAccount: 'create-account',
     },
   },
@@ -129,12 +128,13 @@ function MainTabNavigator() {
 
 function AppNavigator() {
   const { loading, user, currentDog, dogsLoading } = useAuth();
-  const { premiumLoading, isPremium, hasMadeTransaction } = useUser();
-  // On ne dépend plus de isPremium/hasMadeTransaction pour le paywall
+  const { premiumLoading, isPremium, revenueCatReady } = useUser();
+  const enableLoadingDebugLogs = process.env.EXPO_PUBLIC_DEBUG_LOADING_STATE === 'true';
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
+  const [showPaywallOnLogin, setShowPaywallOnLogin] = useState(false);
   const navigationRef = useRef();
 
   // On ne vérifie plus l'historique de paiement ici
@@ -144,6 +144,7 @@ function AppNavigator() {
     console.log('✅ Paywall dismissed - navigating to MainTabs');
     setPaywallDismissed(true);
     setOnboardingCompleted(true);
+    setShowPaywallOnLogin(false);
     AsyncStorage.setItem('show_paywall_on_login', 'false');
     AsyncStorage.setItem('onboardingCompleted', 'true');
   }, []);
@@ -177,57 +178,69 @@ function AppNavigator() {
     };
   }, []);
 
-  // Vérifier si l'onboarding a été complété
+  // Vérifier si l'onboarding a été complété et si le paywall doit s'afficher
   useEffect(() => {
     const checkOnboarding = async () => {
       try {
-        // ⚠️ DEV: Flag pour tester le flow d'onboarding
-        // await AsyncStorage.removeItem('onboardingCompleted');
-        
         const completed = await AsyncStorage.getItem('onboardingCompleted');
         setOnboardingCompleted(completed === 'true');
+        const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
+        setShowPaywallOnLogin(showPaywallFlag === 'true');
       } catch (error) {
         console.error('Erreur lors de la vérification du onboarding:', error);
       } finally {
         setCheckingOnboarding(false);
       }
     };
-
     checkOnboarding();
   }, []);
 
-  // ✅ Écouter les changements d'onboarding en temps réel
+  // Re-synchroniser les flags quand l'utilisateur change (login/reconnexion).
+  useEffect(() => {
+    const syncFlagsAfterAuthChange = async () => {
+      try {
+        const completed = await AsyncStorage.getItem('onboardingCompleted');
+        const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
+        setOnboardingCompleted(completed === 'true');
+        setShowPaywallOnLogin(showPaywallFlag === 'true');
+      } catch (error) {
+        console.error('Erreur sync flags après auth:', error);
+      }
+    };
+
+    syncFlagsAfterAuthChange();
+  }, [user?.id]);
+
+  // ✅ Écouter les changements d'onboarding et du flag paywall en temps réel
   useEffect(() => {
     const subscription = AppState.addEventListener('change', async (state) => {
       if (state === 'active') {
-        // App revient au focus - re-vérifier le flag
         try {
           const completed = await AsyncStorage.getItem('onboardingCompleted');
           setOnboardingCompleted(completed === 'true');
-          console.log('🔄 Onboarding flag re-vérifié:', completed === 'true');
+          const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
+          setShowPaywallOnLogin(showPaywallFlag === 'true');
+          console.log('🔄 Onboarding flag re-vérifié:', completed === 'true', 'show_paywall_on_login:', showPaywallFlag);
         } catch (error) {
           console.error('Erreur vérification onboarding:', error);
         }
       }
     });
-
     return () => {
       subscription.remove();
     };
   }, []);
 
-  // Nouvelle logique : afficher le paywall uniquement à la fin de l'onboarding (jamais à la connexion)
-  // Afficher le paywall uniquement à la toute première complétion de l'onboarding (pas à la connexion)
-  const prevOnboardingCompleted = useRef(false);
+  // Nouvelle logique : afficher le paywall uniquement à la fin de l'onboarding (jamais à la connexion classique)
+  // ⚠️ ATTENDRE que RevenueCat soit ready pour savoir si déjà premium
   useEffect(() => {
-    // On détecte la transition false -> true
     if (
       user &&
       onboardingCompleted &&
-      !prevOnboardingCompleted.current &&
+      showPaywallOnLogin &&
       !paywallDismissed &&
-      !isPremium &&
-      !hasMadeTransaction // Ajout : ne pas afficher le paywall si déjà transaction
+      revenueCatReady && // 🔑 KEY: Attendre que RevenueCat confirme le statut
+      !isPremium
     ) {
       setShowPaywall(true);
       setPaywallDismissed(false);
@@ -236,8 +249,7 @@ function AppNavigator() {
     } else {
       setShowPaywall(false);
     }
-    prevOnboardingCompleted.current = onboardingCompleted;
-  }, [user, onboardingCompleted, paywallDismissed, isPremium, hasMadeTransaction]);
+  }, [user, onboardingCompleted, showPaywallOnLogin, paywallDismissed, isPremium, revenueCatReady]);
 
   // ── Auto-dismiss paywall si besoin (ex: bouton, ou paiement local) ──
   // (plus de logique automatique ici)
@@ -284,13 +296,15 @@ function AppNavigator() {
 
   // Debug logging pour comprendre l'état de chargement
   useEffect(() => {
+    if (!enableLoadingDebugLogs) return;
+
     console.log('📊 Loading state:', {
       loading, checkingOnboarding, dogsLoading,
       premiumLoading, premiumTimedOut,
       user: !!user, currentDog: !!currentDog,
       dogWaitTimedOut, onboardingCompleted, showPaywall, paywallDismissed
     });
-  }, [loading, checkingOnboarding, dogsLoading, premiumLoading, premiumTimedOut, user, currentDog, dogWaitTimedOut, onboardingCompleted, showPaywall, paywallDismissed]);
+  }, [enableLoadingDebugLogs, loading, checkingOnboarding, dogsLoading, premiumLoading, premiumTimedOut, user, currentDog, dogWaitTimedOut, onboardingCompleted, showPaywall, paywallDismissed]);
 
   if (loading || checkingOnboarding || dogsLoading || (user && premiumLoading && !premiumTimedOut) || (user && !currentDog && !dogWaitTimedOut)) {
     return (
@@ -415,8 +429,8 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 5. MAIN APP - Authentifié + a un chien + premium */}
-        {isAuthenticated && hasCurrentDog && isPremium ? (
+        {/* 5. MAIN APP - Authentifié + a un chien */}
+        {isAuthenticated && hasCurrentDog ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="AddDog" component={AddDogScreen} />
@@ -448,14 +462,6 @@ function AppNavigator() {
 
         {/* 5b. Fallback supprimé : plus de mini-onboarding chien */}
 
-        {/* 6. MODAL GLOBAL - Paywall accessible depuis n'importe quel état via deeplink */}
-        <Stack.Group screenOptions={{ presentation: 'modal' }}>
-          <Stack.Screen 
-            name="RevenueCatPaywallModal" 
-            component={RevenueCatPaywallScreen}
-            options={{ headerShown: false, animationEnabled: true }}
-          />
-        </Stack.Group>
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -29,6 +29,8 @@ const AuthScreen = ({ navigation }) => {
       
       // Marquer l'onboarding comme complété (utilisateur existant qui se reconnecte)
       await AsyncStorage.setItem('onboardingCompleted', 'true');
+      // 🔒 Réinitialiser le flag paywall (ce n'est pas un nouvel utilisateur)
+      await AsyncStorage.setItem('show_paywall_on_login', 'false');
       console.log('✅ Connecté avec:', user.email);
     } catch (err) {
       let message = err.message;
@@ -86,6 +88,8 @@ const AuthScreen = ({ navigation }) => {
       // 4. Marquer l'onboarding comme complété IMMÉDIATEMENT
       // (avant que onAuthStateChange ne démonte ce composant)
       await AsyncStorage.setItem('onboardingCompleted', 'true');
+      // 🔒 Réinitialiser le flag paywall (ce n'est pas un nouvel utilisateur)
+      await AsyncStorage.setItem('show_paywall_on_login', 'false');
       console.log('✅ Apple login réussi, le contexte prend le relais');
       
       // Le onAuthStateChange dans AuthContext va:

@@ -25,7 +25,6 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
     isPremium,
     revenueCatReady,
     refreshPremiumStatus,
-    markPaywallShown,
   } = useUser();
 
   const [purchaseComplete, setPurchaseComplete] = useState(false);
@@ -49,16 +48,12 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
       // Si déjà premium, skip direct
       if (isPremium) {
         console.log('✅ User already premium - skipping paywall');
-        markPaywallShown();
         await AsyncStorage.setItem('onboardingCompleted', 'true');
         if (isMounted.current) setPurchaseComplete(true);
-        // App.js va auto-dismiss via le useEffect [isPremium]
-        // Backup callback au cas où :
         try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
         return;
       }
 
-      markPaywallShown();
       console.log('🎯 Presenting HARD paywall...');
 
       let purchased = false;
@@ -95,14 +90,13 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
         console.log('✅ Purchase loop finished');
         await AsyncStorage.setItem('onboardingCompleted', 'true');
         setPurchaseComplete(true);
-        // App.js détecte isPremium=true et auto-dismiss.
-        // Backup callback :
+        console.log('🔔 Calling onPaywallDismissed callback...');
         try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
       }
     };
 
     displayHardPaywall();
-  }, [revenueCatReady]);
+  }, [revenueCatReady, isPremium]);
 
   // ── Fallback navigation.reset si on est toujours là 2s après l'achat ──
   useEffect(() => {

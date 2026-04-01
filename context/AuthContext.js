@@ -84,32 +84,27 @@ export const AuthProvider = ({ children }) => {
               console.warn('❌ refreshSession n\'a pas retourné de session');
             }
           } catch (refreshErr) {
-            console.error('❌ refreshSession a échoué:', refreshErr);
+            // Ne pas invalider agressivement la session sur timeout réseau transitoire.
+            console.warn('⚠️ refreshSession a échoué (transitoire):', refreshErr);
           }
         }
 
         if (!isMounted) return;
 
         if (session?.user) {
+          // Connexion/reprise de session classique: ne jamais relancer le paywall onboarding.
+          await AsyncStorage.setItem('show_paywall_on_login', 'false');
           setUser(session.user);
           await loadUserDog(session.user.id);
         } else {
-          setUser(null);
-          setCurrentDog(null);
-          // Si tout a échoué, forcer un signOut pour nettoyer
-          try {
-            await supabase.auth.signOut();
-            console.log('🚪 signOut forcé après échec session/refresh');
-          } catch (signOutErr) {
-            console.error('❌ Erreur lors du signOut forcé:', signOutErr);
-          }
+          // Pas de session disponible - laisser onAuthStateChange être la source de vérité
+          // (ne pas forcer setUser(null) ici, ça peut écraser une session valide qui arrive via onAuthStateChange)
+          console.log('ℹ️ initAuth: pas de session trouvée via getSession/refreshSession');
         }
       } catch (error) {
         console.error('❌ Erreur AuthProvider init:', error);
-        if (isMounted) {
-          setUser(null);
-          setCurrentDog(null);
-        }
+        // Ne pas forcer setUser(null) ici - laisser onAuthStateChange être la source de vérité
+        // (on peut écraser une session valide)
       } finally {
         if (isMounted) {
           setLoading(false);
@@ -144,6 +139,8 @@ export const AuthProvider = ({ children }) => {
           }
 
           // Flux normal (login classique, reconnexion)
+          // Sécurité anti-flag stale: login != signup, donc pas de paywall onboarding.
+          await AsyncStorage.setItem('show_paywall_on_login', 'false');
           setDogsLoading(true);
           setUser(session.user);
           try {

@@ -4,7 +4,7 @@
  * URI Scheme: pupytracker://
  * 
  * Routes disponibles:
- * - pupytracker://paywall - Ouvre directement le paywall
+ * - pupytracker://paywall - Désactivé (évite ouverture paywall hors onboarding)
  * - pupytracker://invite/:token - Accepter une invitation
  * - pupytracker://auth - Aller à l'écran d'authentification
  */
@@ -52,7 +52,7 @@ export const handleDeepLink = (navigationRef, deeplink) => {
 
   switch (routeName) {
     case 'paywall':
-      navigationRef.current.navigate('RevenueCatPaywall');
+      console.warn('⚠️ Deeplink paywall ignoré (désactivé hors onboarding)');
       break;
     case 'invite':
       navigationRef.current.navigate('AcceptInvitation', { token: params.token });
@@ -76,7 +76,8 @@ export const generateDeepLink = (routeName, params = {}) => {
 
   switch (routeName) {
     case 'paywall':
-      return `${baseUrl}paywall`;
+      console.warn('⚠️ Deeplink paywall désactivé');
+      return baseUrl;
     case 'invite':
       return `${baseUrl}invite/${params.token}`;
     case 'auth':

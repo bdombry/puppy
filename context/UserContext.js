@@ -39,13 +39,11 @@ export const UserProvider = ({ children }) => {
 
   // ── Premium state ──
   const [isPremium, setIsPremium] = useState(false);
-  const [hasMadeTransaction, setHasMadeTransaction] = useState(false);
   // Sur le web, premiumLoading est toujours false pour ne jamais bloquer l'app
   const [premiumLoading, setPremiumLoading] = useState(Platform.OS === 'web' ? false : true);
   const [expiresAt, setExpiresAt] = useState(null);
   const [offerings, setOfferings] = useState(null);
   const [revenueCatReady, setRevenueCatReady] = useState(false);
-  const [paywallShownThisSession, setPaywallShownThisSession] = useState(false);
 
   // Track si on a déjà initialisé pour cet userId
   const initializedForUser = useRef(null);
@@ -67,7 +65,6 @@ export const UserProvider = ({ children }) => {
     try {
       const status = await checkPremiumStatus();
       setIsPremium(status.isPremium);
-      setHasMadeTransaction(status.hasMadeTransaction);
       setExpiresAt(status.expiresAt);
 
       // Sync vers Supabase si un user est connecté
@@ -255,32 +252,18 @@ export const UserProvider = ({ children }) => {
     }
   }, [refreshPremiumStatus]);
 
-  // ── Marquer le paywall comme montré cette session ──
-  const markPaywallShown = useCallback(() => {
-    setPaywallShownThisSession(true);
-  }, []);
-
-  // ── Reset le flag de session (utile après logout) ──
-  useEffect(() => {
-    if (!user) {
-      setPaywallShownThisSession(false);
-    }
-  }, [user]);
 
   return (
     <UserContext.Provider
       value={{
         // État premium
         isPremium,
-        hasMadeTransaction,
         premiumLoading,
         expiresAt,
         revenueCatReady,
         offerings,
 
-        // Session paywall (une seule fois par session)
-        paywallShownThisSession,
-        markPaywallShown,
+        // (paywallShownThisSession supprimé)
 
         // Actions
         refreshPremiumStatus,

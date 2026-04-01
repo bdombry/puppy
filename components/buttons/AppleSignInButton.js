@@ -74,6 +74,7 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
 
         // ══ PHASE 2 directe: Connexion ══
         await AsyncStorage.setItem('onboardingCompleted', 'true');
+        await AsyncStorage.setItem('show_paywall_on_login', 'false');
         await completeSignup();
         console.log('✅ Returning user connected');
         onSuccess?.();

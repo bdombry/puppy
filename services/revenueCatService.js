@@ -31,6 +31,11 @@ export const initializeRevenueCat = async (userId = null) => {
   try {
     console.log('💳 Initializing RevenueCat...');
 
+    // Réduit fortement le bruit des logs SDK (notamment dumps transactions/JWS).
+    if (typeof Purchases.setLogLevel === 'function' && Purchases.LOG_LEVEL?.WARN) {
+      Purchases.setLogLevel(Purchases.LOG_LEVEL.WARN);
+    }
+
     if (userId) {
       await Purchases.configure({
         apiKey: REVENUE_CAT_API_KEY,
@@ -108,7 +113,7 @@ export const checkPremiumStatus = async () => {
     const customerInfo = await Purchases.getCustomerInfo();
 
     if (!customerInfo) {
-      return { isPremium: false, expiresAt: null, entitlement: null, hasMadeTransaction: false };
+      return { isPremium: false, expiresAt: null, entitlement: null };
     }
 
     const entitlement = customerInfo.entitlements.active[ENTITLEMENTS.PRO];
@@ -117,21 +122,15 @@ export const checkPremiumStatus = async () => {
       ? new Date(entitlement.expirationDate)
       : null;
 
-    // Nouvelle logique: a-t-il déjà fait une transaction ?
-    const hasMadeTransaction =
-      (customerInfo.allPurchasedProductIdentifiers && customerInfo.allPurchasedProductIdentifiers.length > 0) ||
-      !!customerInfo.originalPurchaseDate;
-
     console.log(
       `🔑 Premium: ${isPremium ? '✅' : '❌'}`,
-      expiresAt ? `expires ${expiresAt.toISOString()}` : '',
-      `hasMadeTransaction: ${hasMadeTransaction ? '✅' : '❌'}`
+      expiresAt ? `expires ${expiresAt.toISOString()}` : ''
     );
 
-    return { isPremium, expiresAt, entitlement, hasMadeTransaction };
+    return { isPremium, expiresAt, entitlement };
   } catch (error) {
     console.error('❌ Error checking premium:', error.message);
-    return { isPremium: false, expiresAt: null, entitlement: null, hasMadeTransaction: false };
+    return { isPremium: false, expiresAt: null, entitlement: null };
   }
 };
 
