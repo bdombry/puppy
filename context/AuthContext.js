@@ -74,6 +74,13 @@ export const AuthProvider = ({ children }) => {
 
         console.log('🔑 onAuthStateChange:', event, '- signupInProgress:', signupInProgress.current);
 
+        // ✅ IGNORE TOKEN_REFRESHED: Supabase n'est pas prêt pour les queries
+        // INITIAL_SESSION arrivera quelques secondes après et se chargera de loadUserDog
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('⏭️ TOKEN_REFRESHED: ignoré, on attend INITIAL_SESSION');
+          return;
+        }
+
         if (session?.user) {
           // ✅ GARDE: si un signup est en cours, on stocke la session
           // mais on NE déclenche PAS la navigation (pas de setUser).
@@ -114,92 +121,114 @@ export const AuthProvider = ({ children }) => {
 
   const loadUserDog = async (userId, retryCount = 0) => {
     const MAX_RETRIES = 2;
-    const RETRY_DELAY = 1500;
+    const RETRY_DELAY = 2000;
+    const LOAD_TIMEOUT = 20000; // 20 sec timeout (plus de temps après TOKEN_REFRESHED)
+    
     console.log(`🐕 loadUserDog attempt ${retryCount}/${MAX_RETRIES} for user:`, userId);
 
     try {
-      // 1️⃣ Chiens que l'utilisateur possède
-      const { data: ownedDogs, error: ownedError } = await supabase
-        .from('Dogs')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-        
-      if (ownedError) {
-        console.error('Erreur chargement chiens possédés:', ownedError);
-        setDogs([]);
-        setCurrentDog(null);
-        return;
-      }
+      // ✅ Wrapper avec timeout pour éviter de bloquer indéfiniment
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('loadUserDog timeout - queries took too long')), LOAD_TIMEOUT)
+      );
       
-      // 2️⃣ Chiens partagés avec l'utilisateur (via dog_collaborators)
-      const { data: sharedDogIds, error: collaboratorError } = await supabase
-        .from('dog_collaborators')
-        .select('dog_id')
-        .eq('user_id', userId)
-        .eq('status', 'accepted');
-      
-      if (collaboratorError) {
-        console.error('Erreur chargement chiens collaborateurs:', collaboratorError);
-      }
-      
-      // 3️⃣ Récupérer les détails des chiens partagés
-      let sharedDogs = [];
-      if (sharedDogIds && sharedDogIds.length > 0) {
-        const dogIds = sharedDogIds.map(d => d.dog_id);
-        const { data: shared, error: sharedError } = await supabase
+      const loadPromise = (async () => {
+        // 1️⃣ Chiens que l'utilisateur possède
+        const { data: ownedDogs, error: ownedError } = await supabase
           .from('Dogs')
           .select('*')
-          .in('id', dogIds)
+          .eq('user_id', userId)
           .order('created_at', { ascending: false });
-        
-        if (sharedError) {
-          console.error('Erreur chargement détails chiens partagés:', sharedError);
-        } else {
-          sharedDogs = shared || [];
+          
+        if (ownedError) {
+          console.error('Erreur chargement chiens possédés:', ownedError);
+          setDogs([]);
+          setCurrentDog(null);
+          return;
         }
-      }
+        
+        // 2️⃣ Chiens partagés avec l'utilisateur (via dog_collaborators)
+        const { data: sharedDogIds, error: collaboratorError } = await supabase
+          .from('dog_collaborators')
+          .select('dog_id')
+          .eq('user_id', userId)
+          .eq('status', 'accepted');
+        
+        if (collaboratorError) {
+          console.error('Erreur chargement chiens collaborateurs:', collaboratorError);
+        }
+        
+        // 3️⃣ Récupérer les détails des chiens partagés
+        let sharedDogs = [];
+        if (sharedDogIds && sharedDogIds.length > 0) {
+          const dogIds = sharedDogIds.map(d => d.dog_id);
+          const { data: shared, error: sharedError } = await supabase
+            .from('Dogs')
+            .select('*')
+            .in('id', dogIds)
+            .order('created_at', { ascending: false });
+          
+          if (sharedError) {
+            console.error('Erreur chargement détails chiens partagés:', sharedError);
+          } else {
+            sharedDogs = shared || [];
+          }
+        }
+        
+        // 4️⃣ Fusionner les listes (chiens possédés + chiens partagés)
+        const allDogs = [...(ownedDogs || []), ...sharedDogs];
+        
+        setDogs(allDogs);
+        
+        console.log('🐕 Chiens chargés (possédés + partagés):', allDogs?.map(d => ({id: d.id, name: d.name})));
+        
+        // Récupérer le dernier chien sélectionné depuis AsyncStorage
+        const lastDogId = await getLastDogId();
+        let selectedDog = null;
+        
+        if (lastDogId && allDogs) {
+          // Chercher le chien avec cet ID (comparaison flexible string/number)
+          selectedDog = allDogs.find(dog => dog.id == lastDogId);
+          console.log('🔍 Chien trouvé avec ID', lastDogId, '(type:', typeof lastDogId, ') chien ID type:', typeof selectedDog?.id, ':', selectedDog);
+        }
+        
+        // Si pas trouvé ou pas de dernier chien, prendre le premier (plus récent)
+        if (!selectedDog && allDogs && allDogs.length > 0) {
+          selectedDog = allDogs[0];
+          console.log('⚠️ Aucun chien sauvegardé trouvé, utilisation du premier:', selectedDog.name);
+        }
+        
+        console.log('✅ Chien actuel défini:', selectedDog?.name);
+        setCurrentDog(selectedDog);
+        
+        // Si aucun chien trouvé et qu'on peut encore réessayer
+        // (race condition: le chien est en cours de création après signup)
+        if (!selectedDog && retryCount < MAX_RETRIES) {
+          console.log(`⏳ Aucun chien trouvé, retry ${retryCount + 1}/${MAX_RETRIES} dans ${RETRY_DELAY}ms...`);
+          await new Promise(r => setTimeout(r, RETRY_DELAY));
+          return loadUserDog(userId, retryCount + 1);
+        }
+        
+        // Sauvegarder le chien actuel pour les futures sessions
+        if (selectedDog?.id) {
+          await saveLastDogId(selectedDog.id);
+        }
+      })();
       
-      // 4️⃣ Fusionner les listes (chiens possédés + chiens partagés)
-      const allDogs = [...(ownedDogs || []), ...sharedDogs];
+      // Course: si timeout gagne, on catch et retry
+      await Promise.race([loadPromise, timeoutPromise]);
       
-      setDogs(allDogs);
+    } catch (error) {
+      console.error('❌ Erreur loadUserDog:', error.message);
       
-      console.log('🐕 Chiens chargés (possédés + partagés):', allDogs?.map(d => ({id: d.id, name: d.name})));
-      
-      // Récupérer le dernier chien sélectionné depuis AsyncStorage
-      const lastDogId = await getLastDogId();
-      let selectedDog = null;
-      
-      if (lastDogId && allDogs) {
-        // Chercher le chien avec cet ID (comparaison flexible string/number)
-        selectedDog = allDogs.find(dog => dog.id == lastDogId);
-        console.log('🔍 Chien trouvé avec ID', lastDogId, '(type:', typeof lastDogId, ') chien ID type:', typeof selectedDog?.id, ':', selectedDog);
-      }
-      
-      // Si pas trouvé ou pas de dernier chien, prendre le premier (plus récent)
-      if (!selectedDog && allDogs && allDogs.length > 0) {
-        selectedDog = allDogs[0];
-        console.log('⚠️ Aucun chien sauvegardé trouvé, utilisation du premier:', selectedDog.name);
-      }
-      
-      console.log('✅ Chien actuel défini:', selectedDog?.name);
-      setCurrentDog(selectedDog);
-      
-      // Si aucun chien trouvé et qu'on peut encore réessayer
-      // (race condition: le chien est en cours de création après signup)
-      if (!selectedDog && retryCount < MAX_RETRIES) {
-        console.log(`⏳ Aucun chien trouvé, retry ${retryCount + 1}/${MAX_RETRIES} dans ${RETRY_DELAY}ms...`);
+      // Si c'est un timeout et qu'on peut retry, relancer
+      if (error.message.includes('timeout') && retryCount < MAX_RETRIES) {
+        console.log(`⏳ Timeout, retry ${retryCount + 1}/${MAX_RETRIES}...`);
         await new Promise(r => setTimeout(r, RETRY_DELAY));
         return loadUserDog(userId, retryCount + 1);
       }
       
-      // Sauvegarder le chien actuel pour les futures sessions
-      if (selectedDog?.id) {
-        await saveLastDogId(selectedDog.id);
-      }
-    } catch (error) {
-      console.error('Erreur loadUserDog:', error);
+      // Sinon, juste vider l'état
       setDogs([]);
       setCurrentDog(null);
     }
