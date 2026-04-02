@@ -230,7 +230,37 @@ export const showCustomerCenter = async () => {
 // ─────────────────────────────────────────────────
 
 /**
- * Présente le paywall RevenueCatUI.
+ * Présente le paywall RevenueCatUI (SOFT - peut être fermé sans obligatoire d'acheter).
+ * @param {Object} options - { offering, listeners }
+ * @returns {{ success: boolean, result: string, customerInfo: Object|null }}
+ */
+export const presentSoftPaywall = async (options = {}) => {
+  try {
+    console.log('🎬 Presenting SOFT paywall...');
+
+    const paywallResult = await RevenueCatUI.presentPaywall({
+      offering: options.offering || null,
+      ...(options.listeners || {}),
+    });
+
+    console.log('🎯 Paywall result:', paywallResult);
+
+    const success =
+      paywallResult === PAYWALL_RESULT.PURCHASED ||
+      paywallResult === PAYWALL_RESULT.RESTORED;
+
+    // Fetch fresh info après paywall si achat réussi
+    const customerInfo = success ? await Purchases.getCustomerInfo() : null;
+
+    return { success, result: paywallResult, customerInfo };
+  } catch (error) {
+    console.error('❌ Paywall error:', error.message);
+    return { success: false, result: 'ERROR', customerInfo: null };
+  }
+};
+
+/**
+ * Présente le paywall RevenueCatUI (HARD - force l'achat, re-présente indéfiniment).
  * @param {Object} options - { offering, listeners }
  * @returns {{ success: boolean, result: string, customerInfo: Object|null }}
  */
