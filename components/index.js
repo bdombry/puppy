@@ -13,6 +13,8 @@ export { LastWalkTimer } from './LastWalkTimer';
 export { ActionModal } from './ActionModal';
 export { TrialModal } from './TrialModal';
 export { default as PremiumContent } from './PremiumContent';
+export { default as BlurredPremiumSection } from './BlurredPremiumSection';
+export { default as TextHidden } from './HideIfFree';
 
 // ===== COMPOSANTS ANALYTICS =====
 export { DogCommunicationStats } from './charts/AskToGoOutStats';

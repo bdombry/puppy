@@ -8,22 +8,25 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useUser } from '../../context/UserContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { screenStyles } from '../../styles/screenStyles';
 import { WeekChart } from '../../components/charts/WeekChart';
 import { DogCommunicationStats } from '../charts/AskToGoOutStats';
 import { IncidentReasonChart } from '../charts/IncidentReasonChart';
+import { BlurredPremiumSection } from '../../components';
+import { TextHidden } from '../../components';
 import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
 import { useAnalytics } from '../../hooks/useAnalytics';
+import { presentSoftPaywall } from '../../services/revenueCatService';
 import { cacheService } from '../services/cacheService';
 
 export default function AnalyticsScreen() {
   const { currentDog } = useAuth();
+  const { isPremium } = useUser();
   const { stats, communicationStats, loading, refreshData } = useAnalytics(currentDog?.id);
   const [refreshing, setRefreshing] = useState(false);
-
-  console.log('📱 AnalyticsScreen - communicationStats:', communicationStats);
 
   const handleRefresh = React.useCallback(async () => {
     setRefreshing(true);
@@ -169,9 +172,12 @@ export default function AnalyticsScreen() {
 
 
         {/* Insights */}
-        <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>Insights 💡</Text>
-
+        <BlurredPremiumSection
+          title="Insights 💡"
+          message="Statistiques avancées 📊"
+          onPress={() => presentSoftPaywall()}
+          isPremium={isPremium}
+        >
           {/* Tendance */}
           {stats.trend && (
             <View style={[
@@ -187,13 +193,13 @@ export default function AnalyticsScreen() {
                 </Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Tendance 7 jours</Text>
-                <Text style={styles.insightValue}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Tendance 7 jours</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>
                   {stats.trend === 'improving' ? 'En amélioration' : stats.trend === 'declining' ? 'En baisse' : 'Stable'}
-                </Text>
-                <Text style={styles.insightSubtext}>
+                </TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   {stats.trend === 'improving' ? 'Super ! Continue comme ça' : stats.trend === 'declining' ? 'Augmente la fréquence des sorties' : 'Maintiens le rythme'}
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -205,11 +211,11 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>⏰</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Heure à risque</Text>
-                <Text style={styles.insightValue}>Vers {stats.mostFrequentIncidentHour}h</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Heure à risque</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>Vers {stats.mostFrequentIncidentHour}h</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   Le plus d'incidents à cette heure
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -221,11 +227,11 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>⭐</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Meilleure heure</Text>
-                <Text style={styles.insightValue}>Vers {stats.mostFrequentSuccessHour}h</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Meilleure heure</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>Vers {stats.mostFrequentSuccessHour}h</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   Le plus de réussites à cette heure
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -237,11 +243,11 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>⏱️</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Fréquence moyenne</Text>
-                <Text style={styles.insightValue}>{stats.avgTimeBetweenOutings}h</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Fréquence moyenne</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>{stats.avgTimeBetweenOutings}h</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   Entre chaque sortie
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -253,11 +259,11 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>🏅</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Record</Text>
-                <Text style={styles.insightValue}>{stats.maxStreak} jour{stats.maxStreak > 1 ? 's' : ''}</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Record</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>{stats.maxStreak} jour{stats.maxStreak > 1 ? 's' : ''}</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   Consécutifs sans incident
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -269,11 +275,11 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>📊</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Ratio Pipi/Caca</Text>
-                <Text style={styles.insightValue}>{stats.peeVsPoopRatio}:1</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Ratio Pipi/Caca</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>{stats.peeVsPoopRatio}:1</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   {stats.peeVsPoopRatio > 3 ? 'Beaucoup plus de pipis' : 'Équilibré'}
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -285,16 +291,16 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>🏆</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Meilleure journée</Text>
-                <Text style={styles.insightValue}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Meilleure journée</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>
                   {new Date(stats.bestDay).toLocaleDateString('fr-FR', { 
                     day: 'numeric', 
                     month: 'long' 
                   })}
-                </Text>
-                <Text style={styles.insightSubtext}>
+                </TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   {stats.bestDayPercentage}% de réussite
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -306,16 +312,16 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>📅</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Jour difficile</Text>
-                <Text style={styles.insightValue}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Jour difficile</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>
                   {new Date(stats.worstDay).toLocaleDateString('fr-FR', { 
                     day: 'numeric', 
                     month: 'long' 
                   })}
-                </Text>
-                <Text style={styles.insightSubtext}>
+                </TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   {stats.worstDayPercentage}% de réussite - Mais ça va s'améliorer !
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
@@ -327,63 +333,66 @@ export default function AnalyticsScreen() {
                 <Text style={{ fontSize: 32 }}>🎉</Text>
               </View>
               <View style={styles.insightContent}>
-                <Text style={styles.insightLabel}>Bravo !</Text>
-                <Text style={styles.insightValue}>Excellent progrès</Text>
-                <Text style={styles.insightSubtext}>
+                <TextHidden isPremium={isPremium} style={styles.insightLabel}>Bravo !</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightValue}>Excellent progrès</TextHidden>
+                <TextHidden isPremium={isPremium} style={styles.insightSubtext}>
                   Plus de 80% de réussite sur tout
-                </Text>
+                </TextHidden>
               </View>
             </View>
           )}
-        </View>
+        </BlurredPremiumSection>
 
-        {/* Recommandations */}
-        <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>Recommandations 💪</Text>
-
-          <View style={styles.recommendationCard}>
+      {/* Recommandations */}
+      <BlurredPremiumSection
+        title="Recommandations 💪"
+        message="Conseils personnalisés �"
+        onPress={() => presentSoftPaywall()}
+        isPremium={isPremium}
+      >
+        <View style={styles.recommendationCard}>
             {stats.treatPercentage < 50 && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • Récompense davantage après les sorties réussies (actuellement {stats.treatPercentage}%)
-              </Text>
+              </TextHidden>
             )}
             {stats.peeSuccessRate < 70 && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • Augmente la fréquence des sorties pour plus de pipis réussis
-              </Text>
+              </TextHidden>
             )}
             {stats.poopSuccessRate < 70 && stats.peeSuccessRate >= 70 && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • Les pipis sont bien gérés ! Concentre-toi maintenant sur les cacas réussis
-              </Text>
+              </TextHidden>
             )}
             {stats.trend === 'declining' && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • La tendance baisse : reviens à un rythme de sorties plus fréquent
-              </Text>
+              </TextHidden>
             )}
             {stats.avgTimeBetweenOutings > 4 && stats.peeSuccessRate < 80 && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • {stats.avgTimeBetweenOutings}h entre sorties, c'est peut-être trop long - essaie toutes les 3h
-              </Text>
+              </TextHidden>
             )}
             {stats.mostFrequentIncidentHour && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • Anticipe une sortie systématique vers {stats.mostFrequentIncidentHour}h (heure à risque)
-              </Text>
+              </TextHidden>
             )}
             {stats.peeVsPoopRatio > 5 && (
-              <Text style={styles.recommendationText}>
+              <TextHidden isPremium={isPremium} style={styles.recommendationText}>
                 • Beaucoup plus de pipis que de cacas : c'est normal pour un chiot !
-              </Text>
+              </TextHidden>
             )}
             {stats.treatPercentage >= 50 && stats.peeSuccessRate >= 80 && stats.poopSuccessRate >= 80 && stats.trend !== 'declining' && (
-              <Text style={[styles.recommendationText, { color: colors.successDark }]}>
+              <TextHidden isPremium={isPremium} style={[styles.recommendationText, { color: colors.successDark }]}>
                 ✅ Continue comme ça, tu fais un excellent travail ! Ton chiot progresse super bien 🎉
-              </Text>
+              </TextHidden>
             )}
           </View>
-        </View>
+      </BlurredPremiumSection>
       </ScrollView>
     </View>
   );
