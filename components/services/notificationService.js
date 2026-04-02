@@ -172,6 +172,7 @@ export const scheduleNotificationFromOuting = async (lastOutingTime, dogName) =>
           sound: 'default',
         },
         trigger: {
+          type: 'timeInterval',
           seconds,
           repeats: false,
         },

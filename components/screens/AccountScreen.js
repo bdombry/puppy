@@ -1,238 +1,141 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  StyleSheet,
-  Alert,
-  ActivityIndicator,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { supabase } from '../../config/supabase';
-import { useAuth } from '../../context/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlobalStyles } from '../../styles/global';
-import { screenStyles } from '../../styles/screenStyles';
-import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
+import { commonStyles } from '../../styles/commonStyles';
+import { colors, spacing } from '../../constants/theme';
 import { EMOJI } from '../../constants/config';
 import { useUser } from '../../context/UserContext';
 
+const SectionNavButton = ({ emoji, title, subtitle, onPress }) => {
+  return (
+    <TouchableOpacity
+      style={{ paddingVertical: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.gray50, borderRadius: 8, marginBottom: spacing.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+      onPress={onPress}
+      activeOpacity={0.6}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        <Text style={{ fontSize: 20, marginRight: spacing.md }}>{emoji}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={commonStyles.h4}>{title}</Text>
+          {subtitle && <Text style={[commonStyles.bodySmall, { marginTop: spacing.xs }]}>{subtitle}</Text>}
+        </View>
+      </View>
+      <Text style={{ fontSize: 18, color: colors.textSecondary }}>›</Text>
+    </TouchableOpacity>
+  );
+};
+
 export default function AccountScreen() {
-  const { user, deleteAccount } = useAuth();
-  const { isPremium, manageSubscription, premiumLoading } = useUser();
-    // Handler pour résilier l'abonnement (ouvrir Customer Center RevenueCat)
-    const handleCancelSubscription = async () => {
-      try {
-        setLoading(true);
-        await manageSubscription();
-      } catch (err) {
-        Alert.alert('Erreur', 'Impossible d’ouvrir la gestion d’abonnement.');
-      } finally {
-        setLoading(false);
-      }
-    };
   const navigation = useNavigation();
-  const [loading, setLoading] = useState(false);
-
-  const handleNotificationSettings = () => {
-    navigation.navigate('NotificationSettings');
-  };
-
-  const handleLogout = async () => {
-    Alert.alert(
-      'Se déconnecter',
-      'Es-tu sûr de vouloir te déconnecter?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Oui, se déconnecter',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              const { error } = await supabase.auth.signOut();
-              if (error) throw error;
-              
-              // Réinitialiser l'onboarding
-              await AsyncStorage.setItem('onboardingCompleted', 'false');
-              await AsyncStorage.setItem('show_paywall_on_login', 'false');
-              
-              navigation.replace('Auth');
-            } catch (error) {
-              Alert.alert('Erreur', 'Impossible de se déconnecter');
-              setLoading(false);
-            }
-          },
-          style: 'destructive',
-        },
-      ]
-    );
-  };
-
-  const handleDeletePress = () => {
-    Alert.alert(
-      '⚠️ Supprimer le compte',
-      'Es-tu sûr? Cette action est irréversible. Tous tes chiens et historiques seront supprimés DÉFINITIVEMENT.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Oui, supprimer',
-          style: 'destructive',
-          onPress: handleSecondConfirmation,
-        },
-      ]
-    );
-  };
-
-  const handleSecondConfirmation = () => {
-    Alert.alert(
-      '🚨 DERNIÈRE CHANCE!',
-      'C\'est vraiment ta dernière chance. Veux-tu VRAIMENT supprimer ton compte et TOUTES tes données?',
-      [
-        { text: 'Non, garder mon compte', style: 'cancel' },
-        {
-          text: 'OUI, SUPPRIMER DÉFINITIVEMENT',
-          style: 'destructive',
-          onPress: performDeletion,
-        },
-      ]
-    );
-  };
-
-  const performDeletion = async () => {
-    setLoading(true);
-    try {
-      // Supprimer le compte
-      await deleteAccount();
-      
-      // Vider le cache
-      await AsyncStorage.clear();
-      
-      // Réinitialiser onboarding et paywall
-      await AsyncStorage.setItem('onboardingCompleted', 'false');
-      await AsyncStorage.setItem('show_paywall_on_login', 'false');
-      
-      Alert.alert('✅ Compte supprimé', 'Ton compte a été supprimé avec succès');
-      navigation.replace('Auth');
-    } catch (error) {
-      Alert.alert('Erreur', error.message || 'Impossible de supprimer le compte');
-      setLoading(false);
-    }
-  };
+  const insets = useSafeAreaInsets();
+  const { isPremium } = useUser();
 
   return (
-    <View style={GlobalStyles.safeArea}>
-      <ScrollView contentContainerStyle={screenStyles.screenContainer}>
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backIcon}>{EMOJI.arrowBack}</Text>
-          </TouchableOpacity>
-          <Text style={screenStyles.screenTitle}>Mon compte</Text>
-        </View>
+    <View style={[GlobalStyles.safeArea, { paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingBottom: spacing.md, gap: spacing.md }}>
+        <TouchableOpacity
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.gray100, alignItems: 'center', justifyContent: 'center' }}
+          onPress={() => navigation.goBack()}
+        >
+          <Text style={{ fontSize: 18 }}>{EMOJI.arrowBack}</Text>
+        </TouchableOpacity>
+        <Text style={commonStyles.h3}>Paramètres</Text>
+      </View>
 
-        <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>{EMOJI.envelope} Email</Text>
-          <View style={styles.infoBox}>
-            <Text style={styles.email}>{user?.email}</Text>
+      <ScrollView 
+        contentContainerStyle={{ paddingHorizontal: spacing.md, paddingBottom: spacing.lg }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Big Customization Button */}
+        <TouchableOpacity
+          style={{ backgroundColor: colors.primary, borderRadius: 16, padding: spacing.lg, marginBottom: spacing.xl, flexDirection: 'row', alignItems: 'center', gap: spacing.lg, shadowColor: colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 5 }}
+          onPress={() => navigation.navigate('NotificationSettings')}
+        >
+          <Text style={{ fontSize: 40 }}>⚙️</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[commonStyles.h3, { color: colors.white, marginBottom: spacing.xs }]}>Personnaliser</Text>
+            <Text style={[commonStyles.bodySmall, { color: colors.white, opacity: 0.9 }]}>Plages horaires, âge du chien...</Text>
           </View>
+          <Text style={{ fontSize: 24, color: colors.white }}>›</Text>
+        </TouchableOpacity>
+
+        {/* INFO Section Title */}
+        <Text style={[commonStyles.label, { marginBottom: spacing.md }]}>INFO</Text>
+
+        {/* Section Compte */}
+        <View style={{ marginBottom: spacing.md }}>
+          <SectionNavButton
+            emoji="👤"
+            title="Mon compte"
+            subtitle="Email et sécurité"
+            onPress={() => navigation.navigate('AccountDetail')}
+          />
         </View>
 
-        <View style={screenStyles.section}>
-          <Text style={screenStyles.sectionTitle}>⏰ Notifications</Text>
-          <TouchableOpacity
-            style={[screenStyles.button, styles.notificationButton]}
-            onPress={handleNotificationSettings}
-          >
-            <Text style={screenStyles.buttonText}>Paramètres de notification</Text>
-          </TouchableOpacity>
+        {/* Section Notifications */}
+        <View style={{ marginBottom: spacing.md }}>
+          <SectionNavButton
+            emoji="🔔"
+            title="Notifications"
+            subtitle="Paramètres système"
+            onPress={() => navigation.navigate('NotificationDetail')}
+          />
         </View>
 
-        <View style={[screenStyles.section, styles.sectionDanger]}>
-                  {/* Résilier abonnement (visible si premium) */}
-                  {isPremium && (
-                    <TouchableOpacity
-                      style={[screenStyles.button, { backgroundColor: colors.warning, marginBottom: spacing.md }]}
-                      onPress={handleCancelSubscription}
-                      disabled={loading || premiumLoading}
-                    >
-                      {loading || premiumLoading ? (
-                        <ActivityIndicator color={colors.white} size="small" />
-                      ) : (
-                        <Text style={[screenStyles.buttonText, { color: colors.white }]}>Résilier mon abonnement</Text>
-                      )}
-                    </TouchableOpacity>
-                  )}
-          <Text style={screenStyles.sectionTitle}>{EMOJI.warning} Zone dangereuse</Text>
-          
+        {/* Section Autre - Bouton clickable */}
+        {isPremium && (
           <TouchableOpacity
-            style={[screenStyles.button, screenStyles.buttonDanger]}
-            onPress={handleLogout}
-            disabled={loading}
+            style={{ paddingVertical: spacing.md, paddingHorizontal: spacing.md, backgroundColor: colors.gray50, borderRadius: 8, marginBottom: spacing.md, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+            onPress={() => navigation.navigate('OtherSettings')}
           >
-            {loading ? (
-              <ActivityIndicator color={colors.white} size="small" />
-            ) : (
-              <Text style={screenStyles.buttonDangerText}>Se déconnecter</Text>
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Text style={{ fontSize: 20, marginRight: spacing.md }}>⚙️</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={commonStyles.h4}>Abonnement</Text>
+                <Text style={[commonStyles.bodySmall, { marginTop: spacing.xs }]}>Gérer votre souscription</Text>
+              </View>
+            </View>
+            <Text style={{ fontSize: 18, color: colors.textSecondary }}>›</Text>
           </TouchableOpacity>
+        )}
 
-          <TouchableOpacity
-            style={[screenStyles.button, screenStyles.buttonDanger, { marginTop: spacing.md }]}
-            onPress={handleDeletePress}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color={colors.white} size="small" />
-            ) : (
-              <Text style={screenStyles.buttonDangerText}>Supprimer mon compte</Text>
-            )}
-          </TouchableOpacity>
+        {/* Section Évaluer */}
+        <View style={{ marginBottom: spacing.md }}>
+          <SectionNavButton
+            emoji="⭐"
+            title="Noter Pupytracker"
+            subtitle="Donnez-nous votre avis"
+            onPress={() => navigation.navigate('RatingApp')}
+          />
+        </View>
+
+        {/* Section Support */}
+        <View style={{ marginBottom: spacing.md }}>
+          <SectionNavButton
+            emoji="✉️"
+            title="Nous contacter"
+            subtitle="Questions ou suggestions"
+            onPress={() => navigation.navigate('ContactUs')}
+          />
+        </View>
+
+        {/* Section Légal */}
+        <View style={{ marginBottom: spacing.lg }}>
+          <SectionNavButton
+            emoji="ℹ️"
+            title="Légal"
+            onPress={() => navigation.navigate('About')}
+          />
         </View>
       </ScrollView>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    backgroundColor: colors.gray100,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: spacing.md,
-  },
-  backIcon: {
-    fontSize: 20,
-  },
-  sectionDanger: {
-    borderColor: colors.error,
-    backgroundColor: `${colors.error}10`,
-  },
-  infoBox: {
-    backgroundColor: colors.gray100,
-    borderRadius: borderRadius.md,
-    padding: spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: colors.primary,
-  },
-  email: {
-    fontSize: typography.sizes.base,
-    color: colors.text,
-    fontWeight: typography.weights.bold,
-  },
-  notificationButton: {
-    backgroundColor: colors.primaryLight,
-    borderColor: colors.primary,
-    borderWidth: 1,
-  },
-});
