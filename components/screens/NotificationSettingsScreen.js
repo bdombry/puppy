@@ -23,10 +23,12 @@ import {
   saveNotificationSettings,
   DEFAULT_NOTIFICATION_SETTINGS,
   PUPPY_PRESETS,
+  getDogAgeInMonths,
+  getPresetByAge,
 } from '../services/notificationService';
 
 
-export function NotificationSettingsScreen({ dogName, onGoBack }) {
+export function NotificationSettingsScreen({ dogId, dogName, dogBirthDate, onGoBack }) {
   const [settings, setSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS);
   const [originalSettings, setOriginalSettings] = useState(DEFAULT_NOTIFICATION_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -40,7 +42,7 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 
   useEffect(() => {
     loadSettings();
-  }, []);
+  }, [dogId]);
 
   useEffect(() => {
     // Vérifie le statut de permission à l'ouverture
@@ -51,7 +53,16 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 
   const loadSettings = async () => {
     try {
-      const loaded = await loadNotificationSettings();
+      // Calculer le preset par défaut basé sur l'âge
+      const ageInMonths = getDogAgeInMonths(dogBirthDate);
+      const defaultPreset = getPresetByAge(ageInMonths);
+      const defaultSettings = {
+        ...DEFAULT_NOTIFICATION_SETTINGS,
+        preset: defaultPreset,
+      };
+
+      // Charger les paramètres spécifiques à ce chien
+      const loaded = await loadNotificationSettings(dogId, defaultSettings);
       setSettings(loaded);
       setOriginalSettings(loaded); // Garder une copie originale
     } catch (error) {
@@ -66,7 +77,7 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
   const handleSave = async () => {
     try {
       setSaving(true);
-      await saveNotificationSettings(settings);
+      await saveNotificationSettings(settings, dogId);
       setOriginalSettings(settings); // Mettre à jour après sauvegarde
       Alert.alert('✅ Succès', 'Paramètres sauvegardés !');
     } catch (error) {
@@ -142,7 +153,7 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
     <SafeAreaView style={styles.container}>
       {/* Affichage du statut de permission notification */}
       <View style={{ padding: 12, alignItems: 'center' }}>
-        <Text style={{ color: notifStatus === 'granted' ? colors.success : colors.error, fontWeight: 'bold' }}>
+        <Text style={{ color: notifStatus === 'granted' ? colors.successDark : colors.error, fontWeight: 'bold' }}>
           Permission notifications : {notifStatus}
         </Text>
       </View>
@@ -326,35 +337,6 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={async () => {
-              try {
-                const perm = await Notifications.getPermissionsAsync();
-                setNotifStatus(perm.status);
-                if (perm.status !== 'granted') {
-                  Alert.alert('❌ Permission refusée', 'Active les notifications dans les réglages iOS.');
-                  return;
-                }
-                Alert.alert('✅ Test', 'Notif dans 10 secondes...');
-                await Notifications.scheduleNotificationAsync({
-                  identifier: 'test-10sec',
-                  content: {
-                    title: 'Test',
-                    body: 'Si tu vois ça, les notifs marchent !',
-                    sound: 'default',
-                  },
-                  trigger: { type: 'timeInterval', seconds: 10, repeats: false },
-                });
-                Alert.alert('✅ Planification OK', 'Notification planifiée sans erreur.');
-              } catch (e) {
-                Alert.alert('❌ Erreur planification', e.message);
-              }
-            }}
-          >
-            <Text style={styles.actionButtonText}>Test</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.actionButton}
             onPress={() => {
               setSettings(DEFAULT_NOTIFICATION_SETTINGS);
               Alert.alert('🔄 Réinitialisation', 'Paramètres par défaut appliqués');
@@ -401,7 +383,9 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
 }
 
 NotificationSettingsScreen.propTypes = {
+  dogId: PropTypes.string.isRequired,
   dogName: PropTypes.string.isRequired,
+  dogBirthDate: PropTypes.string,
   onGoBack: PropTypes.func.isRequired,
 };
 

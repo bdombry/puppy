@@ -37,6 +37,7 @@ export default function BreedAutoComplete({ label, value, onChange }) {
       />
       {showList && filteredBreeds.length > 0 && (
         <FlatList
+          scrollEnabled={false}
           data={filteredBreeds}
           keyExtractor={item => item}
           style={{

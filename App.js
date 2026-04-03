@@ -466,7 +466,9 @@ function AppNavigator() {
             >
               {({ navigation }) => (
                 <NotificationSettingsScreen 
+                  dogId={currentDog?.id}
                   dogName={currentDog?.name || 'ton chiot'}
+                  dogBirthDate={currentDog?.birth_date}
                   onGoBack={() => navigation.goBack()}
                 />
               )}

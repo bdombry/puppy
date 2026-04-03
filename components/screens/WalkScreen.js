@@ -99,7 +99,7 @@ export default function WalkScreen() {
       // Comme ça, même si Supabase échoue, la notif est programmée localement
       // Convert LOCAL datetime string to Date for notification
       const outingTime = datetime; // Use the modified datetime Date object
-      const notificationScheduled = await scheduleNotificationFromOuting(outingTime, currentDog.name);
+      const notificationScheduled = await scheduleNotificationFromOuting(outingTime, currentDog.name, currentDog.id);
       
       if (!notificationScheduled) {
         console.warn('⚠️ Notification non programmée, mais on continue avec l\'insert');

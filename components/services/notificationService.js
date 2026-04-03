@@ -1,6 +1,7 @@
 /**
  * Service de notifications intelligentes
  * Basé sur l'heure de la dernière sortie + intervalle du preset
+ * Présets personnalisés par chien avec défaut basé sur l'âge
  */
 
 import * as Notifications from 'expo-notifications';
@@ -19,7 +20,29 @@ export const DEFAULT_NOTIFICATION_SETTINGS = {
   excludedRanges: [{ start: '00:00', end: '08:00' }], // Pas de notif la nuit
 };
 
-const STORAGE_KEY = 'notificationSettings';
+/**
+ * Calcule l'âge du chien en mois basé sur sa date de naissance
+ */
+export const getDogAgeInMonths = (birthDate) => {
+  if (!birthDate) return null;
+  const diff = Date.now() - new Date(birthDate).getTime();
+  const ageDate = new Date(diff);
+  const months = ageDate.getUTCMonth() + ageDate.getUTCFullYear() * 12 - 12 * 1970;
+  return Math.max(0, months); // Au minimum 0 mois
+};
+
+/**
+ * Retourne le preset recommandé basé sur l'âge du chien en mois
+ */
+export const getPresetByAge = (ageInMonths) => {
+  if (ageInMonths === null || ageInMonths === undefined) return 'medium';
+  
+  if (ageInMonths <= 3) return 'young';   // 2-3 mois pour chiots jeunes
+  if (ageInMonths <= 6) return 'medium';  // 4-6 mois pour chiots moyens
+  return 'older';                          // 6+ mois pour chiots plus âgés
+};
+
+const getStorageKey = (dogId) => `notificationSettings_${dogId}`;
 
 export const configureNotificationHandler = () => {
   Notifications.setNotificationHandler({
@@ -43,12 +66,15 @@ export const requestNotificationPermissions = async () => {
 };
 
 /**
- * Sauvegarde les paramètres de notification
+ * Sauvegarde les paramètres de notification pour un chien
+ * @param {Object} settings - Paramètres à sauvegarder
+ * @param {string} dogId - ID du chien
  */
-export const saveNotificationSettings = async (settings) => {
+export const saveNotificationSettings = async (settings, dogId) => {
   try {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    console.log('💾 Paramètres notif sauvegardés');
+    const key = getStorageKey(dogId);
+    await AsyncStorage.setItem(key, JSON.stringify(settings));
+    console.log(`💾 Paramètres notif sauvegardés pour chien ${dogId}`);
     return true;
   } catch (error) {
     console.error('Save error:', error);
@@ -57,15 +83,18 @@ export const saveNotificationSettings = async (settings) => {
 };
 
 /**
- * Charge les paramètres de notification
+ * Charge les paramètres de notification pour un chien
+ * @param {string} dogId - ID du chien
+ * @param {Object} defaultSettings - Paramètres par défaut (peut inclure preset par âge)
  */
-export const loadNotificationSettings = async () => {
+export const loadNotificationSettings = async (dogId, defaultSettings = DEFAULT_NOTIFICATION_SETTINGS) => {
   try {
-    const saved = await AsyncStorage.getItem(STORAGE_KEY);
-    return saved ? JSON.parse(saved) : DEFAULT_NOTIFICATION_SETTINGS;
+    const key = getStorageKey(dogId);
+    const saved = await AsyncStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultSettings;
   } catch (error) {
     console.error('Load error:', error);
-    return DEFAULT_NOTIFICATION_SETTINGS;
+    return defaultSettings;
   }
 };
 
@@ -131,11 +160,12 @@ const getNextValidTime = (date, excludedRanges) => {
  * Programme une notification après une sortie
  * @param {Date} lastOutingTime - Heure de la dernière sortie
  * @param {string} dogName - Nom du chien
+ * @param {string} dogId - ID du chien (pour charger ses paramètres personnalisés)
  */
-export const scheduleNotificationFromOuting = async (lastOutingTime, dogName) => {
+export const scheduleNotificationFromOuting = async (lastOutingTime, dogName, dogId) => {
   try {
-    // Charger les paramètres
-    const settings = await loadNotificationSettings();
+    // Charger les paramètres pour ce chien spécifique
+    const settings = await loadNotificationSettings(dogId);
     const preset = PUPPY_PRESETS[settings.preset];
 
     if (!preset) {
