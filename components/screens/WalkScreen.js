@@ -106,10 +106,45 @@ export default function WalkScreen() {
       }
 
       // ✅ PUIS insérer en Supabase (avec retry automatique)
-      await insertWithRetry(supabase, 'outings', [walkData], {
-        maxRetries: 3,
-        context: 'WalkScreen.handleSave',
-      });
+      let insertedData;
+      try {
+        insertedData = await insertWithRetry(supabase, 'outings', [walkData], {
+          maxRetries: 3,
+          context: 'WalkScreen.handleSave',
+        });
+      } catch (insertError) {
+        Alert.alert('❌ Erreur', `Impossible d'enregistrer la sortie: ${insertError.message}`);
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Appeler la Edge Function pour envoyer une push notification
+      try {
+        if (insertedData && insertedData.length > 0) {
+          const outing = insertedData[0];
+          const supabaseUrl = supabase.supabaseUrl;
+          const { data: sessionData } = await supabase.auth.getSession();
+          const token = sessionData?.session?.access_token;
+
+          const response = await fetch(`${supabaseUrl}/functions/v1/send_push_notification`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              outing,
+              user_id: user.id,
+              dog_name: currentDog.name,
+            }),
+          });
+
+          const result = await response.json();
+          console.log('📤 Push notification scheduled via Edge Function:', result);
+        }
+      } catch (pushError) {
+        console.warn('⚠️ Erreur appel Edge Function, notifications locales utilisées:', pushError);
+      }
 
       let successMessage = '';
       if (pee && poop && treat) {

@@ -342,7 +342,7 @@ export function NotificationSettingsScreen({ dogName, onGoBack }) {
                     body: 'Si tu vois ça, les notifs marchent !',
                     sound: 'default',
                   },
-                  trigger: { seconds: 10, repeats: false },
+                  trigger: { type: 'timeInterval', seconds: 10, repeats: false },
                 });
                 Alert.alert('✅ Planification OK', 'Notification planifiée sans erreur.');
               } catch (e) {

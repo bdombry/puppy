@@ -72,6 +72,7 @@ import CreateAccountScreen from './components/screens/CreateAccountScreen';
 import RevenueCatPaywallScreen from './components/screens/RevenueCatPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
+import { usePushToken } from './hooks/usePushToken';
 // import useHasEverPaid from './hooks/useHasEverPaid';
 
 const Stack = createNativeStackNavigator();
@@ -135,6 +136,7 @@ function MainTabNavigator() {
 function AppNavigator() {
   const { loading, user, currentDog, dogsLoading } = useAuth();
   const { premiumLoading, isPremium, revenueCatReady } = useUser();
+  usePushToken(); // Récupère et sauvegarde le token Expo Push
   const enableLoadingDebugLogs = process.env.EXPO_PUBLIC_DEBUG_LOADING_STATE === 'true';
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
