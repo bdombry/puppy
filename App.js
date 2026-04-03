@@ -69,6 +69,10 @@ import Onboarding6GenderScreen from './components/screens/Onboarding6GenderScree
 import Onboarding6AgeScreen from './components/screens/Onboarding6AgeScreen';
 import Onboarding6SituationScreen from './components/screens/Onboarding6SituationScreen';
 import CreateAccountScreen from './components/screens/CreateAccountScreen';
+import PaywallReason1Screen from './components/screens/PaywallReason1Screen';
+import PaywallReason2Screen from './components/screens/PaywallReason2Screen';
+import PaywallReason3Screen from './components/screens/PaywallReason3Screen';
+import PaywallReason4Screen from './components/screens/PaywallReason4Screen';
 import RevenueCatPaywallScreen from './components/screens/RevenueCatPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
@@ -143,6 +147,8 @@ function AppNavigator() {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallDismissed, setPaywallDismissed] = useState(false);
   const [showPaywallOnLogin, setShowPaywallOnLogin] = useState(false);
+  const [showPaywallReasons, setShowPaywallReasons] = useState(false);
+  const [reasonsDismissed, setReasonsDismissed] = useState(false);
   const navigationRef = useRef();
 
   // On ne vérifie plus l'historique de paiement ici
@@ -194,6 +200,8 @@ function AppNavigator() {
         setOnboardingCompleted(completed === 'true');
         const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
         setShowPaywallOnLogin(showPaywallFlag === 'true');
+        const showReasonsFlag = await AsyncStorage.getItem('show_paywall_reasons');
+        setShowPaywallReasons(showReasonsFlag === 'true');
       } catch (error) {
         console.error('Erreur lors de la vérification du onboarding:', error);
       } finally {
@@ -209,8 +217,10 @@ function AppNavigator() {
       try {
         const completed = await AsyncStorage.getItem('onboardingCompleted');
         const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
+        const showReasonsFlag = await AsyncStorage.getItem('show_paywall_reasons');
         setOnboardingCompleted(completed === 'true');
         setShowPaywallOnLogin(showPaywallFlag === 'true');
+        setShowPaywallReasons(showReasonsFlag === 'true');
       } catch (error) {
         console.error('Erreur sync flags après auth:', error);
       }
@@ -228,7 +238,9 @@ function AppNavigator() {
           setOnboardingCompleted(completed === 'true');
           const showPaywallFlag = await AsyncStorage.getItem('show_paywall_on_login');
           setShowPaywallOnLogin(showPaywallFlag === 'true');
-          console.log('🔄 Onboarding flag re-vérifié:', completed === 'true', 'show_paywall_on_login:', showPaywallFlag);
+          const showReasonsFlag = await AsyncStorage.getItem('show_paywall_reasons');
+          setShowPaywallReasons(showReasonsFlag === 'true');
+          console.log('🔄 Onboarding flag re-vérifié:', completed === 'true', 'show_paywall_reasons:', showReasonsFlag, 'show_paywall_on_login:', showPaywallFlag);
         } catch (error) {
           console.error('Erreur vérification onboarding:', error);
         }
@@ -382,6 +394,10 @@ function AppNavigator() {
               name="CreateAccount" 
               component={CreateAccountScreen}
             />
+            <Stack.Screen name="PaywallReason1" component={PaywallReason1Screen} />
+            <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} />
+            <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} />
+            <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} />
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
             <Stack.Screen 
               name="Auth" 
@@ -419,12 +435,36 @@ function AppNavigator() {
             <Stack.Screen name="Onboarding8" component={Onboarding8Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="Onboarding9" component={Onboarding9Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="PaywallReason1" component={PaywallReason1Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} options={{ animationEnabled: true }} />
           </Stack.Group>
         ) : null}
 
-        {/* 3. PAYWALL REVENUECAT - Affiché uniquement à la fin de l'onboarding */}
-        {isAuthenticated && showPaywall && !paywallDismissed ? (
+        {/* 3. PAYWALL REASONS - Écrans de marketing avant le paywall */}
+        {isAuthenticated && showPaywallReasons && !reasonsDismissed ? (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen name="PaywallReason1" component={PaywallReason1Screen} />
+            <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} />
+            <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} />
+            <Stack.Screen 
+              name="PaywallReason4" 
+              component={PaywallReason4Screen}
+              listeners={({ navigation }) => ({
+                beforeRemove: (e) => {
+                  // Marquer les raisons comme terminées
+                  setReasonsDismissed(true);
+                  AsyncStorage.setItem('show_paywall_reasons', 'false');
+                },
+              })}
+            />
+          </Stack.Group>
+        ) : null}
+
+        {/* 4. PAYWALL REVENUECAT - Affiché uniquement à la fin de l'onboarding */}
+        {isAuthenticated && showPaywall && !paywallDismissed && (!showPaywallReasons || reasonsDismissed) ? (
           <Stack.Group screenOptions={{ animationEnabled: false }}>
             <Stack.Screen name="RevenueCatPaywall">
               {(props) => (

@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import { colors, spacing } from '../../constants/theme';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
+import { configureNotificationHandler, requestNotificationPermissions } from '../services/notificationService';
 
 const Onboarding8Screen = ({ navigation, route }) => {
   const [showButton, setShowButton] = useState(false);
@@ -23,27 +24,34 @@ const Onboarding8Screen = ({ navigation, route }) => {
 
   const handleContinue = async () => {
     try {
+      // Initialiser le handler et demander les permissions
+      configureNotificationHandler();
+      const hasPermission = await requestNotificationPermissions();
+      
       // Récupérer les noms
       const personName = userData?.name || 'Ami du chiot';
       const dogName = dogData?.name || 'ton chiot';
       
       // Message personnalisé avec infos de la personne et du chien
-      const title = `Salut ${personName}! 👋`;
-      const body = `Quand est-ce que ${dogName} a fait ses besoins pour la dernière fois?`;
+      const title = `Bienvenue ${personName}! 🎉`;
+      const body = `Vous avez fait le bon choix pour ${dogName}!`;
 
-      // Envoyer la notification immédiatement
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title,
-          body,
-          sound: true,
-          priority: 'high',
-          badge: 1,
-        },
-        trigger: null, // Immédiat
-      });
-
-      console.log('✅ Notification envoyée:', title, body);
+      // Envoyer la notification immédiatement si permission accordée
+      if (hasPermission) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title,
+            body,
+            sound: true,
+            priority: 'high',
+            badge: 1,
+          },
+          trigger: null, // Immédiat
+        });
+        console.log('✅ Notification envoyée:', title, body);
+      } else {
+        console.log('⚠️ Permission notifications non accordée, notification non envoyée');
+      }
       
       // Naviguer après un petit délai
       setTimeout(() => {
@@ -59,53 +67,46 @@ const Onboarding8Screen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
-        <BackButton onPress={() => navigation.goBack()} />
+        <BackButton onPress={() => navigation.navigate('Onboarding7')} />
         <OnboardingProgressBar percent={96} />
       </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between', paddingVertical: spacing.lg }}>
         {/* Contenu principal */}
-        <View style={{ justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, justifyContent: 'flex-start', paddingTop: spacing.lg }}>
           {/* Titre */}
           <Text style={{
             fontSize: 28,
-            fontWeight: '700',
-            color: colors.textPrimary,
-            marginBottom: spacing.xs,
-            textAlign: 'center',
-            letterSpacing: -0.5,
-          }}>
-            Regardez comment ça
-          </Text>
-          <Text style={{
-            fontSize: 28,
-            fontWeight: '700',
+            fontWeight: '800',
             color: colors.primary,
-            marginBottom: spacing.lg,
+            marginBottom: spacing.sm,
             textAlign: 'center',
-            letterSpacing: -0.5,
+            lineHeight: 35,
           }}>
-            marche ! 🎬
+            Comment ça marche
           </Text>
 
           {/* Sous-titre */}
           <Text style={{
             fontSize: 14,
             color: colors.textSecondary,
-            marginBottom: spacing.lg,
+            marginBottom: spacing.xl,
             textAlign: 'center',
             lineHeight: 20,
+            fontWeight: '500',
           }}>
-            Enregistrez chaque balade en 2 secondes
+            Enregistrez chaque balade ou besoin en quelques secondes
           </Text>
 
           {/* Vidéo */}
           <View style={{
             width: '100%',
-            height: 350,
-            backgroundColor: '#000',
-            borderRadius: 16,
+            height: 280,
+            backgroundColor: colors.surface,
+            borderRadius: 14,
             overflow: 'hidden',
             marginBottom: spacing.lg,
+            borderWidth: 1,
+            borderColor: colors.pupyBorder,
           }}>
             <Video
               source={require('../../assets/videos/demo-walk.mp4')}
@@ -117,41 +118,33 @@ const Onboarding8Screen = ({ navigation, route }) => {
               useNativeControls={false}
             />
           </View>
-
-          {/* Message court */}
-          <Text style={{
-            fontSize: 12,
-            color: colors.textSecondary,
-            marginBottom: spacing.lg,
-            textAlign: 'center',
-          }}>
-            Vos promenades, vos statistiques, vos rappels
-          </Text>
         </View>
 
         {/* Bouton visible après 4 secondes */}
         {showButton && (
-          <View
-            style={{
-              width: '100%',
-            }}
-          >
+          <View style={{ paddingVertical: spacing.lg }}>
             <TouchableOpacity
               onPress={handleContinue}
               style={{
                 paddingVertical: spacing.md,
-                borderRadius: 10,
+                paddingHorizontal: spacing.lg,
+                borderRadius: 14,
                 backgroundColor: colors.primary,
                 alignItems: 'center',
-                width: '100%',
+                shadowColor: colors.primary,
+                shadowOffset: { width: 0, height: 3 },
+                shadowOpacity: 0.25,
+                shadowRadius: 6,
+                elevation: 4,
               }}
             >
               <Text style={{
                 color: colors.pureWhite,
-                fontWeight: '600',
-                fontSize: 16,
+                fontWeight: '700',
+                fontSize: 15,
+                letterSpacing: 0.2,
               }}>
-                Essayer maintenant
+                Continuer
               </Text>
             </TouchableOpacity>
           </View>

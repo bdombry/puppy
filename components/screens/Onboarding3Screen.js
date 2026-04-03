@@ -86,7 +86,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
             letterSpacing: -0.5,
           }}
         >
-          chiot ?
+          chien ?
         </Text>
 
         {/* Photo */}
@@ -102,7 +102,7 @@ const Onboarding3Screen = ({ navigation, route }) => {
             justifyContent: 'center',
             alignItems: 'center',
             alignSelf: 'center',
-            marginBottom: spacing.xxl,
+            marginBottom: spacing.md,
             overflow: 'hidden',
           }}
         >
@@ -112,6 +112,19 @@ const Onboarding3Screen = ({ navigation, route }) => {
             <Text style={{ fontSize: 48 }}>📸</Text>
           )}
         </TouchableOpacity>
+
+        {/* Texte explicatif */}
+        <Text
+          style={{
+            fontSize: 13,
+            color: colors.textSecondary,
+            textAlign: 'center',
+            marginBottom: spacing.xxl,
+            fontWeight: '500',
+          }}
+        >
+          Appuyez pour ajouter une photo de votre chien
+        </Text>
 
         {/* Nom */}
         <View style={{ marginBottom: spacing.lg }}>

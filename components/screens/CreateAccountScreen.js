@@ -147,7 +147,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
       // Poser les flags AVANT de connecter
       await AsyncStorage.setItem('onboardingCompleted', 'true');
-      await AsyncStorage.setItem('show_paywall_on_login', 'true'); // Affiche une seule fois après signup
+      await AsyncStorage.setItem('show_paywall_reasons', 'true'); // Affiche les écrans de raisons d'achat
+      await AsyncStorage.setItem('show_paywall_on_login', 'true'); // Après les raisons, affiche le paywall
 
       // Libérer la garde → setUser + loadUserDog → navigation
       await completeSignup();

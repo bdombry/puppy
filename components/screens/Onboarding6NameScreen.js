@@ -19,7 +19,7 @@ const Onboarding6NameScreen = ({ navigation, route }) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
-        <BackButton onPress={() => navigation.goBack()} />
+        <BackButton onPress={() => navigation.navigate('Onboarding6')} />
         <OnboardingProgressBar percent={76} />
       </View>
       <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between' }}>
