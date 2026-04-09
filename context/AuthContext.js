@@ -508,7 +508,29 @@ export const AuthProvider = ({ children }) => {
       }
       console.log('Deleted dogs');
 
-      // 4. Soft delete l'utilisateur (renommer l'email)
+      // 4. Supprimer les données de subscription (évite les problèmes RLS cascadés)
+      const { error: deleteSubError } = await supabase
+        .from('user_subscriptions')
+        .delete()
+        .eq('user_id', userId);
+
+      if (deleteSubError) {
+        console.error('Error deleting subscriptions:', deleteSubError);
+      }
+      console.log('Deleted subscriptions');
+
+      // 5. Supprimer les données du profil (évite les problèmes RLS cascadés)
+      const { error: deleteProfileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
+
+      if (deleteProfileError) {
+        console.error('Error deleting profile:', deleteProfileError);
+      }
+      console.log('Deleted profile');
+
+      // 6. Soft delete l'utilisateur (renommer l'email)
       const { data: rpcData, error: rpcError } = await supabase.rpc('soft_delete_user', {
         user_id: userId,
       });
@@ -525,13 +547,13 @@ export const AuthProvider = ({ children }) => {
         throw new Error('soft_delete_user returned false');
       }
 
-      // 5. Nettoyer l'état local APRÈS les suppressions
+      // 7. Nettoyer l'état local APRÈS les suppressions
       setCurrentDog(null);
       setDogs([]);
       setUser(null);
       await clearLastDogId();
 
-      // 6. Se déconnecter
+      // 8. Se déconnecter
       await supabase.auth.signOut();
 
       console.log('Account fully deleted');

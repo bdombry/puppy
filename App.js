@@ -398,6 +398,14 @@ function AppNavigator() {
             <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} />
             <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} />
             <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} />
+            <Stack.Screen name="RevenueCatPaywall">
+              {(props) => (
+                <RevenueCatPaywallScreen 
+                  {...props} 
+                  onPaywallDismissed={handlePaywallDismissed}
+                />
+              )}
+            </Stack.Screen>
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} />
             <Stack.Screen 
               name="Auth" 
@@ -434,11 +442,19 @@ function AppNavigator() {
             <Stack.Screen name="Onboarding7" component={Onboarding7Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="Onboarding8" component={Onboarding8Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="Onboarding9" component={Onboarding9Screen} options={{ animationEnabled: true }} />
-            <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason1" component={PaywallReason1Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="RevenueCatPaywall">
+              {(props) => (
+                <RevenueCatPaywallScreen 
+                  {...props} 
+                  onPaywallDismissed={handlePaywallDismissed}
+                />
+              )}
+            </Stack.Screen>
             <Stack.Screen name="AccessCode" component={AccessCodeScreen} options={{ animationEnabled: true }} />
           </Stack.Group>
         ) : null}
@@ -457,6 +473,7 @@ function AppNavigator() {
                   // Marquer les raisons comme terminées
                   setReasonsDismissed(true);
                   AsyncStorage.setItem('show_paywall_reasons', 'false');
+                  AsyncStorage.setItem('show_paywall_on_login', 'true');
                 },
               })}
             />

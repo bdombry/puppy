@@ -145,14 +145,17 @@ const CreateAccountScreen = ({ navigation, route }) => {
       console.log('🔗 PHASE 2: Connexion...');
       setStatusMessage('Connexion...');
 
-      // Poser les flags AVANT de connecter
-      await AsyncStorage.setItem('onboardingCompleted', 'true');
-      await AsyncStorage.setItem('show_paywall_reasons', 'true'); // Affiche les écrans de raisons d'achat
-      await AsyncStorage.setItem('show_paywall_on_login', 'true'); // Après les raisons, affiche le paywall
-
-      // Libérer la garde → setUser + loadUserDog → navigation
-      await completeSignup();
-      console.log('✅ PHASE 2 TERMINÉE: navigation en cours');
+      // ⚠️ IMPORTANT: NE PAS poser onboardingCompleted ici!
+      // Il sera posé par RevenueCatPaywall après completeSignup()
+      // Sinon le Stack.Group 1 se ferme et RevenueCatPaywall ne s'affiche pas
+      
+      setStatusMessage('Affichage de l\'offre...');
+      
+      console.log('✅ PHASE 1 & 2 TERMINÉE: navigation vers paywall');
+      // Ajouter un petit délai pour que React ait le temps de re-rendre et ajouter RevenueCatPaywall
+      setTimeout(() => {
+        navigation.replace('RevenueCatPaywall');
+      }, 100);
 
     } catch (err) {
       console.error('❌ Signup error:', err.message);

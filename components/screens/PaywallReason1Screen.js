@@ -83,7 +83,11 @@ const PaywallReason1Screen = ({ navigation, route }) => {
   }, [titleOpacity, descriptionOpacity, buttonOpacity, mascotteScale, mascotteY, mascotteOpacity]);
 
   const handleContinue = () => {
+    const dogData = route?.params?.dogData || {};
+    const userData = route?.params?.userData || {};
     navigation.navigate('PaywallReason2', {
+      dogData,
+      userData,
       onDismissReasons: route?.params?.onDismissReasons,
     });
   };

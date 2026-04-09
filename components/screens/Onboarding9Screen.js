@@ -54,10 +54,10 @@ const Onboarding9Screen = ({ navigation, route }) => {
 
   const handleContinue = async () => {
     try {
-      console.log('🚀 Navigating to CreateAccount...');
+      console.log('🚀 Navigating to PaywallReason1...');
       console.log('   dogData:', dogData);
       console.log('   userData:', userData);
-      navigation.navigate('CreateAccount', { dogData, userData });
+      navigation.navigate('PaywallReason1', { dogData, userData });
     } catch (error) {
       console.error('❌ Error in handleContinue:', error);
       Alert.alert('Erreur', 'Une erreur est survenue');

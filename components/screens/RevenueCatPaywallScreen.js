@@ -21,6 +21,7 @@ import { presentPaywall } from '../../services/revenueCatService';
 
 const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
   const { user } = useAuth();
+  const { completeSignup } = useAuth();
   const {
     isPremium,
     revenueCatReady,
@@ -45,12 +46,18 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
     hasPresented.current = true;
 
     const displayHardPaywall = async () => {
-      // Si déjà premium, skip direct
+      // Si déjà premium, appeler completeSignup() pour finaliser
       if (isPremium) {
-        console.log('✅ User already premium - skipping paywall');
+        console.log('✅ User already premium - calling completeSignup');
         await AsyncStorage.setItem('onboardingCompleted', 'true');
         if (isMounted.current) setPurchaseComplete(true);
-        try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
+        try { 
+          await completeSignup();
+          onPaywallDismissed?.(); 
+        } catch (e) { 
+          console.warn('completeSignup error:', e); 
+          onPaywallDismissed?.();
+        }
         return;
       }
 
@@ -88,10 +95,18 @@ const RevenueCatPaywallScreen = ({ navigation, onPaywallDismissed }) => {
 
       if (isMounted.current) {
         console.log('✅ Purchase loop finished');
+        // ✅ MAINTENANT poser onboardingCompleted pour fermer Stack.Group 1
         await AsyncStorage.setItem('onboardingCompleted', 'true');
         setPurchaseComplete(true);
-        console.log('🔔 Calling onPaywallDismissed callback...');
-        try { onPaywallDismissed?.(); } catch (e) { console.warn('dismiss cb error:', e); }
+        console.log('🔔 Calling completeSignup to authenticate user...');
+        // ✅ Appeler completeSignup() APRÈS le paywall complété
+        try { 
+          await completeSignup();
+          onPaywallDismissed?.(); 
+        } catch (e) { 
+          console.warn('completeSignup error:', e); 
+          onPaywallDismissed?.();
+        }
       }
     };
 

@@ -304,6 +304,14 @@ export const syncPremiumToSupabase = async (userId, premiumData) => {
   try {
     if (!userId) return;
 
+    // ✅ Vérifier que l'utilisateur actuel correspond à userId
+    // Évite les erreurs RLS si la session n'est pas bien établie
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || user.id !== userId) {
+      console.warn('⚠️ syncPremiumToSupabase: user not authenticated or mismatch, skipping sync');
+      return;
+    }
+
     const customerInfo = await Purchases.getCustomerInfo();
     const entitlement =
       customerInfo?.entitlements?.active?.[ENTITLEMENTS.PRO];

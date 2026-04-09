@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Animated, Dimensions, Image } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import PropTypes from 'prop-types';
-import { colors, spacing } from '../../constants/theme';
-import BackButton from '../BackButton';
-import { OnboardingProgressBar } from '../OnboardingProgressBar';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Animated,
+  Dimensions,
+  Image,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import PropTypes from "prop-types";
+import { colors, spacing } from "../../constants/theme";
+import BackButton from "../BackButton";
+import { OnboardingProgressBar } from "../OnboardingProgressBar";
 
 const PaywallReason4Screen = ({ navigation, route }) => {
   const [showTitle, setShowTitle] = useState(false);
@@ -18,8 +26,16 @@ const PaywallReason4Screen = ({ navigation, route }) => {
   useEffect(() => {
     const timeline = [
       { delay: 400, action: () => setShowTitle(true), animate: titleOpacity },
-      { delay: 1200, action: () => setShowDescription(true), animate: descriptionOpacity },
-      { delay: 2400, action: () => setShowButton(true), animate: buttonOpacity },
+      {
+        delay: 1200,
+        action: () => setShowDescription(true),
+        animate: descriptionOpacity,
+      },
+      {
+        delay: 2400,
+        action: () => setShowButton(true),
+        animate: buttonOpacity,
+      },
     ];
 
     const timers = timeline.map((item) => {
@@ -38,42 +54,72 @@ const PaywallReason4Screen = ({ navigation, route }) => {
     };
   }, [titleOpacity, descriptionOpacity, buttonOpacity]);
 
-  const handleContinue = () => {
-    navigation.navigate('RevenueCatPaywall');
+  const handleContinue = async () => {
+    // Poser les flags AVANT de naviguer
+    await AsyncStorage.setItem('show_paywall_reasons', 'false');
+    await AsyncStorage.setItem('show_paywall_on_login', 'true');
+    
+    // Navigate to CreateAccount (NOT directly, but we check the flow)
+    const dogData = route?.params?.dogData || {};
+    const userData = route?.params?.userData || {};
+    navigation.navigate('CreateAccount', { dogData, userData });
   };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <View style={{ paddingHorizontal: spacing.lg }}>
-        <BackButton onPress={() => navigation.navigate('PaywallReason3')} />
+        <BackButton onPress={() => navigation.navigate("PaywallReason3")} />
         <OnboardingProgressBar percent={100} />
       </View>
 
-      <View style={{ flex: 1, paddingHorizontal: spacing.lg, justifyContent: 'space-between', paddingVertical: spacing.lg, position: 'relative' }}>
+      <View
+        style={{
+          flex: 1,
+          paddingHorizontal: spacing.lg,
+          justifyContent: "space-between",
+          paddingVertical: spacing.lg,
+          position: "relative",
+        }}
+      >
         {/* Mascotte en bas à gauche */}
-        <View style={{
-          position: 'absolute',
-          bottom: -200,
-          left: -200,
-          zIndex: 0,
-        }}>
+        <View
+          style={{
+            position: "absolute",
+            bottom: -200,
+            left: -200,
+            zIndex: 0,
+          }}
+        >
           <Image
-            source={require('../../assets/illustrations/mascotte_happy.png')}
+            source={require("../../assets/illustrations/mascotte_happy.png")}
             style={{
               width: 600,
               height: 600,
-              transform: [{ rotate: '15deg' }],
+              transform: [{ rotate: "15deg" }],
             }}
             resizeMode="contain"
           />
         </View>
 
         {/* Contenu */}
-        <View style={{ flex: 1, justifyContent: 'flex-start', alignItems: 'center', paddingTop: spacing.xxxl + spacing.xxl }}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-start",
+            alignItems: "center",
+            paddingTop: spacing.xxxl + spacing.xxl,
+          }}
+        >
           {/* Emoji */}
           {showTitle && (
             <Animated.View style={{ opacity: titleOpacity }}>
-              <Text style={{ fontSize: 64, marginBottom: spacing.lg, textAlign: 'center' }}>
+              <Text
+                style={{
+                  fontSize: 64,
+                  marginBottom: spacing.lg,
+                  textAlign: "center",
+                }}
+              >
                 🚀
               </Text>
             </Animated.View>
@@ -82,14 +128,16 @@ const PaywallReason4Screen = ({ navigation, route }) => {
           {/* Titre */}
           {showTitle && (
             <Animated.View style={{ opacity: titleOpacity }}>
-              <Text style={{
-                fontSize: 28,
-                fontWeight: '800',
-                color: colors.primary,
-                marginBottom: spacing.lg,
-                textAlign: 'center',
-                lineHeight: 35,
-              }}>
+              <Text
+                style={{
+                  fontSize: 28,
+                  fontWeight: "800",
+                  color: colors.primary,
+                  marginBottom: spacing.lg,
+                  textAlign: "center",
+                  lineHeight: 35,
+                }}
+              >
                 Résultats garantis
               </Text>
             </Animated.View>
@@ -97,14 +145,19 @@ const PaywallReason4Screen = ({ navigation, route }) => {
 
           {/* Description */}
           {showDescription && (
-            <Animated.View style={{ opacity: descriptionOpacity, maxWidth: 280 }}>
-              <Text style={{
-                fontSize: 16,
-                color: colors.black,
-                textAlign: 'center',
-                lineHeight: 24,
-              }}>
-                Voyez les premiers progrès dès la première semaine. Votre chiot progresse, vous le voyez.
+            <Animated.View
+              style={{ opacity: descriptionOpacity, maxWidth: 280 }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  color: colors.black,
+                  textAlign: "center",
+                  lineHeight: 24,
+                }}
+              >
+                Voyez les premiers progrès dès la première semaine. Votre chiot
+                progresse, vous le voyez.
               </Text>
             </Animated.View>
           )}
@@ -120,7 +173,7 @@ const PaywallReason4Screen = ({ navigation, route }) => {
                 paddingHorizontal: spacing.lg,
                 borderRadius: 14,
                 backgroundColor: colors.primary,
-                alignItems: 'center',
+                alignItems: "center",
                 shadowColor: colors.primary,
                 shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.25,
@@ -128,12 +181,14 @@ const PaywallReason4Screen = ({ navigation, route }) => {
                 elevation: 4,
               }}
             >
-              <Text style={{
-                color: colors.pureWhite,
-                fontWeight: '700',
-                fontSize: 15,
-                letterSpacing: 0.2,
-              }}>
+              <Text
+                style={{
+                  color: colors.pureWhite,
+                  fontWeight: "700",
+                  fontSize: 15,
+                  letterSpacing: 0.2,
+                }}
+              >
                 Voir les tarifs →
               </Text>
             </TouchableOpacity>
