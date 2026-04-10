@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,24 +7,37 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { GlobalStyles } from '../../styles/global';
-import { screenStyles } from '../../styles/screenStyles';
-import { supabase } from '../../config/supabase';
-import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
-import { cacheService } from '../services/cacheService';
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAuth } from "../../context/AuthContext";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { GlobalStyles } from "../../styles/global";
+import { screenStyles } from "../../styles/screenStyles";
+import { supabase } from "../../config/supabase";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+} from "../../constants/theme";
+import { cacheService } from "../services/cacheService";
 
 // ✅ Parser une chaîne ISO locale (sans timezone) en Date locale
 const parseLocalISOString = (isoString) => {
   if (!isoString) return new Date();
   // Format: "2025-12-08T00:14:09" (LOCAL, pas UTC)
-  const [datePart, timePart] = isoString.split('T');
-  const [year, month, day] = datePart.split('-');
-  const [hours, minutes, seconds] = timePart.split(':');
-  return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
+  const [datePart, timePart] = isoString.split("T");
+  const [year, month, day] = datePart.split("-");
+  const [hours, minutes, seconds] = timePart.split(":");
+  return new Date(
+    parseInt(year),
+    parseInt(month) - 1,
+    parseInt(day),
+    parseInt(hours),
+    parseInt(minutes),
+    parseInt(seconds),
+  );
 };
 
 export default function EditSuccessScreen() {
@@ -38,47 +51,64 @@ export default function EditSuccessScreen() {
   const [pee, setPee] = useState(success?.pee || false);
   const [poop, setPoop] = useState(success?.poop || false);
   const [treat, setTreat] = useState(success?.treat || false);
-  const [dogAskedForWalk, setDogAskedForWalk] = useState(success?.dog_asked_for_walk || false);
-  const [datetime, setDatetime] = useState(parseLocalISOString(success?.datetime));
+  const [dogAskedForWalk, setDogAskedForWalk] = useState(
+    success?.dog_asked_for_walk || false,
+  );
+  const [datetime, setDatetime] = useState(
+    parseLocalISOString(success?.datetime),
+  );
   const [showDateTimeEditor, setShowDateTimeEditor] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleDateTimeChange = (event, selectedDate) => {
+  const handleDateChange = (event, selectedDate) => {
     if (selectedDate) {
-      setDatetime(selectedDate);
+      const newDate = new Date(datetime);
+      newDate.setFullYear(selectedDate.getFullYear());
+      newDate.setMonth(selectedDate.getMonth());
+      newDate.setDate(selectedDate.getDate());
+      setDatetime(newDate);
+    }
+  };
+
+  const handleTimeChange = (event, selectedTime) => {
+    if (selectedTime) {
+      const newDate = new Date(datetime);
+      newDate.setHours(selectedTime.getHours());
+      newDate.setMinutes(selectedTime.getMinutes());
+      setDatetime(newDate);
     }
   };
 
   const handleSave = async () => {
     if (!pee && !poop) {
-      Alert.alert('⚠️ Attention', 'Coche au moins pipi ou caca');
+      Alert.alert("⚠️ Attention", "Coche au moins pipi ou caca");
       return;
     }
 
     if (!success?.id) {
-      Alert.alert('❌ Erreur', 'Données de réussite manquantes');
+      Alert.alert("❌ Erreur", "Données de réussite manquantes");
       return;
     }
 
     setLoading(true);
     try {
-      const pad = (n) => String(n).padStart(2, '0');
+      const pad = (n) => String(n).padStart(2, "0");
       const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
       const updateData = {
         pee,
-        pee_location: pee ? 'outside' : null,
+        pee_location: pee ? "outside" : null,
         poop,
-        poop_location: poop ? 'outside' : null,
+        poop_location: poop ? "outside" : null,
         treat,
         dog_asked_for_walk: dogAskedForWalk,
         datetime: datetimeISO,
       };
 
       const { error } = await supabase
-        .from('outings')
+        .from("outings")
         .update(updateData)
-        .eq('id', success.id);
+        .eq("id", success.id);
 
       if (error) throw error;
 
@@ -86,13 +116,13 @@ export default function EditSuccessScreen() {
       cacheService.invalidatePattern(`.*history.*_${currentDog?.id}`);
       cacheService.invalidatePattern(`analytics_${currentDog?.id}_.*`);
 
-      Alert.alert('✅ Modifié', 'La réussite a été mise à jour');
+      Alert.alert("✅ Modifié", "La réussite a été mise à jour");
       setTimeout(() => {
         navigation.goBack();
         if (onSave) onSave();
       }, 500);
     } catch (err) {
-      Alert.alert('❌ Erreur', err.message || 'Impossible de modifier');
+      Alert.alert("❌ Erreur", err.message || "Impossible de modifier");
     } finally {
       setLoading(false);
     }
@@ -102,11 +132,18 @@ export default function EditSuccessScreen() {
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
         <View style={styles.header}>
-          <View style={[screenStyles.avatar, { backgroundColor: colors.successLight }]}>
+          <View
+            style={[
+              screenStyles.avatar,
+              { backgroundColor: colors.successLight },
+            ]}
+          >
             <Text style={screenStyles.avatarEmoji}>✅</Text>
           </View>
           <Text style={screenStyles.screenTitle}>Éditer réussite</Text>
-          <Text style={screenStyles.screenSubtitle}>Modifie les détails de la sortie</Text>
+          <Text style={screenStyles.screenSubtitle}>
+            Modifie les détails de la sortie
+          </Text>
         </View>
 
         {/* Date et Heure */}
@@ -121,14 +158,16 @@ export default function EditSuccessScreen() {
             disabled={loading}
           >
             <Text style={styles.dateTimeButtonText}>
-              {datetime.toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })} à {datetime.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
+              {datetime.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}{" "}
+              à{" "}
+              {datetime.toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </Text>
           </TouchableOpacity>
@@ -142,9 +181,7 @@ export default function EditSuccessScreen() {
                     value={datetime}
                     mode="date"
                     display="spinner"
-                    onChange={(event, selectedDate) => {
-                      if (selectedDate) setDatetime(selectedDate);
-                    }}
+                    onChange={handleDateChange}
                   />
                 </View>
               </View>
@@ -156,9 +193,7 @@ export default function EditSuccessScreen() {
                     value={datetime}
                     mode="time"
                     display="spinner"
-                    onChange={(event, selectedTime) => {
-                      if (selectedTime) setDatetime(selectedTime);
-                    }}
+                    onChange={handleTimeChange}
                   />
                 </View>
               </View>
@@ -175,20 +210,12 @@ export default function EditSuccessScreen() {
 
         {/* Pipi */}
         <TouchableOpacity
-          style={[
-            styles.optionCard,
-            pee && styles.optionCardActiveGreen,
-          ]}
+          style={[styles.optionCard, pee && styles.optionCardActiveGreen]}
           onPress={() => setPee(!pee)}
           activeOpacity={0.7}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View
-              style={[
-                styles.checkbox,
-                pee && styles.checkboxActiveGreen,
-              ]}
-            >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={[styles.checkbox, pee && styles.checkboxActiveGreen]}>
               {pee && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <View style={{ flex: 1 }}>
@@ -200,20 +227,12 @@ export default function EditSuccessScreen() {
 
         {/* Caca */}
         <TouchableOpacity
-          style={[
-            styles.optionCard,
-            poop && styles.optionCardActiveGreen,
-          ]}
+          style={[styles.optionCard, poop && styles.optionCardActiveGreen]}
           onPress={() => setPoop(!poop)}
           activeOpacity={0.7}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View
-              style={[
-                styles.checkbox,
-                poop && styles.checkboxActiveGreen,
-              ]}
-            >
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <View style={[styles.checkbox, poop && styles.checkboxActiveGreen]}>
               {poop && <Text style={styles.checkmark}>✓</Text>}
             </View>
             <View style={{ flex: 1 }}>
@@ -225,19 +244,13 @@ export default function EditSuccessScreen() {
 
         {/* Friandise */}
         <TouchableOpacity
-          style={[
-            styles.optionCard,
-            treat && styles.optionCardActivePurple,
-          ]}
+          style={[styles.optionCard, treat && styles.optionCardActivePurple]}
           onPress={() => setTreat(!treat)}
           activeOpacity={0.7}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View
-              style={[
-                styles.checkbox,
-                treat && styles.checkboxActivePurple,
-              ]}
+              style={[styles.checkbox, treat && styles.checkboxActivePurple]}
             >
               {treat && <Text style={styles.checkmark}>✓</Text>}
             </View>
@@ -257,7 +270,7 @@ export default function EditSuccessScreen() {
           onPress={() => setDogAskedForWalk(!dogAskedForWalk)}
           activeOpacity={0.7}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View
               style={[
                 styles.checkbox,
@@ -289,9 +302,7 @@ export default function EditSuccessScreen() {
               ]}
               onPress={handleSave}
             >
-              <Text style={screenStyles.buttonPrimaryText}>
-                ✅ Sauvegarder
-              </Text>
+              <Text style={screenStyles.buttonPrimaryText}>✅ Sauvegarder</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -309,7 +320,7 @@ export default function EditSuccessScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.xxxl,
   },
   fieldCard: {
@@ -321,8 +332,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   fieldLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   fieldEmoji: {
@@ -346,7 +357,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   dateTimeEditor: {
     marginTop: spacing.md,
@@ -375,7 +386,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.gray200,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   pickerValidateButton: {
     backgroundColor: colors.success,
@@ -383,7 +394,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     marginTop: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pickerValidateText: {
     fontSize: typography.sizes.base,
@@ -421,8 +432,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 2,
     borderColor: colors.gray300,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.lg,
   },
   checkboxActiveGreen: {

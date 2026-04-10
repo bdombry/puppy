@@ -2,7 +2,7 @@
  * Écran pour enregistrer alimentation/hydratation
  */
 
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -11,20 +11,32 @@ import {
   Alert,
   ActivityIndicator,
   ScrollView,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../context/AuthContext';
-import { GlobalStyles } from '../../styles/global';
-import { screenStyles } from '../../styles/screenStyles';
-import { useNavigation } from '@react-navigation/native';
-import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
-import { supabase } from '../../config/supabase';
-import { scheduleFeedingNotification } from '../services/feedingService';
-import { getDogMessages } from '../../constants/dogMessages';
-import { validateFeedingData, formatValidationErrors } from '../services/validationService';
-import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
-import { insertBatchWithFallback } from '../services/retryService';
-import { cacheService } from '../services/cacheService';
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAuth } from "../../context/AuthContext";
+import { GlobalStyles } from "../../styles/global";
+import { screenStyles } from "../../styles/screenStyles";
+import { useNavigation } from "@react-navigation/native";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+} from "../../constants/theme";
+import { supabase } from "../../config/supabase";
+import { scheduleFeedingNotification } from "../services/feedingService";
+import { getDogMessages } from "../../constants/dogMessages";
+import {
+  validateFeedingData,
+  formatValidationErrors,
+} from "../services/validationService";
+import {
+  getUserFriendlyErrorMessage,
+  logError,
+} from "../services/errorHandler";
+import { insertBatchWithFallback } from "../services/retryService";
+import { cacheService } from "../services/cacheService";
 
 export default function FeedingScreen() {
   const navigation = useNavigation();
@@ -39,31 +51,31 @@ export default function FeedingScreen() {
   const messages = getDogMessages(currentDog?.name, currentDog?.sex);
 
   const toggleFeedingType = (type) => {
-    setSelectedTypes(prev =>
-      prev.includes(type)
-        ? prev.filter(t => t !== type)
-        : [...prev, type]
+    setSelectedTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     );
   };
 
   const handleRecord = async () => {
     if (selectedTypes.length === 0) {
-      Alert.alert('⚠️ Attention', 'Sélectionne au moins manger ou boire');
+      Alert.alert("⚠️ Attention", "Sélectionne au moins manger ou boire");
       return;
     }
 
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
-        throw new Error('Utilisateur non authentifié');
+        throw new Error("Utilisateur non authentifié");
       }
 
       // Créer la date en heure locale (chaîne ISO sans conversion UTC)
-      const pad = (n) => String(n).padStart(2, '0');
+      const pad = (n) => String(n).padStart(2, "0");
       const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
-      const records = selectedTypes.map(type => ({
+      const records = selectedTypes.map((type) => ({
         dog_id: currentDog.id,
         user_id: user.id,
         type: type,
@@ -71,7 +83,10 @@ export default function FeedingScreen() {
       }));
 
       // ✅ VALIDATION des données
-      const validation = validateFeedingData({ types: selectedTypes, datetime: datetimeISO });
+      const validation = validateFeedingData({
+        types: selectedTypes,
+        datetime: datetimeISO,
+      });
       if (!validation.isValid) {
         throw new Error(formatValidationErrors(validation.errors));
       }
@@ -84,9 +99,9 @@ export default function FeedingScreen() {
       // ✅ PUIS insérer en Supabase (avec fallback retry)
       const { successful, failed } = await insertBatchWithFallback(
         supabase,
-        'feeding',
+        "feeding",
         records,
-        { maxRetries: 3 }
+        { maxRetries: 3 },
       );
 
       if (failed.length > 0) {
@@ -94,16 +109,16 @@ export default function FeedingScreen() {
       }
 
       // Messages personnalisés selon le sexe
-      let message = '';
-      if (selectedTypes.includes('eat') && selectedTypes.includes('drink')) {
+      let message = "";
+      if (selectedTypes.includes("eat") && selectedTypes.includes("drink")) {
         message = messages.ateAndDrank;
-      } else if (selectedTypes.includes('eat')) {
+      } else if (selectedTypes.includes("eat")) {
         message = messages.ateFood;
       } else {
         message = messages.drankWater;
       }
 
-      Alert.alert('✅ Enregistré !', message);
+      Alert.alert("✅ Enregistré !", message);
 
       // 🗑️ Invalider le cache car données modifiées
       cacheService.invalidatePattern(`home_.*_${currentDog.id}`);
@@ -113,9 +128,9 @@ export default function FeedingScreen() {
 
       navigation.goBack();
     } catch (err) {
-      logError('FeedingScreen.handleRecord', err);
+      logError("FeedingScreen.handleRecord", err);
       const userMessage = getUserFriendlyErrorMessage(err);
-      Alert.alert('❌ Erreur', userMessage);
+      Alert.alert("❌ Erreur", userMessage);
     } finally {
       setLoading(false);
     }
@@ -125,16 +140,13 @@ export default function FeedingScreen() {
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
         <View style={styles.header}>
-          <View style={[
-            screenStyles.avatar,
-            { backgroundColor: colors.infoLight }
-          ]}>
+          <View
+            style={[screenStyles.avatar, { backgroundColor: colors.infoLight }]}
+          >
             <Text style={screenStyles.avatarEmoji}>🍽️</Text>
           </View>
 
-          <Text style={screenStyles.screenTitle}>
-            Alimentation
-          </Text>
+          <Text style={screenStyles.screenTitle}>Alimentation</Text>
           <Text style={screenStyles.screenSubtitle}>
             {messages.pronoun} a mangé ou bu ?
           </Text>
@@ -152,14 +164,16 @@ export default function FeedingScreen() {
             disabled={loading}
           >
             <Text style={styles.dateTimeButtonText}>
-              {datetime.toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })} à {datetime.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
+              {datetime.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}{" "}
+              à{" "}
+              {datetime.toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </Text>
           </TouchableOpacity>
@@ -193,7 +207,10 @@ export default function FeedingScreen() {
                     display="spinner"
                     onChange={(event, selectedTime) => {
                       if (selectedTime) {
-                        setDatetime(selectedTime);
+                        const newDate = new Date(datetime);
+                        newDate.setHours(selectedTime.getHours());
+                        newDate.setMinutes(selectedTime.getMinutes());
+                        setDatetime(newDate);
                       }
                     }}
                   />
@@ -215,19 +232,21 @@ export default function FeedingScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              selectedTypes.includes('eat') && styles.optionCardActive,
+              selectedTypes.includes("eat") && styles.optionCardActive,
             ]}
-            onPress={() => toggleFeedingType('eat')}
+            onPress={() => toggleFeedingType("eat")}
             activeOpacity={0.7}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={[
                   styles.checkbox,
-                  selectedTypes.includes('eat') && styles.checkboxActive,
+                  selectedTypes.includes("eat") && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('eat') && <Text style={styles.checkmark}>✓</Text>}
+                {selectedTypes.includes("eat") && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>🍗 Manger</Text>
@@ -241,19 +260,21 @@ export default function FeedingScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              selectedTypes.includes('drink') && styles.optionCardActive,
+              selectedTypes.includes("drink") && styles.optionCardActive,
             ]}
-            onPress={() => toggleFeedingType('drink')}
+            onPress={() => toggleFeedingType("drink")}
             activeOpacity={0.7}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={[
                   styles.checkbox,
-                  selectedTypes.includes('drink') && styles.checkboxActive,
+                  selectedTypes.includes("drink") && styles.checkboxActive,
                 ]}
               >
-                {selectedTypes.includes('drink') && <Text style={styles.checkmark}>✓</Text>}
+                {selectedTypes.includes("drink") && (
+                  <Text style={styles.checkmark}>✓</Text>
+                )}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💧 Boire</Text>
@@ -281,9 +302,7 @@ export default function FeedingScreen() {
               ]}
               onPress={handleRecord}
             >
-              <Text style={screenStyles.buttonPrimaryText}>
-                ✅ Enregistrer
-              </Text>
+              <Text style={screenStyles.buttonPrimaryText}>✅ Enregistrer</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -301,7 +320,7 @@ export default function FeedingScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.xxxl,
   },
   checkmark: {
@@ -330,8 +349,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 2,
     borderColor: colors.gray300,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.lg,
   },
   checkboxActive: {
@@ -368,8 +387,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   fieldLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   fieldEmoji: {
@@ -393,7 +412,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   dateTimeEditor: {
     marginTop: spacing.md,
@@ -422,7 +441,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.gray200,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   pickerValidateButton: {
     backgroundColor: colors.info,
@@ -430,7 +449,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     marginTop: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pickerValidateText: {
     fontSize: typography.sizes.base,

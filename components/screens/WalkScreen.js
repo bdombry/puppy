@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -8,30 +8,47 @@ import {
   ActivityIndicator,
   ScrollView,
   Modal,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../context/AuthContext';
-import { GlobalStyles } from '../../styles/global';
-import { screenStyles } from '../../styles/screenStyles';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { supabase } from '../../config/supabase';
-import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
-import { scheduleNotificationFromOuting } from '../services/notificationService';
-import { getDogMessages } from '../../constants/dogMessages';
-import { validateWalkData, formatValidationErrors } from '../services/validationService';
-import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
-import { insertWithRetry } from '../services/retryService';
-import { cacheService } from '../services/cacheService';
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAuth } from "../../context/AuthContext";
+import { GlobalStyles } from "../../styles/global";
+import { screenStyles } from "../../styles/screenStyles";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import { supabase } from "../../config/supabase";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+} from "../../constants/theme";
+import { scheduleNotificationFromOuting } from "../services/notificationService";
+import { getDogMessages } from "../../constants/dogMessages";
+import {
+  validateWalkData,
+  formatValidationErrors,
+} from "../services/validationService";
+import {
+  getUserFriendlyErrorMessage,
+  logError,
+} from "../services/errorHandler";
+import { insertWithRetry } from "../services/retryService";
+import { cacheService } from "../services/cacheService";
 
 export default function WalkScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const { currentDog, user } = useAuth();
 
-  const eventType = route.params?.type || 'walk';
-  const isIncident = eventType === 'incident';
+  const eventType = route.params?.type || "walk";
+  const isIncident = eventType === "incident";
 
-  console.log('🚶 WalkScreen montée, eventType:', eventType, 'isIncident:', isIncident);
+  console.log(
+    "🚶 WalkScreen montée, eventType:",
+    eventType,
+    "isIncident:",
+    isIncident,
+  );
 
   const [pee, setPee] = useState(false);
   const [poop, setPoop] = useState(false);
@@ -44,34 +61,39 @@ export default function WalkScreen() {
   const [loading, setLoading] = useState(false);
 
   const incidentReasons = [
-    { label: '⏰ Pas le temps', value: 'pas_le_temps' },
-    { label: '🌙 Horaire trop tardif', value: 'trop_tard' },
-    { label: '😑 Flemme', value: 'flemme' },
-    { label: '🤔 Oublié', value: 'oublie' },
-    { label: 'ℹ️ Autre', value: 'autre' },
+    { label: "⏰ Pas le temps", value: "pas_le_temps" },
+    { label: "🌙 Horaire trop tardif", value: "trop_tard" },
+    { label: "😑 Flemme", value: "flemme" },
+    { label: "🤔 Oublié", value: "oublie" },
+    { label: "ℹ️ Autre", value: "autre" },
   ];
 
   const messages = getDogMessages(currentDog?.name, currentDog?.sex);
 
   const handleSave = async () => {
-    console.log('🚶 WalkScreen handleSave appelé avec:', { pee, poop, treat, dogAskedForWalk });
-    
+    console.log("🚶 WalkScreen handleSave appelé avec:", {
+      pee,
+      poop,
+      treat,
+      dogAskedForWalk,
+    });
+
     if (!pee && !poop) {
-      console.log('❌ WalkScreen: Pas de pee ni poop, Alert affiché');
+      console.log("❌ WalkScreen: Pas de pee ni poop, Alert affiché");
       Alert.alert(
-        '⚠️ Attention',
-        'Coche au moins une option (pipi ou caca) 💧💩'
+        "⚠️ Attention",
+        "Coche au moins une option (pipi ou caca) 💧💩",
       );
       return;
     }
 
-    console.log('✅ WalkScreen: Validation réussie, création de walkData');
+    console.log("✅ WalkScreen: Validation réussie, création de walkData");
     setLoading(true);
     try {
-      const location = isIncident ? 'inside' : 'outside';
+      const location = isIncident ? "inside" : "outside";
       // ✅ IMPORTANT: Utiliser la date modifiée (ou maintenant si pas modifiée)
       // Les deux tables (outings ET activities) stockent en LOCAL dans leur champ datetime
-      const pad = (n) => String(n).padStart(2, '0');
+      const pad = (n) => String(n).padStart(2, "0");
       const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
       const walkData = {
@@ -86,8 +108,8 @@ export default function WalkScreen() {
         dog_asked_for_walk: dogAskedForWalk,
         incident_reason: isIncident ? incidentReason : null,
       };
-      
-      console.log('📤 WalkScreen: Données à envoyer:', walkData);
+
+      console.log("📤 WalkScreen: Données à envoyer:", walkData);
 
       // ✅ VALIDATION des données AVANT Supabase
       const validation = validateWalkData(walkData);
@@ -99,21 +121,30 @@ export default function WalkScreen() {
       // Comme ça, même si Supabase échoue, la notif est programmée localement
       // Convert LOCAL datetime string to Date for notification
       const outingTime = datetime; // Use the modified datetime Date object
-      const notificationScheduled = await scheduleNotificationFromOuting(outingTime, currentDog.name, currentDog.id);
-      
+      const notificationScheduled = await scheduleNotificationFromOuting(
+        outingTime,
+        currentDog.name,
+        currentDog.id,
+      );
+
       if (!notificationScheduled) {
-        console.warn('⚠️ Notification non programmée, mais on continue avec l\'insert');
+        console.warn(
+          "⚠️ Notification non programmée, mais on continue avec l'insert",
+        );
       }
 
       // ✅ PUIS insérer en Supabase (avec retry automatique)
       let insertedData;
       try {
-        insertedData = await insertWithRetry(supabase, 'outings', [walkData], {
+        insertedData = await insertWithRetry(supabase, "outings", [walkData], {
           maxRetries: 3,
-          context: 'WalkScreen.handleSave',
+          context: "WalkScreen.handleSave",
         });
       } catch (insertError) {
-        Alert.alert('❌ Erreur', `Impossible d'enregistrer la sortie: ${insertError.message}`);
+        Alert.alert(
+          "❌ Erreur",
+          `Impossible d'enregistrer la sortie: ${insertError.message}`,
+        );
         setLoading(false);
         return;
       }
@@ -126,27 +157,36 @@ export default function WalkScreen() {
           const { data: sessionData } = await supabase.auth.getSession();
           const token = sessionData?.session?.access_token;
 
-          const response = await fetch(`${supabaseUrl}/functions/v1/send_push_notification`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
+          const response = await fetch(
+            `${supabaseUrl}/functions/v1/send_push_notification`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                outing,
+                user_id: user.id,
+                dog_name: currentDog.name,
+              }),
             },
-            body: JSON.stringify({
-              outing,
-              user_id: user.id,
-              dog_name: currentDog.name,
-            }),
-          });
+          );
 
           const result = await response.json();
-          console.log('📤 Push notification scheduled via Edge Function:', result);
+          console.log(
+            "📤 Push notification scheduled via Edge Function:",
+            result,
+          );
         }
       } catch (pushError) {
-        console.warn('⚠️ Erreur appel Edge Function, notifications locales utilisées:', pushError);
+        console.warn(
+          "⚠️ Erreur appel Edge Function, notifications locales utilisées:",
+          pushError,
+        );
       }
 
-      let successMessage = '';
+      let successMessage = "";
       if (pee && poop && treat) {
         successMessage = `${messages.pronoun} a tout fait! 💧💩🍖`;
       } else if (pee && poop) {
@@ -158,10 +198,10 @@ export default function WalkScreen() {
       }
 
       Alert.alert(
-        '✅ Enregistré !',
+        "✅ Enregistré !",
         isIncident
           ? `L'incident a été synchronisé. ${successMessage}`
-          : `La sortie a été synchronisée. ${successMessage}`
+          : `La sortie a été synchronisée. ${successMessage}`,
       );
 
       // 🗑️ Invalider le cache car données modifiées
@@ -172,12 +212,12 @@ export default function WalkScreen() {
 
       // ✅ Navigation après succès
       setTimeout(() => {
-        navigation.navigate('MainTabs', { screen: 'Home' });
+        navigation.navigate("MainTabs", { screen: "Home" });
       }, 1000); // Réduit de 2s à 1s puisqu'on a le retry
     } catch (err) {
-      logError('WalkScreen.handleSave', err);
+      logError("WalkScreen.handleSave", err);
       const userMessage = getUserFriendlyErrorMessage(err);
-      Alert.alert('❌ Erreur', userMessage);
+      Alert.alert("❌ Erreur", userMessage);
     } finally {
       setLoading(false);
     }
@@ -187,27 +227,34 @@ export default function WalkScreen() {
     <View style={GlobalStyles.safeArea}>
       <ScrollView contentContainerStyle={screenStyles.screenContainer}>
         <View style={styles.header}>
-          <View style={[
-            screenStyles.avatar,
-            { backgroundColor:
-                isIncident
+          <View
+            style={[
+              screenStyles.avatar,
+              {
+                backgroundColor: isIncident
                   ? colors.errorLight
-                  : eventType === 'walk'
+                  : eventType === "walk"
                     ? colors.pupyAccent
-                    : colors.successLight }
-          ]}>
+                    : colors.successLight,
+              },
+            ]}
+          >
             <Text style={screenStyles.avatarEmoji}>
-              {isIncident ? '⚠️' : eventType === 'walk' ? '🚶' : '🌳'}
+              {isIncident ? "⚠️" : eventType === "walk" ? "🚶" : "🌳"}
             </Text>
           </View>
 
           <Text style={screenStyles.screenTitle}>
-            {isIncident ? 'Incident' : eventType === 'walk' ? 'Balade' : 'Réussite'}
+            {isIncident
+              ? "Incident"
+              : eventType === "walk"
+                ? "Balade"
+                : "Réussite"}
           </Text>
           <Text style={screenStyles.screenSubtitle}>
             {isIncident
               ? messages.incidentInside
-              : eventType === 'walk'
+              : eventType === "walk"
                 ? `Balade avec ${currentDog?.name}`
                 : `Qu'a fait ${currentDog?.name} ?`}
           </Text>
@@ -225,14 +272,16 @@ export default function WalkScreen() {
             disabled={loading}
           >
             <Text style={styles.dateTimeButtonText}>
-              {datetime.toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })} à {datetime.toLocaleTimeString('fr-FR', {
-                hour: '2-digit',
-                minute: '2-digit',
+              {datetime.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}{" "}
+              à{" "}
+              {datetime.toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </Text>
           </TouchableOpacity>
@@ -266,7 +315,10 @@ export default function WalkScreen() {
                     display="spinner"
                     onChange={(event, selectedTime) => {
                       if (selectedTime) {
-                        setDatetime(selectedTime);
+                        const newDate = new Date(datetime);
+                        newDate.setHours(selectedTime.getHours());
+                        newDate.setMinutes(selectedTime.getMinutes());
+                        setDatetime(newDate);
                       }
                     }}
                   />
@@ -288,34 +340,35 @@ export default function WalkScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              pee && (isIncident
-                ? styles.optionCardActiveRed
-                : eventType === 'walk'
-                  ? styles.optionCardActiveBlue
-                  : styles.optionCardActiveGreen),
+              pee &&
+                (isIncident
+                  ? styles.optionCardActiveRed
+                  : eventType === "walk"
+                    ? styles.optionCardActiveBlue
+                    : styles.optionCardActiveGreen),
             ]}
             onPress={() => {
-              console.log('💧 WalkScreen: Toggle pee, avant:', pee);
+              console.log("💧 WalkScreen: Toggle pee, avant:", pee);
               setPee(!pee);
             }}
             activeOpacity={0.7}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={[
                   styles.checkbox,
-                  pee && (isIncident
-                    ? styles.checkboxActiveRed
-                    : eventType === 'walk'
-                      ? styles.checkboxActiveBlue
-                      : styles.checkboxActiveGreen),
+                  pee &&
+                    (isIncident
+                      ? styles.checkboxActiveRed
+                      : eventType === "walk"
+                        ? styles.checkboxActiveBlue
+                        : styles.checkboxActiveGreen),
                 ]}
               >
                 {pee && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.optionLabel}>💧 Pipi</Text>
-                
               </View>
             </View>
           </TouchableOpacity>
@@ -323,27 +376,29 @@ export default function WalkScreen() {
           <TouchableOpacity
             style={[
               styles.optionCard,
-              poop && (isIncident
-                ? styles.optionCardActiveRed
-                : eventType === 'walk'
-                  ? styles.optionCardActiveBlue
-                  : styles.optionCardActiveGreen),
+              poop &&
+                (isIncident
+                  ? styles.optionCardActiveRed
+                  : eventType === "walk"
+                    ? styles.optionCardActiveBlue
+                    : styles.optionCardActiveGreen),
             ]}
             onPress={() => {
-              console.log('💩 WalkScreen: Toggle poop, avant:', poop);
+              console.log("💩 WalkScreen: Toggle poop, avant:", poop);
               setPoop(!poop);
             }}
             activeOpacity={0.7}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
               <View
                 style={[
                   styles.checkbox,
-                  poop && (isIncident
-                    ? styles.checkboxActiveRed
-                    : eventType === 'walk'
-                      ? styles.checkboxActiveBlue
-                      : styles.checkboxActiveGreen),
+                  poop &&
+                    (isIncident
+                      ? styles.checkboxActiveRed
+                      : eventType === "walk"
+                        ? styles.checkboxActiveBlue
+                        : styles.checkboxActiveGreen),
                 ]}
               >
                 {poop && <Text style={styles.checkmark}>✓</Text>}
@@ -363,7 +418,7 @@ export default function WalkScreen() {
               onPress={() => setTreat(!treat)}
               activeOpacity={0.7}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
                   style={[
                     styles.checkbox,
@@ -390,7 +445,7 @@ export default function WalkScreen() {
               onPress={() => setDogAskedForWalk(!dogAskedForWalk)}
               activeOpacity={0.7}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
                   style={[
                     styles.checkbox,
@@ -400,7 +455,9 @@ export default function WalkScreen() {
                   {dogAskedForWalk && <Text style={styles.checkmark}>✓</Text>}
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.optionLabel}>🐕 Le chien l'a demandé</Text>
+                  <Text style={styles.optionLabel}>
+                    🐕 Le chien l'a demandé
+                  </Text>
                   <Text style={styles.optionHint}>Initié par le chien</Text>
                 </View>
               </View>
@@ -417,7 +474,7 @@ export default function WalkScreen() {
               onPress={() => setShowReasonModal(true)}
               activeOpacity={0.7}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
                   style={[
                     styles.checkbox,
@@ -429,8 +486,9 @@ export default function WalkScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.optionLabel}>
                     {incidentReason
-                      ? incidentReasons.find((r) => r.value === incidentReason)?.label
-                      : '📋 Raison'}
+                      ? incidentReasons.find((r) => r.value === incidentReason)
+                          ?.label
+                      : "📋 Raison"}
                   </Text>
                   <Text style={styles.optionHint}>Pourquoi cet accident ?</Text>
                 </View>
@@ -453,13 +511,16 @@ export default function WalkScreen() {
               activeOpacity={1}
             >
               <View style={styles.reasonModalContent}>
-                <Text style={styles.reasonModalTitle}>Pourquoi cet accident ?</Text>
+                <Text style={styles.reasonModalTitle}>
+                  Pourquoi cet accident ?
+                </Text>
                 {incidentReasons.map((reason) => (
                   <TouchableOpacity
                     key={reason.value}
                     style={[
                       styles.reasonOption,
-                      incidentReason === reason.value && styles.reasonOptionActive,
+                      incidentReason === reason.value &&
+                        styles.reasonOptionActive,
                     ]}
                     onPress={() => {
                       setIncidentReason(reason.value);
@@ -469,7 +530,8 @@ export default function WalkScreen() {
                     <Text
                       style={[
                         styles.reasonOptionText,
-                        incidentReason === reason.value && styles.reasonOptionTextActive,
+                        incidentReason === reason.value &&
+                          styles.reasonOptionTextActive,
                       ]}
                     >
                       {reason.label}
@@ -483,7 +545,9 @@ export default function WalkScreen() {
                     setShowReasonModal(false);
                   }}
                 >
-                  <Text style={styles.reasonClearText}>Effacer la sélection</Text>
+                  <Text style={styles.reasonClearText}>
+                    Effacer la sélection
+                  </Text>
                 </TouchableOpacity>
               </View>
             </TouchableOpacity>
@@ -502,12 +566,17 @@ export default function WalkScreen() {
               style={[
                 screenStyles.button,
                 screenStyles.buttonPrimary,
-                { backgroundColor: isIncident ? colors.error : colors.success, marginBottom: spacing.lg },
+                {
+                  backgroundColor: isIncident ? colors.error : colors.success,
+                  marginBottom: spacing.lg,
+                },
               ]}
               onPress={handleSave}
             >
               <Text style={screenStyles.buttonPrimaryText}>
-                {isIncident ? '✅ Enregistrer l\'accident' : '✅ Enregistrer le besoin'}
+                {isIncident
+                  ? "✅ Enregistrer l'accident"
+                  : "✅ Enregistrer le besoin"}
               </Text>
             </TouchableOpacity>
 
@@ -526,7 +595,7 @@ export default function WalkScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.xxxl,
   },
   checkmark: {
@@ -571,8 +640,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 2,
     borderColor: colors.gray300,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.lg,
   },
   checkboxActiveGreen: {
@@ -637,8 +706,8 @@ const styles = StyleSheet.create({
   },
   reasonModalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   reasonModalContent: {
     backgroundColor: colors.white,
@@ -653,7 +722,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
     color: colors.text,
     marginBottom: spacing.lg,
-    textAlign: 'center',
+    textAlign: "center",
   },
   reasonOption: {
     paddingHorizontal: spacing.lg,
@@ -686,7 +755,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     color: colors.textSecondary,
     fontWeight: typography.weights.bold,
-    textAlign: 'center',
+    textAlign: "center",
   },
   fieldCard: {
     backgroundColor: colors.white,
@@ -697,8 +766,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   fieldLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.md,
   },
   fieldEmoji: {
@@ -722,7 +791,7 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.base,
     fontWeight: typography.weights.medium,
     color: colors.text,
-    textAlign: 'center',
+    textAlign: "center",
   },
   dateTimeEditor: {
     marginTop: spacing.md,
@@ -751,7 +820,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 1,
     borderColor: colors.gray200,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   pickerValidateButton: {
     backgroundColor: colors.success,
@@ -759,7 +828,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     borderRadius: borderRadius.md,
     marginTop: spacing.md,
-    alignItems: 'center',
+    alignItems: "center",
   },
   pickerValidateText: {
     fontSize: typography.sizes.base,

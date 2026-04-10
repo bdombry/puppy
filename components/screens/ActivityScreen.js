@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,32 +9,44 @@ import {
   Alert,
   ActivityIndicator,
   Platform,
-} from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../context/AuthContext';
-import { GlobalStyles } from '../../styles/global';
-import { screenStyles } from '../../styles/screenStyles';
-import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../../config/supabase';
-import { colors, spacing, borderRadius, shadows, typography } from '../../constants/theme';
-import { getDogMessages } from '../../constants/dogMessages';
-import { validateActivityData, formatValidationErrors } from '../services/validationService';
-import { getUserFriendlyErrorMessage, logError } from '../services/errorHandler';
-import { insertWithRetry } from '../services/retryService';
-import { cacheService } from '../services/cacheService';
+} from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import { useAuth } from "../../context/AuthContext";
+import { GlobalStyles } from "../../styles/global";
+import { screenStyles } from "../../styles/screenStyles";
+import { useNavigation } from "@react-navigation/native";
+import { supabase } from "../../config/supabase";
+import {
+  colors,
+  spacing,
+  borderRadius,
+  shadows,
+  typography,
+} from "../../constants/theme";
+import { getDogMessages } from "../../constants/dogMessages";
+import {
+  validateActivityData,
+  formatValidationErrors,
+} from "../services/validationService";
+import {
+  getUserFriendlyErrorMessage,
+  logError,
+} from "../services/errorHandler";
+import { insertWithRetry } from "../services/retryService";
+import { cacheService } from "../services/cacheService";
 
 export default function ActivityScreen() {
   const navigation = useNavigation();
   const { currentDog, user } = useAuth();
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [location, setLocation] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
   const [datetime, setDatetime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showDateTimeEditor, setShowDateTimeEditor] = useState(false);
-  const [duration, setDuration] = useState('');
+  const [duration, setDuration] = useState("");
   const [pee, setPee] = useState(false);
   const [peeIncident, setPeeIncident] = useState(false); // Pipi est un incident
   const [poop, setPoop] = useState(false);
@@ -44,7 +56,7 @@ export default function ActivityScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleDateChange = (event, selectedDate) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowDatePicker(false);
     }
     if (selectedDate) {
@@ -57,7 +69,7 @@ export default function ActivityScreen() {
   };
 
   const handleTimeChange = (event, selectedTime) => {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === "android") {
       setShowTimePicker(false);
     }
     if (selectedTime) {
@@ -73,7 +85,7 @@ export default function ActivityScreen() {
     try {
       // ✅ IMPORTANT: Créer la date en LOCAL (comme c'était avant)
       // Les deux tables (outings ET activities) stockent en LOCAL dans leur champ datetime
-      const pad = (n) => String(n).padStart(2, '0');
+      const pad = (n) => String(n).padStart(2, "0");
       const datetimeISO = `${datetime.getFullYear()}-${pad(datetime.getMonth() + 1)}-${pad(datetime.getDate())}T${pad(datetime.getHours())}:${pad(datetime.getMinutes())}:${pad(datetime.getSeconds())}`;
 
       const activityData = {
@@ -98,46 +110,46 @@ export default function ActivityScreen() {
         throw new Error(formatValidationErrors(validation.errors));
       }
 
-      console.log('💾 Enregistrement activité:', activityData);
-      
+      console.log("💾 Enregistrement activité:", activityData);
+
       // ✅ INSÉRER avec retry automatique et meilleure gestion d'erreur
       try {
-        await insertWithRetry(supabase, 'activities', [activityData], {
+        await insertWithRetry(supabase, "activities", [activityData], {
           maxRetries: 3,
-          context: 'ActivityScreen.handleSave',
+          context: "ActivityScreen.handleSave",
         });
       } catch (err) {
         // Si erreur sur colonne "treat", essayer sans (migration en cours)
-        if (err.message?.includes('treat') || err.code === '42703') {
-          console.log('⚠️ Tentative sans colonne treat...');
+        if (err.message?.includes("treat") || err.code === "42703") {
+          console.log("⚠️ Tentative sans colonne treat...");
           const activityDataNoTreat = { ...activityData };
           delete activityDataNoTreat.treat;
-          await insertWithRetry(supabase, 'activities', [activityDataNoTreat], {
+          await insertWithRetry(supabase, "activities", [activityDataNoTreat], {
             maxRetries: 2,
-            context: 'ActivityScreen.handleSave (sans treat)',
+            context: "ActivityScreen.handleSave (sans treat)",
           });
         } else {
           throw err;
         }
       }
 
-      console.log('✅ Activité enregistrée avec succès');
-      Alert.alert('✅ Enregistré !', 'La balade a été enregistrée avec succès');
-      
+      console.log("✅ Activité enregistrée avec succès");
+      Alert.alert("✅ Enregistré !", "La balade a été enregistrée avec succès");
+
       // 🗑️ Invalider le cache car données modifiées
       cacheService.invalidatePattern(`home_.*_${currentDog.id}`);
       cacheService.invalidatePattern(`walk_history.*_${currentDog.id}`);
       cacheService.invalidatePattern(`analytics_${currentDog.id}_.*`);
       // NOTE: Pas de cache pour les timers (last_outing, last_need)
-      
+
       // Navigation après succès
       setTimeout(() => {
         navigation.goBack();
       }, 500);
     } catch (err) {
-      logError('ActivityScreen.handleSave', err);
+      logError("ActivityScreen.handleSave", err);
       const userMessage = getUserFriendlyErrorMessage(err);
-      Alert.alert('❌ Erreur', userMessage);
+      Alert.alert("❌ Erreur", userMessage);
     } finally {
       setLoading(false);
     }
@@ -149,7 +161,12 @@ export default function ActivityScreen() {
         <Text style={screenStyles.screenTitle}>Enregistrer une balade</Text>
 
         <View style={styles.header}>
-          <View style={[screenStyles.avatar, { backgroundColor: colors.primaryLight }]}>
+          <View
+            style={[
+              screenStyles.avatar,
+              { backgroundColor: colors.primaryLight },
+            ]}
+          >
             <Text style={screenStyles.avatarEmoji}>🚶</Text>
           </View>
         </View>
@@ -180,7 +197,10 @@ export default function ActivityScreen() {
               <Text style={styles.fieldOptional}>(optionnel)</Text>
             </View>
             <TextInput
-              style={[styles.fieldInput, { minHeight: 100, textAlignVertical: 'top' }]}
+              style={[
+                styles.fieldInput,
+                { minHeight: 100, textAlignVertical: "top" },
+              ]}
               placeholder="Notes sur la balade..."
               placeholderTextColor={colors.textSecondary}
               value={description}
@@ -219,18 +239,20 @@ export default function ActivityScreen() {
               disabled={loading}
             >
               <Text style={styles.dateTimeButtonText}>
-                {datetime.toLocaleDateString('fr-FR', { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })} à {datetime.toLocaleTimeString('fr-FR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
+                {datetime.toLocaleDateString("fr-FR", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}{" "}
+                à{" "}
+                {datetime.toLocaleTimeString("fr-FR", {
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </Text>
             </TouchableOpacity>
-            
+
             {/* Éditeur date/heure - affichage conditionnel */}
             {showDateTimeEditor && (
               <View style={styles.dateTimeEditor}>
@@ -241,7 +263,7 @@ export default function ActivityScreen() {
                     <DateTimePicker
                       value={datetime}
                       mode="date"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
                       onChange={handleDateChange}
                     />
                   </View>
@@ -254,7 +276,7 @@ export default function ActivityScreen() {
                     <DateTimePicker
                       value={datetime}
                       mode="time"
-                      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                      display={Platform.OS === "ios" ? "spinner" : "default"}
                       onChange={handleTimeChange}
                     />
                   </View>
@@ -284,7 +306,7 @@ export default function ActivityScreen() {
                   ]}
                   onPress={() => {
                     if (duration === String(minutes)) {
-                      setDuration('');
+                      setDuration("");
                     } else {
                       setDuration(String(minutes));
                     }
@@ -294,7 +316,8 @@ export default function ActivityScreen() {
                   <Text
                     style={[
                       styles.durationButtonText,
-                      duration === String(minutes) && styles.durationButtonTextActive,
+                      duration === String(minutes) &&
+                        styles.durationButtonTextActive,
                     ]}
                   >
                     {minutes}m
@@ -306,9 +329,13 @@ export default function ActivityScreen() {
               <TextInput
                 style={styles.customDurationInput}
                 placeholder="Autre durée (min)"
-                value={duration && !['15', '30', '45', '60'].includes(duration) ? duration : ''}
+                value={
+                  duration && !["15", "30", "45", "60"].includes(duration)
+                    ? duration
+                    : ""
+                }
                 onChangeText={(text) => {
-                  if (text === '' || /^\d+$/.test(text)) {
+                  if (text === "" || /^\d+$/.test(text)) {
                     setDuration(text);
                   }
                 }}
@@ -325,14 +352,11 @@ export default function ActivityScreen() {
               {/* Pipi */}
               <View style={styles.needsCard}>
                 <TouchableOpacity
-                  style={[
-                    styles.needsButton,
-                    pee && styles.needsButtonActive,
-                  ]}
+                  style={[styles.needsButton, pee && styles.needsButtonActive]}
                   onPress={() => setPee(!pee)}
                   activeOpacity={0.7}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View
                       style={[
                         styles.checkbox,
@@ -372,14 +396,11 @@ export default function ActivityScreen() {
               {/* Caca */}
               <View style={styles.needsCard}>
                 <TouchableOpacity
-                  style={[
-                    styles.needsButton,
-                    poop && styles.needsButtonActive,
-                  ]}
+                  style={[styles.needsButton, poop && styles.needsButtonActive]}
                   onPress={() => setPoop(!poop)}
                   activeOpacity={0.7}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <View
                       style={[
                         styles.checkbox,
@@ -420,21 +441,17 @@ export default function ActivityScreen() {
 
           {/* Récompense */}
           <View style={screenStyles.formGroup}>
-            <Text style={screenStyles.label}>A-t-il eu une friandise ? (optionnel)</Text>
+            <Text style={screenStyles.label}>
+              A-t-il eu une friandise ? (optionnel)
+            </Text>
             <TouchableOpacity
-              style={[
-                styles.treatCard,
-                treat && styles.treatCardActive,
-              ]}
+              style={[styles.treatCard, treat && styles.treatCardActive]}
               onPress={() => setTreat(!treat)}
               activeOpacity={0.7}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
-                  style={[
-                    styles.checkbox,
-                    treat && styles.checkboxActiveTreat,
-                  ]}
+                  style={[styles.checkbox, treat && styles.checkboxActiveTreat]}
                 >
                   {treat && <Text style={styles.checkmark}>✓</Text>}
                 </View>
@@ -454,7 +471,7 @@ export default function ActivityScreen() {
               onPress={() => setDogAskedForWalk(!dogAskedForWalk)}
               activeOpacity={0.7}
             >
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View
                   style={[
                     styles.checkbox,
@@ -463,11 +480,12 @@ export default function ActivityScreen() {
                 >
                   {dogAskedForWalk && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-                <Text style={styles.initiativeLabel}>🐕 Le chien l'a demandé</Text>
+                <Text style={styles.initiativeLabel}>
+                  🐕 Le chien l'a demandé
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
-
         </View>
 
         {loading ? (
@@ -479,10 +497,16 @@ export default function ActivityScreen() {
         ) : (
           <>
             <TouchableOpacity
-              style={[screenStyles.button, screenStyles.buttonPrimary, { marginBottom: spacing.lg }]}
+              style={[
+                screenStyles.button,
+                screenStyles.buttonPrimary,
+                { marginBottom: spacing.lg },
+              ]}
               onPress={handleSave}
             >
-              <Text style={screenStyles.buttonPrimaryText}>✅ Enregistrer la balade</Text>
+              <Text style={screenStyles.buttonPrimaryText}>
+                ✅ Enregistrer la balade
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -500,14 +524,14 @@ export default function ActivityScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: spacing.xxxl,
   },
   form: {
     marginBottom: spacing.lg,
   },
   dateTimeRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: spacing.xl,
     gap: spacing.md,
   },
@@ -550,8 +574,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     borderWidth: 2,
     borderColor: colors.gray300,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     marginRight: spacing.lg,
   },
   checkboxActiveGreen: {
@@ -569,12 +593,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.gray200,
     marginBottom: spacing.md,
-    overflow: 'hidden',
+    overflow: "hidden",
     ...shadows.small,
   },
   needsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: spacing.lg,
     borderBottomWidth: 0,
   },
@@ -590,7 +614,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.md,
   },
   statusButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: spacing.lg,
     paddingTop: spacing.md,
     gap: spacing.md,
@@ -602,8 +626,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     borderRadius: borderRadius.lg,
     borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     backgroundColor: colors.white,
     borderColor: colors.gray200,
   },
@@ -637,7 +661,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.bold,
   },
   durationContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
     marginTop: spacing.base,
     marginBottom: spacing.md,
@@ -650,7 +674,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.gray200,
     backgroundColor: colors.white,
-    alignItems: 'center',
+    alignItems: "center",
   },
   durationButtonActive: {
     backgroundColor: colors.primaryLight,
@@ -683,8 +707,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.gray200,
     padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     ...shadows.small,
   },
   treatCardActive: {
@@ -707,8 +731,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: colors.gray200,
     padding: spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     ...shadows.small,
   },
   initiativeCardActive: {
@@ -745,8 +769,8 @@ const styles = StyleSheet.create({
     ...shadows.small,
   },
   fieldLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: spacing.base,
   },
   fieldEmoji: {
@@ -761,7 +785,7 @@ const styles = StyleSheet.create({
   fieldOptional: {
     fontSize: typography.sizes.sm,
     color: colors.textSecondary,
-    fontStyle: 'italic',
+    fontStyle: "italic",
     marginLeft: spacing.xs,
   },
   fieldInput: {
@@ -781,8 +805,8 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   dateTimeButtonText: {
     fontSize: typography.sizes.lg,
@@ -801,15 +825,15 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray200,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   pickerValidateButton: {
     backgroundColor: colors.success,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.base,
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: spacing.md,
   },
   pickerValidateText: {
