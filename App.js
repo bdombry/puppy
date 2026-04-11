@@ -73,6 +73,7 @@ import PaywallReason1Screen from './components/screens/PaywallReason1Screen';
 import PaywallReason2Screen from './components/screens/PaywallReason2Screen';
 import PaywallReason3Screen from './components/screens/PaywallReason3Screen';
 import PaywallReason4Screen from './components/screens/PaywallReason4Screen';
+import PaywallReason5Screen from './components/screens/PaywallReason5Screen';
 import RevenueCatPaywallScreen from './components/screens/RevenueCatPaywallScreen';
 import { Footer } from './components/Footer';
 import { initializeNotifications } from './components/services/notificationService';
@@ -398,6 +399,7 @@ function AppNavigator() {
             <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} />
             <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} />
             <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} />
+            <Stack.Screen name="PaywallReason5" component={PaywallReason5Screen} />
             <Stack.Screen name="RevenueCatPaywall">
               {(props) => (
                 <RevenueCatPaywallScreen 
@@ -446,6 +448,7 @@ function AppNavigator() {
             <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} options={{ animationEnabled: true }} />
+            <Stack.Screen name="PaywallReason5" component={PaywallReason5Screen} options={{ animationEnabled: true }} />
             <Stack.Screen name="CreateAccount" component={CreateAccountScreen} options={{ animationEnabled: true }} />
             <Stack.Screen name="RevenueCatPaywall">
               {(props) => (
@@ -465,9 +468,10 @@ function AppNavigator() {
             <Stack.Screen name="PaywallReason1" component={PaywallReason1Screen} />
             <Stack.Screen name="PaywallReason2" component={PaywallReason2Screen} />
             <Stack.Screen name="PaywallReason3" component={PaywallReason3Screen} />
+            <Stack.Screen name="PaywallReason4" component={PaywallReason4Screen} />
             <Stack.Screen 
-              name="PaywallReason4" 
-              component={PaywallReason4Screen}
+              name="PaywallReason5" 
+              component={PaywallReason5Screen}
               listeners={({ navigation }) => ({
                 beforeRemove: (e) => {
                   // Marquer les raisons comme terminées

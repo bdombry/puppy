@@ -122,14 +122,15 @@ const Onboarding8Screen = ({ navigation, route }) => {
           {/* Vidéo */}
           <View
             style={{
-              width: "100%",
-              height: 280,
+              width: "65%",
+              aspectRatio: 9 / 16,
               backgroundColor: colors.surface,
               borderRadius: 14,
               overflow: "hidden",
               marginBottom: spacing.lg,
               borderWidth: 1,
               borderColor: colors.pupyBorder,
+              alignSelf: "center",
             }}
           >
             <Video

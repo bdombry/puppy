@@ -140,7 +140,7 @@ const PaywallReason2Screen = ({ navigation, route }) => {
                 fontSize: 15,
                 letterSpacing: 0.2,
               }}>
-                Suivant
+                Continuer
               </Text>
             </TouchableOpacity>
           </Animated.View>

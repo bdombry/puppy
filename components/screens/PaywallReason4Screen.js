@@ -55,14 +55,10 @@ const PaywallReason4Screen = ({ navigation, route }) => {
   }, [titleOpacity, descriptionOpacity, buttonOpacity]);
 
   const handleContinue = async () => {
-    // Poser les flags AVANT de naviguer
-    await AsyncStorage.setItem('show_paywall_reasons', 'false');
-    await AsyncStorage.setItem('show_paywall_on_login', 'true');
-    
-    // Navigate to CreateAccount (NOT directly, but we check the flow)
+    // Navigate to PaywallReason5
     const dogData = route?.params?.dogData || {};
     const userData = route?.params?.userData || {};
-    navigation.navigate('CreateAccount', { dogData, userData });
+    navigation.navigate('PaywallReason5', { dogData, userData });
   };
 
   return (
@@ -189,7 +185,7 @@ const PaywallReason4Screen = ({ navigation, route }) => {
                   letterSpacing: 0.2,
                 }}
               >
-                Voir les tarifs →
+                Continuer
               </Text>
             </TouchableOpacity>
           </Animated.View>
