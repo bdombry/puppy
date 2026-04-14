@@ -44,12 +44,6 @@
       "favicon": "./assets/favicon.png"
     },
     "description": "Track your puppy's walks, feeding, and bathroom breaks with smart reminders. Professional insights for your dog's health and happiness.",
-    "privacy": "https://www.pupytracker.app/#privacy",
-    "author": {
-      "name": "PupyTracker",
-      "email": "contact@pupytracker.app"
-    },
-    "homepage": "https://www.pupytracker.app",
     "extra": {
       "eas": {
         "projectId": "f7b436e8-a612-45a9-8925-8843f12c4100"
