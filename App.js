@@ -537,7 +537,19 @@ function AppNavigator() {
           </Stack.Group>
         ) : null}
 
-        {/* 5b. Fallback supprimé : plus de mini-onboarding chien */}
+        {/* 5b. FALLBACK - Utilisateur authentifié mais SANS CHIEN (edge case) */}
+        {isAuthenticated && !hasCurrentDog ? (
+          <Stack.Group screenOptions={{ animationEnabled: false }}>
+            <Stack.Screen 
+              name="AddDog" 
+              component={AddDogScreen}
+              options={{
+                headerShown: false,
+                gestureEnabled: false
+              }}
+            />
+          </Stack.Group>
+        ) : null}
 
       </Stack.Navigator>
     </NavigationContainer>

@@ -13,13 +13,15 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.dombry.PupyTracker",
       "scheme": "pupytracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "PupyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
-        "NSPhotoLibraryUsageDescription": "PupyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades."
+        "NSPhotoLibraryUsageDescription": "PupyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades.",
+        "NSUserNotificationsUsageDescription": "PupyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux.",
+        "NSNotificationPermissionUsageDescription": "PupyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux."
       }
     },
     "android": {
@@ -35,16 +37,19 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "READ_MEDIA_IMAGES",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "READ_MEDIA_IMAGES"
+        "POST_NOTIFICATIONS"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "description": "insight update",
+    "description": "Track your puppy's walks, feeding, and bathroom breaks with smart reminders. Professional insights for your dog's health and happiness.",
+    "privacy": "https://www.pupytracker.app/#privacy",
+    "author": {
+      "name": "PupyTracker",
+      "email": "contact@pupytracker.app"
+    },
+    "homepage": "https://www.pupytracker.app",
     "extra": {
       "eas": {
         "projectId": "f7b436e8-a612-45a9-8925-8843f12c4100"

@@ -159,9 +159,21 @@ const CreateAccountScreen = ({ navigation, route }) => {
 
     } catch (err) {
       console.error('❌ Signup error:', err.message);
+      
+      // ⚠️ DANGER: Si erreur APRÈS auth.signUp(), l'utilisateur est créé mais orphelin!
+      // Il faut nettoyer manuellement ou logger l'erreur
+      if (err.message.includes('Erreur création du chien') || err.message.includes('Vérification échouée')) {
+        console.error('🚨 CRITICAL: User created but dog missing! Check Supabase for orphaned users');
+        Alert.alert(
+          'Erreur critique',
+          'Votre compte a été créé mais il y a eu un problème lors de l\'ajout de votre chien. Veuillez contacter support@pupytracker.app si le problème persiste.'
+        );
+      } else {
+        Alert.alert('Erreur de création', err.message);
+      }
+      
       cancelSignup();
       setStatusMessage('');
-      Alert.alert('Erreur de création', err.message);
     } finally {
       setLoading(false);
     }

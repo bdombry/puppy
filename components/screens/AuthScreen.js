@@ -140,6 +140,7 @@ const AuthScreen = ({ navigation }) => {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.pupyBackground }}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         style={{ flex: 1 }}
       >
         {/* Back Button - masqué car on est sur l'écran principal d'auth */}
