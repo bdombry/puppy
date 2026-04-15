@@ -78,6 +78,11 @@ const CreateAccountScreen = ({ navigation, route }) => {
       if (!userId) throw new Error('Pas d\'identifiant utilisateur retourné');
       console.log('✅ Compte créé, userId:', userId);
 
+      // ⚠️ CRITICAL: Délai pour que la session Supabase soit appliquée
+      // Sinon, RLS policies voient auth.uid() = NULL et bloquent les inserts
+      console.log('⏳ Attente de la session Supabase (RLS check)...');
+      await new Promise(r => setTimeout(r, 500));
+
       // 1b. Créer le profil utilisateur
       setStatusMessage('Configuration du profil...');
       console.log('📝 Création du profil...', JSON.stringify(userData));
@@ -95,7 +100,8 @@ const CreateAccountScreen = ({ navigation, route }) => {
         .select();
 
       if (profileError) {
-        console.warn('⚠️ Erreur profil (non bloquante):', profileError.message);
+        console.error('❌ Erreur profil (BLOCKING):', profileError);
+        throw new Error('Profile creation failed: ' + (profileError.message || JSON.stringify(profileError)));
       } else {
         console.log('✅ Profil créé');
       }
@@ -103,6 +109,12 @@ const CreateAccountScreen = ({ navigation, route }) => {
       // 1c. Créer le chien
       setStatusMessage('Ajout de votre chien...');
       console.log('🐕 Création du chien...', JSON.stringify(dogData));
+      
+      // ⚠️ VALIDATION: Le nom du chien est requis!
+      if (!dogData.name || dogData.name.trim() === '') {
+        throw new Error('Le nom du chien est requis');
+      }
+      
       // Mapper le sexe en anglais pour l'enum Supabase
       let mappedSex = 'unknown';
       if (dogData.sex === 'Mâle') mappedSex = 'male';
@@ -113,7 +125,7 @@ const CreateAccountScreen = ({ navigation, route }) => {
         .from('Dogs')
         .insert([{
           user_id: userId,
-          name: dogData.name || 'Mon chiot',
+          name: dogData.name,
           breed: dogData.breed || '',
           birth_date: dogData.birthDate || null,
           sex: mappedSex,
@@ -228,10 +240,14 @@ const CreateAccountScreen = ({ navigation, route }) => {
                   dogData={dogData}
                   userData={userData}
                   onSuccess={() => {
-                    console.log('✅ Apple Sign In successful');
+                    console.log('✅ Apple Sign In successful - navigation handled by App.js');
                   }}
                   onError={(err) => {
-                    Alert.alert('Erreur Apple', err.message);
+                    console.error('❌ Apple Sign In error in CreateAccountScreen:', err);
+                    const errorMessage = err?.message || 'Erreur de connexion Apple';
+                    Alert.alert('❌ Connexion Apple échouée', errorMessage, [
+                      { text: 'OK', onPress: () => console.log('Error dismissed') }
+                    ]);
                   }}
                 />
               )}

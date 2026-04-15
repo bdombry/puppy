@@ -240,23 +240,19 @@ export default function WalkScreen() {
             ]}
           >
             <Text style={screenStyles.avatarEmoji}>
-              {isIncident ? "⚠️" : eventType === "walk" ? "🚶" : "🌳"}
+              {isIncident ? "⚠️" : "🌳"}
             </Text>
           </View>
 
           <Text style={screenStyles.screenTitle}>
             {isIncident
               ? "Incident"
-              : eventType === "walk"
-                ? "Balade"
-                : "Réussite"}
+              : "Réussite"}
           </Text>
           <Text style={screenStyles.screenSubtitle}>
             {isIncident
               ? messages.incidentInside
-              : eventType === "walk"
-                ? `Balade avec ${currentDog?.name}`
-                : `Qu'a fait ${currentDog?.name} ?`}
+              : `Réussite avec ${currentDog?.name}`}
           </Text>
         </View>
 

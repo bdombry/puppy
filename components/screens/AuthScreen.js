@@ -81,7 +81,9 @@ const AuthScreen = ({ navigation }) => {
       });
 
       if (error) {
-        Alert.alert('Erreur de connexion', error.message);
+        const errorMessage = error.message || error.error_description || 'Erreur inconnue lors de la connexion Apple';
+        console.error('🔴 Supabase Apple auth error:', error);
+        Alert.alert('❌ Erreur de connexion Apple', errorMessage);
         return;
       }
 
@@ -100,8 +102,9 @@ const AuthScreen = ({ navigation }) => {
       if (error.code === 'ERR_REQUEST_CANCELED') {
         console.log('👋 Apple Sign In annulé par l\'utilisateur');
       } else {
+        const errorMessage = error?.message || error?.error_description || 'Impossible de se connecter avec Apple';
         console.error('❌ Apple login error:', error);
-        Alert.alert('Erreur', 'Impossible de se connecter avec Apple');
+        Alert.alert('❌ Erreur de connexion Apple', errorMessage);
       }
     } finally {
       setLoading(false);

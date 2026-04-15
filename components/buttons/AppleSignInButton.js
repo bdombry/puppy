@@ -7,6 +7,16 @@ import { useAuth } from '../../context/AuthContext';
 import { colors, spacing, typography, borderRadius } from '../../constants/theme';
 import PropTypes from 'prop-types';
 
+// Utilitaire pour extraire le message d'erreur de Supabase correctement
+const getErrorMessage = (error) => {
+  if (!error) return 'Erreur inconnue';
+  if (typeof error === 'string') return error;
+  if (error.message) return error.message;
+  if (error.error_description) return error.error_description;
+  if (error.msg) return error.msg;
+  return 'Une erreur est survenue lors de la connexion Apple';
+};
+
 const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
   const { beginSignup, completeSignup, cancelSignup } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -60,6 +70,11 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
       if (!userId) throw new Error('No user ID from Apple auth');
       console.log('✅ Apple auth OK, userId:', userId);
 
+      // ⚠️ CRITICAL: Délai pour que la session Supabase soit appliquée
+      // Sinon, RLS policies voient auth.uid() = NULL et bloquent les inserts
+      console.log('⏳ Attente de la session Supabase (RLS check)...');
+      await new Promise(r => setTimeout(r, 500));
+
       // 1b. Vérifier si c'est un returning user (a déjà des chiens)
       const { data: existingDogs } = await supabase
         .from('Dogs')
@@ -83,7 +98,7 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
 
       // 1c. Nouveau user → créer profil
       setStatusMessage('Configuration du profil...');
-      console.log('📝 Creating profile...');
+      console.log('📝 Creating profile...', JSON.stringify(userData));
       const { error: profileError } = await supabase
         .from('profiles')
         .upsert([{
@@ -93,28 +108,41 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
           gender: userData?.gender || null,
           family_situation: userData?.situation || null,
           user_problems: JSON.stringify(userData?.problems || []),
+          app_source: userData?.app_source || null,
         }], { onConflict: 'id' })
         .select();
 
       if (profileError) {
-        console.warn('⚠️ Profile error (non-blocking):', profileError.message);
+        console.error('❌ Profile error (BLOCKING):', profileError);
+        throw new Error('Profile creation failed: ' + (profileError.message || JSON.stringify(profileError)));
       } else {
         console.log('✅ Profile created');
       }
 
       // 1d. Créer le chien
       setStatusMessage('Ajout de votre chien...');
-      console.log('🐕 Creating dog...');
+      console.log('🐕 Creating dog...', JSON.stringify(dogData));
+      
+      // ⚠️ VALIDATION: Le nom du chien est requis!
+      if (!dogData?.name || dogData.name.trim() === '') {
+        throw new Error('Le nom du chien est requis');
+      }
+      
+      // Mapper le sexe en anglais pour l'enum Supabase (IMPORTANT: du français vers anglais)
+      let mappedSex = 'unknown';
+      if (dogData?.sex === 'Mâle') mappedSex = 'male';
+      else if (dogData?.sex === 'Femelle') mappedSex = 'female';
+      else if (['male', 'female', 'unknown'].includes(dogData?.sex)) mappedSex = dogData.sex;
+      
       const { data: dogResult, error: dogError } = await supabase
         .from('Dogs')
         .insert([{
           user_id: userId,
-          name: dogData?.name || 'Mon chiot',
+          name: dogData.name,
           breed: dogData?.breed || '',
           birth_date: dogData?.birthDate || null,
-          sex: dogData?.sex || 'unknown',
+          sex: mappedSex,
           photo_url: dogData?.photo || dogData?.photo_url || null,
-          situation: userData?.situation || dogData?.situation || '',
         }])
         .select();
 
@@ -151,9 +179,15 @@ const AppleSignInButton = ({ onSuccess, onError, dogData, userData }) => {
 
     } catch (error) {
       console.error('❌ Apple Sign In error:', error);
+      const errorMessage = getErrorMessage(error);
+      console.error('📝 Formatted error message:', errorMessage);
       cancelSignup();
       setStatusMessage('');
-      onError?.(error);
+      
+      // Passer un objet d'erreur structuré avec un message clair
+      const formattedError = new Error(errorMessage);
+      formattedError.originalError = error;
+      onError?.(formattedError);
     } finally {
       setLoading(false);
     }
