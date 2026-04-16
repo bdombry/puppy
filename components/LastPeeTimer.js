@@ -8,19 +8,22 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, Text, StyleSheet } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
+import translations from '../constants/translations.fr.json';
+
+const t = translations;
 
 export function LastPeeTimer({ lastPeeTime }) {
   if (!lastPeeTime) {
     return (
       <View style={styles.container}>
-        <Text style={styles.text}>Dernier pipi : aucun enregistrement 💧</Text>
+        <Text style={styles.text}>{t.screens.home.timers.lastPee} : {t.screens.home.timers.lastPeeNoRecord} 💧</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Dernier pipi : {lastPeeTime} 💧</Text>
+      <Text style={styles.text}>{t.screens.home.timers.lastPee} : {lastPeeTime} 💧</Text>
     </View>
   );
 }

@@ -2,6 +2,9 @@ import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { homeStyles } from '../../styles/homeStyles';
 import { EMOJI } from '../../constants/config';
+import translations from '../../constants/translations.fr.json';
+
+const t = translations;
 
 export function AccountButton({ onPress }) {
   return (
@@ -12,7 +15,7 @@ export function AccountButton({ onPress }) {
     >
       <View style={homeStyles.actionButtonRow}>
         <Text style={homeStyles.actionButtonIcon}>{EMOJI.gear}</Text>
-        <Text style={homeStyles.actionButtonTextSecondary}>Mon compte</Text>
+        <Text style={homeStyles.actionButtonTextSecondary}>{t.screens.home.buttons.myAccount}</Text>
       </View>
     </TouchableOpacity>
   );

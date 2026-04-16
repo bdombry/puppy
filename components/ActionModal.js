@@ -8,6 +8,9 @@ import PropTypes from 'prop-types';
 import { Modal, View, Text, TouchableOpacity, PanResponder, Animated } from 'react-native';
 import { homeStyles } from '../styles/homeStyles';
 import { EMOJI } from '../constants/config';
+import translations from '../constants/translations.fr.json';
+
+const t = translations;
 
 export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, onActivityPress, onFeedingPress }) {
   const [panY] = React.useState(new Animated.Value(0));
@@ -49,8 +52,8 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
           <TouchableOpacity activeOpacity={1} onPress={(e) => e.stopPropagation()}>
           <View style={homeStyles.modalContent}>
             <View style={homeStyles.modalHandle} />
-            <Text style={homeStyles.modalTitle}>Que veux-tu noter ?</Text>
-            <Text style={homeStyles.modalSubtitle}>Choisis le type d'événement</Text>
+            <Text style={homeStyles.modalTitle}>{t.screens.home.modal.title}</Text>
+            <Text style={homeStyles.modalSubtitle}>{t.screens.home.modal.subtitle}</Text>
 
             <TouchableOpacity
               style={[homeStyles.modalOptionButton, homeStyles.modalOptionFeeding]}
@@ -67,9 +70,9 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>🍽️</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Alimentation</Text>
+                <Text style={homeStyles.modalOptionTitle}>{t.screens.home.modal.feeding.title}</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Recevoir des rappels
+                  {t.screens.home.modal.feeding.description}
                 </Text>
               </View>
             </View>
@@ -90,9 +93,9 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>{EMOJI.walk}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Besoin réussi</Text>
+                <Text style={homeStyles.modalOptionTitle}>{t.screens.home.modal.walk.title}</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  À l'endroit prévu
+                  {t.screens.home.modal.walk.description}
                 </Text>
               </View>
             </View>
@@ -113,9 +116,9 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>{EMOJI.incident}</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Incident</Text>
+                <Text style={homeStyles.modalOptionTitle}>{t.screens.home.modal.incident.title}</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Pas au bon endroit
+                  {t.screens.home.modal.incident.description}
                 </Text>
               </View>
             </View>
@@ -136,16 +139,16 @@ export function ActionModal({ visible, onClose, onIncidentPress, onWalkPress, on
                 <Text style={homeStyles.modalOptionIcon}>🚶</Text>
               </View>
               <View style={homeStyles.modalOptionInfo}>
-                <Text style={homeStyles.modalOptionTitle}>Balade</Text>
+                <Text style={homeStyles.modalOptionTitle}>{t.screens.home.modal.activity.title}</Text>
                 <Text style={homeStyles.modalOptionDescription}>
-                  Enregistrer une promenade complète
+                  {t.screens.home.modal.activity.description}
                 </Text>
               </View>
             </View>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={onClose} style={homeStyles.modalCancelButton}>
-              <Text style={homeStyles.modalCancelText}>Annuler</Text>
+              <Text style={homeStyles.modalCancelText}>{t.screens.home.modal.cancel}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

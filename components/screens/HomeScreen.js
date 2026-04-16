@@ -31,6 +31,9 @@ import { useTimer } from '../../hooks/useTimer';
 import { EMOJI } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
 import { colors } from '../../constants/theme';
+import translations from '../../constants/translations.fr.json';
+
+const t = translations;
 
 export default function HomeScreen() {
   const { currentDog, dogs, setCurrentDog, signOut } = useAuth();
@@ -99,13 +102,13 @@ export default function HomeScreen() {
         case 'activity':
           return {
             value: streakData?.activity || 0,
-            label: (streakData?.activity || 0) <= 1 ? 'Jour actif' : 'Jours actifs',
+            label: (streakData?.activity || 0) <= 1 ? t.screens.home.streaks.activeDay : t.screens.home.streaks.activeDays,
             icon: EMOJI.fire,
           };
         case 'clean':
           return {
             value: streakData?.clean || 0,
-            label: (streakData?.clean || 0) <= 1 ? 'Jour sans incident' : 'Jours sans incident',
+            label: (streakData?.clean || 0) <= 1 ? t.screens.home.streaks.cleanDay : t.screens.home.streaks.cleanDays,
             icon: EMOJI.sparkle,
           };
         default:
@@ -170,18 +173,18 @@ export default function HomeScreen() {
         <View style={{ ...homeStyles.header, backgroundColor: colors.pupyBackground }}>
           <View style={homeStyles.headerRow}>
             {/* Titre marketing */}
-            <Text style={{ ...homeStyles.headerTitle, color: colors.primary }}>PupyTracker</Text>
+            <Text style={{ ...homeStyles.headerTitle, color: colors.primary }}>{t.screens.home.header.title}</Text>
             <TouchableOpacity
               style={{ ...homeStyles.headerAccountButtonRight, backgroundColor: colors.primary }}
               onPress={() => navigation.navigate('Account')}
             >
-              <Text style={{ ...homeStyles.headerAccountEmoji, color: colors.pureWhite }}>🧑</Text>
+              <Text style={{ ...homeStyles.headerAccountEmoji, color: colors.pureWhite }}>{t.screens.home.header.accountButton}</Text>
             </TouchableOpacity>
           </View>
           {/* Sélecteur de chien en sous-titre cliquable */}
           <TouchableOpacity onPress={handleDogSelectorOpen} style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, marginBottom: 4 }}>
             <Text style={{ ...homeStyles.headerSubtitle, color: colors.pupyTextPrimary }}>
-              {currentDog?.name ? `Suivi des besoins de ${currentDog.name}` : 'Sélectionner un chien'}
+              {currentDog?.name ? `${t.screens.home.header.dogTrackingLabel} ${currentDog.name}` : t.screens.home.header.selectDog}
             </Text>
             <Text style={{ fontSize: 16, marginLeft: 5, color: colors.primary }}>▼</Text>
           </TouchableOpacity>
@@ -260,7 +263,7 @@ export default function HomeScreen() {
             activeOpacity={1}
           >
             <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' }}>
-              Sélectionner un chien
+              {t.screens.home.modal.selectDog}
             </Text>
             <FlatList
               data={dogs}
@@ -275,7 +278,7 @@ export default function HomeScreen() {
                   }}
                   onPress={() => handleDogSelect(item)}
                 >
-                  <Text style={{ fontSize: 16 }}>{item.name || 'Chien sans nom'}</Text>
+                  <Text style={{ fontSize: 16 }}>{item.name || t.screens.home.modal.dogNamePlaceholder}</Text>
                 </TouchableOpacity>
               )}
               showsVerticalScrollIndicator={false}

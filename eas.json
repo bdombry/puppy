@@ -7,6 +7,7 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "channel": "development",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",
@@ -16,6 +17,7 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://nbcbujuxoyifqjyrjaci.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "@SUPABASE_ANON_KEY",

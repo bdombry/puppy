@@ -10,6 +10,9 @@ import PropTypes from 'prop-types';
 import { View, Text, StyleSheet } from 'react-native';
 import { EMOJI } from '../constants/config';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
+import translations from '../constants/translations.fr.json';
+
+const t = translations;
 
 export function TimersSection({ lastOuting, lastNeed }) {
   if (!lastOuting && !lastNeed) return null;
@@ -19,7 +22,7 @@ export function TimersSection({ lastOuting, lastNeed }) {
       {lastOuting && (
         <View style={styles.timerBox}>
           <Text style={styles.text}>
-            🚶 Dernière balade : il y a {lastOuting}
+            🚶 {t.screens.home.timers.lastWalk} {lastOuting}
           </Text>
         </View>
       )}
@@ -27,7 +30,7 @@ export function TimersSection({ lastOuting, lastNeed }) {
       {lastNeed && (
         <View style={[styles.timerBox, styles.timerBoxSecondary]}>
           <Text style={[styles.text, styles.textSecondary]}>
-            � Dernier besoin : il y a {lastNeed}
+            💧 {t.screens.home.timers.lastNeed} {lastNeed}
           </Text>
         </View>
       )}

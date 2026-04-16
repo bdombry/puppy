@@ -8,6 +8,9 @@ import PropTypes from 'prop-types';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { homeStyles } from '../../styles/homeStyles';
 import { EMOJI } from '../../constants/config';
+import translations from '../../constants/translations.fr.json';
+
+const t = translations;
 
 export function StatsCards({
   totalOutings,
@@ -23,7 +26,7 @@ export function StatsCards({
           <Text style={homeStyles.statIcon}>{EMOJI.history}</Text>
         </View>
         <Text style={homeStyles.statValue}>{totalOutings}</Text>
-        <Text style={homeStyles.statLabel}>Total</Text>
+        <Text style={homeStyles.statLabel}>{t.screens.home.stats.total}</Text>
       </View>
 
       <View style={[homeStyles.statCard, homeStyles.statCardRight]}>
@@ -37,7 +40,7 @@ export function StatsCards({
           <Text style={homeStyles.statLabel}>
             {streakLabel}
           </Text>
-          <Text style={homeStyles.statHint}>Tap pour changer</Text>
+          <Text style={homeStyles.statHint}>{t.screens.home.stats.tapToChange}</Text>
         </TouchableOpacity>
       </View>
     </View>

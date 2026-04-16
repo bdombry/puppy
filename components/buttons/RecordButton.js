@@ -2,6 +2,9 @@ import React from 'react';
 import { TouchableOpacity, View, Text } from 'react-native';
 import { homeStyles } from '../../styles/homeStyles';
 import { EMOJI } from '../../constants/config';
+import translations from '../../constants/translations.fr.json';
+
+const t = translations;
 
 export function RecordButton({ onPress }) {
   return (
@@ -12,7 +15,7 @@ export function RecordButton({ onPress }) {
     >
       <View style={homeStyles.actionButtonRow}>
         <Text style={homeStyles.actionButtonPrimaryIcon}>{EMOJI.history}</Text>
-        <Text style={homeStyles.actionButtonTextPrimaryBig}>Enregistrer événement</Text>
+        <Text style={homeStyles.actionButtonTextPrimaryBig}>{t.screens.home.buttons.recordEvent}</Text>
       </View>
     </TouchableOpacity>
   );

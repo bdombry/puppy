@@ -1,0 +1,67 @@
+{
+  "screens": {
+    "home": {
+      "header": {
+        "title": "PupyTracker",
+        "dogTrackingLabel": "Suivi des besoins de",
+        "selectDog": "Sélectionner un chien",
+        "accountButton": "🧑"
+      },
+      "dogCard": {
+        "ageUnknown": "Âge inconnu",
+        "ageMonthsSingular": "1 mois",
+        "ageMonthsPlural": "{months} mois",
+        "ageLessThanMonth": "moins d'un mois",
+        "settingsButton": "⚙️"
+      },
+      "timers": {
+        "lastWalk": "Dernière balade : il y a",
+        "lastNeed": "Dernier besoin : il y a",
+        "lastPee": "Dernier pipi",
+        "lastPeeNoRecord": "Dernier pipi : aucun enregistrement",
+        "lastPoop": "Dernier caca",
+        "lastPoopNoRecord": "Dernier caca : aucun enregistrement"
+      },
+      "streaks": {
+        "activeDay": "Jour actif",
+        "activeDays": "Jours actifs",
+        "cleanDay": "Jour sans incident",
+        "cleanDays": "Jours sans incident"
+      },
+      "buttons": {
+        "recordEvent": "Enregistrer événement",
+        "viewHistory": "Voir l'historique",
+        "analytics": "Analytics",
+        "myAccount": "Mon compte",
+        "logout": "Se déconnecter"
+      },
+      "stats": {
+        "total": "Total",
+        "tapToChange": "Tap pour changer"
+      },
+      "modal": {
+        "title": "Que veux-tu noter ?",
+        "subtitle": "Choisis le type d'événement",
+        "selectDog": "Sélectionner un chien",
+        "dogNamePlaceholder": "Chien sans nom",
+        "feeding": {
+          "title": "Alimentation",
+          "description": "Recevoir des rappels"
+        },
+        "walk": {
+          "title": "Besoin réussi",
+          "description": "À l'endroit prévu"
+        },
+        "incident": {
+          "title": "Incident",
+          "description": "Pas au bon endroit"
+        },
+        "activity": {
+          "title": "Balade",
+          "description": "Enregistrer une promenade complète"
+        },
+        "cancel": "Annuler"
+      }
+    }
+  }
+}

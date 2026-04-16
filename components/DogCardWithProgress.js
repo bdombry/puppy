@@ -10,15 +10,18 @@ import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Animated, 
 import { homeStyles } from '../styles/homeStyles';
 import { EMOJI, PERIODS } from '../constants/config';
 import { colors } from '../constants/theme';
+import translations from '../constants/translations.fr.json';
+
+const t = translations;
 
 function getDogAge(birthDate) {
   if (!birthDate) return null;
   const diff = Date.now() - new Date(birthDate).getTime();
   const ageDate = new Date(diff);
   const months = ageDate.getUTCMonth() + ageDate.getUTCFullYear() * 12 - 12 * 1970;
-  if (months < 1) return "moins d'un mois";
-  if (months === 1) return "1 mois";
-  return `${months} mois`;
+  if (months < 1) return t.screens.home.dogCard.ageLessThanMonth;
+  if (months === 1) return t.screens.home.dogCard.ageMonthsSingular;
+  return t.screens.home.dogCard.ageMonthsPlural.replace('{months}', months);
 }
 
 export function DogCardWithProgress({
@@ -58,7 +61,7 @@ export function DogCardWithProgress({
 
         <View style={homeStyles.dogMetaRow}>
           <Text style={homeStyles.dogAge}>
-            {getDogAge(dog.birth_date) || 'Âge inconnu'}
+            {getDogAge(dog.birth_date) || t.screens.home.dogCard.ageUnknown}
           </Text>
           {dog.breed && (
             <>

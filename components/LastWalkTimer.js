@@ -8,6 +8,9 @@ import PropTypes from 'prop-types';
 import { View, Text, StyleSheet } from 'react-native';
 import { EMOJI } from '../constants/config';
 import { colors, spacing, borderRadius, typography } from '../constants/theme';
+import translations from '../constants/translations.fr.json';
+
+const t = translations;
 
 export function LastWalkTimer({ timeSince }) {
   if (!timeSince) return null;
@@ -15,7 +18,7 @@ export function LastWalkTimer({ timeSince }) {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>
-        {EMOJI.timer} Dernière balade : il y a {timeSince}
+        {EMOJI.timer} {t.screens.home.timers.lastWalk} {timeSince}
       </Text>
     </View>
   );
