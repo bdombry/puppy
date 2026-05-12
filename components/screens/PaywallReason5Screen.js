@@ -138,7 +138,7 @@ const PaywallReason5Screen = ({ navigation, route }) => {
                   lineHeight: 35,
                 }}
               >
-                3 jours gratuits
+                14 jours gratuits
               </Text>
             </Animated.View>
           )}
@@ -156,7 +156,7 @@ const PaywallReason5Screen = ({ navigation, route }) => {
                   lineHeight: 24,
                 }}
               >
-                Essayez gratuitement tous les outils pendant 3 jours. Pas de carte bancaire requise.
+                Essayez gratuitement tous les outils pendant 14 jours. Aucun engagement, annulez quand vous voulez.
               </Text>
             </Animated.View>
           )}

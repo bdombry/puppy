@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { commonStyles } from '../../styles/commonStyles';
 import { colors, spacing } from '../../constants/theme';
-import { EMOJI } from '../../constants/config';
+import { EMOJI, APP_NAME } from '../../constants/config';
 
 export default function RatingAppScreen() {
   const navigation = useNavigation();
@@ -56,13 +56,13 @@ export default function RatingAppScreen() {
         {/* Illustration */}
         <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
           <Text style={{ fontSize: 60, marginBottom: spacing.md }}>⭐</Text>
-          <Text style={[commonStyles.h3, { textAlign: 'center' }]}>Aimez Pupytracker?</Text>
+          <Text style={[commonStyles.h3, { textAlign: 'center' }]}>Aimez {APP_NAME}?</Text>
         </View>
 
         {/* Info Card */}
         <View style={{ backgroundColor: colors.gray50, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.xl, borderWidth: 1, borderColor: colors.gray200 }}>
           <Text style={[commonStyles.bodySmall, { lineHeight: 22, color: colors.gray700, textAlign: 'center' }]}>
-            Votre avis nous aide à améliorer Pupytracker et à atteindre plus de propriétaires de chiots!
+            Votre avis nous aide à améliorer {APP_NAME} et à atteindre plus de propriétaires de chiots!
           </Text>
         </View>
 

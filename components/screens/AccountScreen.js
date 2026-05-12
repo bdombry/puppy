@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { GlobalStyles } from '../../styles/global';
 import { commonStyles } from '../../styles/commonStyles';
 import { colors, spacing } from '../../constants/theme';
-import { EMOJI } from '../../constants/config';
+import { EMOJI, APP_NAME } from '../../constants/config';
 import { useUser } from '../../context/UserContext';
 
 const SectionNavButton = ({ emoji, title, subtitle, onPress }) => {
@@ -111,7 +111,7 @@ export default function AccountScreen() {
         <View style={{ marginBottom: spacing.md }}>
           <SectionNavButton
             emoji="⭐"
-            title="Noter Pupytracker"
+            title={`Noter ${APP_NAME}`}
             subtitle="Donnez-nous votre avis"
             onPress={() => navigation.navigate('RatingApp')}
           />

@@ -20,7 +20,7 @@ export default function ContactUsScreen() {
 
   const handleContactUs = async () => {
     const email = 'contact@pupytracker.com';
-    const subject = encodeURIComponent('Contact Pupytracker');
+    const subject = encodeURIComponent('Contact Puppytracker');
     const url = `mailto:${email}?subject=${subject}`;
     
     try {

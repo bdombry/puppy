@@ -2,6 +2,9 @@
  * Configuration et constantes métier
  */
 
+// ===== APP NAME =====
+export const APP_NAME = 'PuppyTracker';
+
 // ===== PÉRIODES D'ANALYSE =====
 export const PERIODS = [
   { id: '1w', label: '7 jours' },

@@ -11,6 +11,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { acceptInvitation } from '../services/collaboratorService';
 import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../constants/theme';
+import { APP_NAME } from '../../constants/config';
 
 /**
  * Écran pour accepter une invitation de partage de chien
@@ -147,7 +148,7 @@ export const AcceptInvitationScreen = ({ route, navigation }) => {
       </Text>
 
       <Text style={styles.description}>
-        Quelqu'un veut partager son chien avec vous sur PupyTracker. Acceptez cette invitation pour commencer à tracker ensemble!
+        Quelqu'un veut partager son chien avec vous sur {APP_NAME}. Acceptez cette invitation pour commencer à tracker ensemble!
       </Text>
 
       <TouchableOpacity

@@ -3,6 +3,7 @@ import { TouchableOpacity, Text, ActivityIndicator, Alert, Share } from 'react-n
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { generateInviteLink } from './services/collaboratorService';
 import { colors } from '../constants/theme';
+import { APP_NAME } from '../constants/config';
 import PropTypes from 'prop-types';
 
 /**
@@ -22,7 +23,7 @@ const ShareDogButton = ({ dogId, userId, dogName = 'Ton chien', forcePremium = f
       const result = await generateInviteLink(dogId, userId);
       if (result.success) {
         await Share.share({
-          message: `🐕 Viens partager ${dogName} avec moi sur PupyTracker!\n\n${result.invitationUrl}\n\n* Ce lien expire dans 7 jours et ne peut être utilisé qu'une seule fois.`,
+          message: `🐕 Viens partager ${dogName} avec moi sur ${APP_NAME}!\n\n${result.invitationUrl}\n\n* Ce lien expire dans 7 jours et ne peut être utilisé qu'une seule fois.`,
           title: `Partage ${dogName}`,
         });
       } else {

@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { commonStyles } from '../../styles/commonStyles';
 import { colors, spacing } from '../../constants/theme';
-import { EMOJI } from '../../constants/config';
+import { EMOJI, APP_NAME } from '../../constants/config';
 
 export default function NotificationDetailScreen() {
   const navigation = useNavigation();
@@ -59,7 +59,7 @@ export default function NotificationDetailScreen() {
         {/* Info Card */}
         <View style={{ backgroundColor: colors.gray50, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.xl, borderWidth: 1, borderColor: colors.gray200 }}>
           <Text style={[commonStyles.bodySmall, { lineHeight: 22, color: colors.gray700, textAlign: 'center' }]}>
-            Gérez vos notifications au niveau du système d'exploitation pour mieux contrôler les alertes Pupytracker.
+            Gérez vos notifications au niveau du système d'exploitation pour mieux contrôler les alertes {APP_NAME}.
           </Text>
         </View>
 

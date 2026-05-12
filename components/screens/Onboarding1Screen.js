@@ -3,6 +3,7 @@ import { View, Text, Animated, TouchableOpacity, useWindowDimensions, Image } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 import { colors, spacing, typography } from '../../constants/theme';
+import { APP_NAME } from '../../constants/config';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 
 const Onboarding1Screen = ({ navigation }) => {
@@ -340,7 +341,7 @@ const Onboarding1Screen = ({ navigation }) => {
                 letterSpacing: -0.5,
               }}
             >
-              <Text>Bienvenue sur PupyTracker</Text>
+              <Text>Bienvenue sur {APP_NAME}</Text>
             </Text>
           </Animated.View>
 

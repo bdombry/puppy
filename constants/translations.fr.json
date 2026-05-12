@@ -2,7 +2,7 @@
   "screens": {
     "home": {
       "header": {
-        "title": "PupyTracker",
+        "title": "PuppyTracker",
         "dogTrackingLabel": "Suivi des besoins de",
         "selectDog": "Sélectionner un chien",
         "accountButton": "🧑"

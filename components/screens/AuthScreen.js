@@ -6,6 +6,7 @@ import { supabase } from '../../config/supabase';
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import { APP_NAME } from '../../constants/config';
 
 const AuthScreen = ({ navigation }) => {
   const { signInWithEmail } = useAuth();
@@ -186,7 +187,7 @@ const AuthScreen = ({ navigation }) => {
               lineHeight: 20,
             }}
           >
-            Retrouvez votre compte PupyTracker
+            Retrouvez votre compte {APP_NAME}
           </Text>
 
           {/* Apple Sign In Button (iOS only, login only) */}

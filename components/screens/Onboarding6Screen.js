@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../constants/theme';
+import { APP_NAME } from '../../constants/config';
 import BackButton from '../BackButton';
 import { OnboardingProgressBar } from '../OnboardingProgressBar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -70,7 +71,7 @@ const Onboarding7Screen = ({ navigation, route }) => {
           marginBottom: spacing.lg,
           letterSpacing: -0.5,
         }}>
-          découvert PupyTracker ?
+          découvert {APP_NAME} ?
         </Text>
 
         {/* Sous-titre */}

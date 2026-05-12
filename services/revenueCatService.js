@@ -8,12 +8,13 @@ import Purchases from 'react-native-purchases';
 import RevenueCatUI, { PAYWALL_RESULT } from 'react-native-purchases-ui';
 import ENV from '../config/env';
 import { supabase } from '../config/supabase';
+import { APP_NAME } from '../constants/config';
 
 const REVENUE_CAT_API_KEY = ENV.REVENUE_CAT_API_KEY;
 
 // Entitlements disponibles
 export const ENTITLEMENTS = {
-  PRO: 'PupyTracker Pro',
+  PRO: `${APP_NAME} Pro`,
 };
 
 // Re-export pour usage externe

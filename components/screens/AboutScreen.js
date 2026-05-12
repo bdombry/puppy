@@ -12,7 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { GlobalStyles } from '../../styles/global';
 import { commonStyles } from '../../styles/commonStyles';
 import { colors, spacing } from '../../constants/theme';
-import { EMOJI } from '../../constants/config';
+import { EMOJI, APP_NAME } from '../../constants/config';
 
 export default function AboutScreen() {
   const navigation = useNavigation();
@@ -46,7 +46,7 @@ export default function AboutScreen() {
         {/* About Info */}
         <View style={{ backgroundColor: colors.gray50, borderRadius: 12, padding: spacing.lg, marginBottom: spacing.xl, borderWidth: 1, borderColor: colors.gray200, alignItems: 'center' }}>
           <Text style={{ fontSize: 50, marginBottom: spacing.md }}>🐕</Text>
-          <Text style={[commonStyles.h3, { textAlign: 'center', marginBottom: spacing.sm }]}>PupyTracker</Text>
+          <Text style={[commonStyles.h3, { textAlign: 'center', marginBottom: spacing.sm }]}>{APP_NAME}</Text>
           <Text style={[commonStyles.label, { color: colors.gray600 }]}>Version 1.0.1</Text>
           <Text style={[commonStyles.bodySmall, { marginTop: spacing.md, textAlign: 'center', lineHeight: 20, color: colors.gray700 }]}>
             L'application complète pour suivre la santé et le bien-être de votre chiot.
@@ -82,7 +82,7 @@ export default function AboutScreen() {
         <Text style={[commonStyles.label, { marginBottom: spacing.md }]}>CRÉDITS</Text>
         <View style={{ backgroundColor: colors.gray50, padding: spacing.lg, borderRadius: 12, borderWidth: 1, borderColor: colors.gray200 }}>
           <Text style={[commonStyles.bodySmall, { lineHeight: 20, color: colors.gray700, textAlign: 'center' }]}>
-            PupyTracker est créé avec ❤️ pour aider les propriétaires de chiots à mieux s'occuper de leurs compagnons.
+            {APP_NAME} est créé avec ❤️ pour aider les propriétaires de chiots à mieux s'occuper de leurs compagnons.
           </Text>
         </View>
       </ScrollView>

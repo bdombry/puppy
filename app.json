@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "PupyTracker",
+    "name": "PuppyTracker",
     "slug": "PupyTracker",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -18,10 +18,10 @@
       "scheme": "pupytracker",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "PupyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
-        "NSPhotoLibraryUsageDescription": "PupyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades.",
-        "NSUserNotificationsUsageDescription": "PupyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux.",
-        "NSNotificationPermissionUsageDescription": "PupyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux."
+        "NSCameraUsageDescription": "PuppyTracker a besoin d'accéder à votre caméra pour prendre des photos de vos balades avec votre chien.",
+        "NSPhotoLibraryUsageDescription": "PuppyTracker a besoin d'accéder à votre galerie pour ajouter des photos à vos balades.",
+        "NSUserNotificationsUsageDescription": "PuppyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux.",
+        "NSNotificationPermissionUsageDescription": "PuppyTracker envoie des rappels de promenade personnalisés pour aider à garder votre chiot en bonne santé et heureux."
       }
     },
     "android": {

@@ -28,7 +28,7 @@ import { TimersSection } from '../TimersSection';
 import { ActionModal } from '../ActionModal';
 import { useHomeData } from '../../hooks/useHomeData';
 import { useTimer } from '../../hooks/useTimer';
-import { EMOJI } from '../../constants/config';
+import { EMOJI, APP_NAME } from '../../constants/config';
 import { screenStyles } from '../../styles/screenStyles';
 import { colors } from '../../constants/theme';
 import translations from '../../constants/translations.fr.json';
@@ -173,7 +173,7 @@ export default function HomeScreen() {
         <View style={{ ...homeStyles.header, backgroundColor: colors.pupyBackground }}>
           <View style={homeStyles.headerRow}>
             {/* Titre marketing */}
-            <Text style={{ ...homeStyles.headerTitle, color: colors.primary }}>{t.screens.home.header.title}</Text>
+            <Text style={{ ...homeStyles.headerTitle, color: colors.primary }}>{APP_NAME}</Text>
             <TouchableOpacity
               style={{ ...homeStyles.headerAccountButtonRight, backgroundColor: colors.primary }}
               onPress={() => navigation.navigate('Account')}
